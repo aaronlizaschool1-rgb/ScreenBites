@@ -1,17 +1,39 @@
-target/
-pom.xml.tag
-pom.xml.releaseBackup
-pom.xml.versionsBackup
-pom.xml.next
-release.properties
-dependency-reduced-pom.xml
-buildNumber.properties
-.mvn/timing.properties
-# https://maven.apache.org/tools/wrapper/#Usage_with_or_without_Binary_JAR
-.mvn/wrapper/maven-wrapper.jar
+# Operating System files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
 
-# Eclipse m2e generated files
-# Eclipse Core
-.project
-# JDT-specific (Eclipse Java Development Tools)
-.classpath
+# IDE & Editor files
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Environment & Sensitive Credentials
+.env
+.env.local
+.env.production
+config/db_credentials.php
+
+# Web Server & Local Runtime (XAMPP / Apache)
+error_log
+access_log
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# Uploads & Dynamic Storage
+uploads/receipts/*
+uploads/posters/*
+!uploads/posters/.gitkeep
+!uploads/receipts/.gitkeep
+storage/backups/*
+storage/logs/*
+!storage/logs/.gitkeep
+
+# Composer dependencies (if used for PDF generation/PHPMailer)
+/vendor/
+composer.phar
