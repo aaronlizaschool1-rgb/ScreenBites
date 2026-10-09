@@ -1,0 +1,2 @@
+<?php
+// Stock tables & alerts

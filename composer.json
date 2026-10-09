@@ -1,0 +1,7 @@
+{
+    "name": "screenbites/app",
+    "description": "Cinema ticketing and concessions management",
+    "require": {
+        "php": ">=8.0"
+    }
+}

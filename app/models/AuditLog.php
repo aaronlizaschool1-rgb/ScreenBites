@@ -1,0 +1,2 @@
+<?php
+// Audit log model

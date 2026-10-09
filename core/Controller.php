@@ -1,0 +1,2 @@
+<?php
+// Base controller interface

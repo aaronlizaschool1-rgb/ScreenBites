@@ -1,0 +1,2 @@
+<?php
+// Single entry point

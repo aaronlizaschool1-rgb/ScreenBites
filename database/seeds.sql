@@ -1,0 +1,1 @@
+-- Default admin account, tiers, and sample halls

@@ -1,0 +1,2 @@
+<?php
+// User model

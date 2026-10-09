@@ -1,0 +1,2 @@
+<?php
+// Utility expense model

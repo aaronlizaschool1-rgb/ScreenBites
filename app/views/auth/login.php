@@ -1,0 +1,2 @@
+<?php
+// Login view
