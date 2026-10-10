@@ -1,4 +1,29 @@
-RewriteEngine On
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ index.php?url=$1 [QSA,L]
+# ==============================================================================
+# ScreenBites - Apache Rewrite Engine Configuration
+# Target: Apache 2.4+ (XAMPP default)
+# ==============================================================================
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Prevent directory listing for security
+    Options -Indexes -MultiViews
+
+    # Pass Authorization headers for API / basic / bearer authentication
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # If the requested physical file or directory exists, serve it directly
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Rewrite all remaining requests to public/index.php
+    RewriteRule ^ index.php [L,QSA]
+</IfModule>
+
+# Protect hidden configuration and dotfiles (.git, .env, etc.)
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
