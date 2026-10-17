@@ -1,9 +1,9 @@
 <?php
 /**
- * ScreenBites: Authentication Controller
+ * ScreenBites: Audit Controller
  * 
- * Handles user login views, credential authentication, session delegation,
- * role-directed dashboard routing, and user logouts.
+ * Handles rendering and filtering of operational audit trail logs.
+ * Restricted strictly to the Administrator role (FR13, FR16).
  * 
  * @author Aaron Louis F. Macapagal
  */
@@ -14,135 +14,63 @@ namespace App\Controllers;
 
 use Core\Controller;
 use Core\Auth;
-use Core\Database;
+use App\Models\AuditLog;
 use App\Models\User;
 
-class AuthController extends Controller
+class AuditController extends Controller
 {
+    private AuditLog $auditModel;
     private User $userModel;
 
     public function __construct()
     {
-        $this->userModel = new User();
+        // FR13 Enforcement: Audit logs are strictly restricted to Administrators
+        Auth::requireRole(ROLE_ADMIN);
+
+        $this->auditModel = new AuditLog();
+        $this->userModel  = new User();
     }
 
     /**
-     * Render the login page or redirect if already authenticated
+     * Display the audit log table with filter options
      */
     public function index(): void
     {
-        if (Auth::check()) {
-            $this->redirect('dashboard');
-            return;
-        }
+        $filters = [
+            'action_type' => $this->get('action_type') ?: null,
+            'user_id'     => $this->get('user_id') ?: null,
+            'start_date'  => $this->get('start_date') ?: null,
+            'end_date'    => $this->get('end_date') ?: null,
+        ];
 
-        $flashError = $_SESSION['flash_error'] ?? null;
-        unset($_SESSION['flash_error']);
+        $page = max(1, (int)$this->get('page', 1));
+        $limit = 25;
+        $offset = ($page - 1) * $limit;
 
-        // Renders app/views/auth/login.php without master header/sidebar layouts
-        $this->view('auth/login', [
-            'error'     => $flashError,
-            'csrfToken' => Auth::csrfToken()
-        ], null);
-    }
+        $logs = $this->auditModel->getLogs($filters, $limit, $offset);
+        $totalLogs = $this->auditModel->countLogs($filters);
+        $totalPages = (int)ceil($totalLogs / $limit);
 
-    /**
-     * Process login form submission via POST
-     */
-    public function authenticate(): void
-    {
-        // 1. Verify CSRF Token
-        $token = (string)$this->post('csrf_token', '');
-        if (!Auth::verifyCsrfToken($token)) {
-            $_SESSION['flash_error'] = 'Security validation failed (Invalid CSRF token). Please try again.';
-            $this->redirect('login');
-            return;
-        }
+        // Fetch users to populate the filter dropdown
+        $users = $this->userModel->getAllUsers();
 
-        $username = trim((string)$this->post('username', ''));
-        $password = (string)$this->post('password', '');
+        $actionTypes = [
+            AUDIT_CANCEL_TICKET,
+            AUDIT_REFUND_ORDER,
+            AUDIT_INVENTORY_OVERRIDE,
+            AUDIT_EXPENSE_MODIFIED,
+            AUDIT_LOGIN_FAILURE
+        ];
 
-        // 2. Validate non-empty fields
-        if ($username === '' || $password === '') {
-            $_SESSION['flash_error'] = 'Please enter both your username and password.';
-            $this->redirect('login');
-            return;
-        }
-
-        // 3. Attempt Authentication
-        $user = $this->userModel->authenticate($username, $password);
-
-        if (!$user) {
-            // Log security incident to audit_logs (FR16)
-            $this->logFailedAttempt($username);
-
-            $_SESSION['flash_error'] = 'Invalid username or password.';
-            $this->redirect('login');
-            return;
-        }
-
-        // 4. Log the user into session
-        Auth::login($user);
-
-        // 5. Redirect based on assigned role (FR13)
-        $this->redirectToRoleDashboard($user['role']);
-    }
-
-    /**
-     * Log user out and terminate session
-     */
-    public function logout(): void
-    {
-        Auth::logout();
-        $this->redirect('login');
-    }
-
-    /**
-     * Direct the user to their designated workspace based on RBAC permissions
-     */
-    private function redirectToRoleDashboard(string $role): void
-    {
-        switch ($role) {
-            case ROLE_ADMIN:
-                $this->redirect('dashboard');
-                break;
-            case ROLE_TICKETING:
-                $this->redirect('schedules');
-                break;
-            case ROLE_CASHIER:
-                $this->redirect('pos');
-                break;
-            default:
-                $this->redirect('dashboard');
-                break;
-        }
-    }
-
-    /**
-     * Helper to log authentication failures to the audit table (FR16)
-     */
-    private function logFailedAttempt(string $attemptedUsername): void
-    {
-        try {
-            $db = Database::getInstance();
-            $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
-            
-            // Check if user exists to link record_id, else default to 0
-            $existing = $this->userModel->findByUsername($attemptedUsername);
-            $userId = $existing ? (int)$existing['user_id'] : 1; // Fallback to system admin ID for foreign key
-
-            $sql = "INSERT INTO audit_logs (user_id, action_type, target_table, record_id, details, ip_address) 
-                    VALUES (:uid, 'LOGIN_FAILURE', 'users', :rid, :details, :ip)";
-
-            $db->query($sql, [
-                ':uid'     => $userId,
-                ':rid'     => $userId,
-                ':details' => "Failed authentication attempt for username: '{$attemptedUsername}'",
-                ':ip'      => $ip
-            ]);
-        } catch (\Throwable $e) {
-            // Fail silently so DB logging issues do not disrupt login responses
-            error_log("[Auth Log Failure] " . $e->getMessage());
-        }
+        // Deliver data to app/views/audit/index.php (assigned to John for frontend presentation)
+        $this->view('audit/index', [
+            'logs'        => $logs,
+            'users'       => $users,
+            'actionTypes' => $actionTypes,
+            'filters'     => $filters,
+            'page'        => $page,
+            'totalPages'  => $totalPages,
+            'totalLogs'   => $totalLogs
+        ]);
     }
 }

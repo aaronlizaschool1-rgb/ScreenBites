@@ -1,2 +1,125 @@
 <?php
-// Movie + snack combos (FR6)
+/**
+ * ScreenBites: Bundle & Combo Controller
+ * 
+ * Handles combo management, multi-product bundle creation, and pricing logic (FR6).
+ * 
+ * @author Aaron Louis F. Macapagal
+ */
+
+declare(strict_types=1);
+
+namespace App\Controllers;
+
+use Core\Controller;
+use Core\Auth;
+use App\Models\Combo;
+use App\Models\Product;
+use Throwable;
+
+class BundleController extends Controller
+{
+    private Combo $comboModel;
+    private Product $productModel;
+
+    public function __construct()
+    {
+        // Enforce RBAC: Cashiers can view combos for POS; Admins can manage/create
+        Auth::requireRole([ROLE_ADMIN, ROLE_CASHIER]);
+
+        $this->comboModel   = new Combo();
+        $this->productModel = new Product();
+    }
+
+    /**
+     * Display promotional combo list and bundle builder modal (FR6)
+     */
+    public function index(): void
+    {
+        $combos   = $this->comboModel->getAllCombosWithItems();
+        $products = $this->productModel->getAllProducts();
+
+        // AJAX check for POS register dynamic lookups
+        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+            $this->json([
+                'success' => true,
+                'combos'  => $combos
+            ]);
+            return;
+        }
+
+        $flashSuccess = $_SESSION['flash_success'] ?? null;
+        $flashError   = $_SESSION['flash_error'] ?? null;
+        unset($_SESSION['flash_success'], $_SESSION['flash_error']);
+
+        // Renders app/views/concessions/bundles.php
+        $this->view('concessions/bundles', [
+            'combos'       => $combos,
+            'products'     => $products,
+            'flashSuccess' => $flashSuccess,
+            'flashError'   => $flashError,
+            'csrfToken'    => Auth::csrfToken(),
+            'userRole'     => Auth::role()
+        ]);
+    }
+
+    /**
+     * Process creation of a new promotional bundle
+     */
+    public function create(): void
+    {
+        Auth::requireRole(ROLE_ADMIN);
+
+        if (!Auth::verifyCsrfToken((string)$this->post('csrf_token'))) {
+            $_SESSION['flash_error'] = 'Security validation failed. Please try again.';
+            $this->redirect('bundles');
+            return;
+        }
+
+        $name        = trim((string)$this->post('combo_name', ''));
+        $description = trim((string)$this->post('description', ''));
+        $price       = (float)$this->post('combo_price', 0.00);
+        $productIds  = (array)$this->post('product_ids', []);
+        $quantities  = (array)$this->post('quantities', []);
+
+        if ($name === '' || $price <= 0.00 || empty($productIds)) {
+            $_SESSION['flash_error'] = 'A bundle title, package price, and at least one concession item are required.';
+            $this->redirect('bundles');
+            return;
+        }
+
+        // Structure items array while eliminating duplicate product selections
+        $formattedItems = [];
+        foreach ($productIds as $idx => $rawProdId) {
+            $prodId = (int)$rawProdId;
+            $qty    = max(1, (int)($quantities[$idx] ?? 1));
+
+            if ($prodId > 0) {
+                // If the product was added multiple times in the form, sum quantities
+                if (isset($formattedItems[$prodId])) {
+                    $formattedItems[$prodId]['quantity'] += $qty;
+                } else {
+                    $formattedItems[$prodId] = [
+                        'product_id' => $prodId,
+                        'quantity'   => $qty
+                    ];
+                }
+            }
+        }
+
+        if (empty($formattedItems)) {
+            $_SESSION['flash_error'] = 'Please select valid products for the bundle package.';
+            $this->redirect('bundles');
+            return;
+        }
+
+        try {
+            $this->comboModel->createCombo($name, $description, $price, array_values($formattedItems));
+            $_SESSION['flash_success'] = "Promotional package '{$name}' created successfully.";
+        } catch (Throwable $e) {
+            $_SESSION['flash_error'] = 'Failed to create combo package: ' . $e->getMessage();
+        }
+
+        $this->redirect('bundles');
+    }
+}
