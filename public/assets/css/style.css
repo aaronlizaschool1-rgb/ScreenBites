@@ -257,16 +257,203 @@ tr.row-low td { background: var(--bad-bg); }
 }
 
 /* =========================================================
-   Login page (app/views/auth/login.php)
+   Login page (app/views/auth/login.php): cinema ticket
    ========================================================= */
-.login-page { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; background:#f4f6f8; font-family:system-ui, -apple-system, "Segoe UI", sans-serif; color:#1c2430; padding:1rem; }
-.login-card { width:100%; max-width:380px; background:#fff; border:1px solid #d9dde3; border-radius:10px; padding:2rem; box-shadow:0 2px 12px rgba(0,0,0,.06); }
-.login-card h1 { margin:0 0 .25rem; font-size:1.6rem; }
-.login-sub { margin:0 0 1.5rem; color:#5f6b7a; font-size:.95rem; }
-.login-error { background:#fde4e4; color:#9b1c1c; border:1px solid #f5b5b5; border-radius:6px; padding:.65rem .8rem; margin-bottom:1rem; font-size:.9rem; }
-.login-field { display:flex; flex-direction:column; gap:.3rem; margin-bottom:1rem; }
-.login-field label { font-size:.85rem; font-weight:600; color:#5f6b7a; }
-.login-field input { padding:.6rem .7rem; border:1px solid #d9dde3; border-radius:6px; font:inherit; }
-.login-field input:focus-visible, .login-btn:focus-visible { outline:3px solid #9db7ff; outline-offset:1px; }
-.login-btn { width:100%; padding:.7rem; border:0; border-radius:6px; background:#1f4fd8; color:#fff; font:inherit; font-weight:600; cursor:pointer; }
-.login-btn:hover { background:#1a43b8; }
+.login-page {
+  --bg: #2b2d7a;
+  --red: #d93a4a;
+  --red-dark: #b82d3c;
+  --gold: #f5b93a;
+  --ink: #1d1f3a;
+  --muted: #5d6180;
+  --line: #c3c8de;
+  --field: #f3f4fa;
+
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem 1rem;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.ticket {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 18px 44px rgba(8, 9, 50, .4);
+  border-radius: 14px;
+}
+
+/* ---- Top of the ticket ---- */
+.ticket-top {
+  background: var(--red);
+  color: #fff;
+  padding: 1.1rem 1.75rem 1.6rem;
+  border-radius: 14px 14px 0 0;
+}
+.ticket-top h1 {
+  margin: 1rem 0 .35rem;
+  font-family: "Bricolage Grotesque", "Figtree", system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 2.3rem;
+  line-height: 1.05;
+  letter-spacing: -.02em;
+}
+.ticket-top p {
+  margin: 0;
+  color: rgba(255, 255, 255, .88);
+  font-size: .95rem;
+  max-width: 30ch;
+}
+
+/* Marquee bulbs: two interleaved rows that take turns glowing */
+.ticket-marquee {
+  position: relative;
+  height: 10px;
+}
+.ticket-marquee::before,
+.ticket-marquee::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, var(--gold) 0 3.5px, transparent 4px) 0 50% / 22px 10px repeat-x;
+}
+.ticket-marquee::after {
+  background-position: 11px 50%;
+  animation: bulbs 1.4s steps(1, end) infinite;
+}
+.ticket-marquee::before {
+  animation: bulbs 1.4s steps(1, end) infinite reverse;
+}
+@keyframes bulbs {
+  0%   { opacity: 1; }
+  50%  { opacity: .3; }
+  100% { opacity: 1; }
+}
+
+/* ---- Perforation with side notches ---- */
+.ticket-perf {
+  position: relative;
+  height: 28px;
+  background: #fff;
+}
+.ticket-perf span {
+  position: absolute;
+  left: 22px;
+  right: 22px;
+  top: 50%;
+  border-top: 2px dashed var(--line);
+}
+.ticket-perf::before,
+.ticket-perf::after {
+  content: "";
+  position: absolute;
+  top: 1px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--bg);
+}
+.ticket-perf::before { left: -13px; }
+.ticket-perf::after  { right: -13px; }
+
+/* ---- Form (the stub) ---- */
+.ticket-body {
+  background: #fff;
+  padding: .75rem 1.75rem 1.9rem;
+  border-radius: 0 0 14px 14px;
+}
+
+.login-error {
+  background: #fdeaec;
+  color: #8f1f2c;
+  border: 1px solid #f3b7be;
+  border-left: 4px solid var(--red);
+  border-radius: 6px;
+  padding: .7rem .85rem;
+  margin-bottom: 1.1rem;
+  font-size: .92rem;
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: .35rem;
+  margin-bottom: 1.1rem;
+}
+.login-field label {
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+.login-field input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: .75rem .85rem;
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  background: var(--field);
+  color: var(--ink);
+  font: inherit;
+}
+.login-field input:focus {
+  outline: none;
+  border-color: var(--bg);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(43, 45, 122, .22);
+}
+
+.login-pw { position: relative; }
+.login-pw input { padding-right: 4.2rem; }
+.login-pw-toggle {
+  position: absolute;
+  right: .4rem;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  color: var(--bg);
+  font: inherit;
+  font-size: .85rem;
+  font-weight: 600;
+  padding: .35rem .55rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.login-pw-toggle:hover { background: rgba(43, 45, 122, .1); }
+.login-pw-toggle:focus-visible,
+.login-btn:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.login-btn {
+  width: 100%;
+  margin-top: .35rem;
+  padding: .85rem 1rem;
+  border: 0;
+  border-radius: 8px;
+  background: var(--bg);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+.login-btn:hover { background: #22245f; }
+.login-btn:disabled { background: #6a6c9c; cursor: wait; }
+
+@media (max-width: 420px) {
+  .ticket-top { padding-left: 1.25rem; padding-right: 1.25rem; }
+  .ticket-body { padding-left: 1.25rem; padding-right: 1.25rem; }
+  .ticket-top h1 { font-size: 2rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ticket-marquee::before,
+  .ticket-marquee::after { animation: none; }
+}
