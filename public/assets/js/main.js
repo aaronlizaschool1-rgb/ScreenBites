@@ -8,7 +8,7 @@
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') toggle(false); });
 })();
 
-// showToast('Seat held for 5:00', 'success')   types: success | warn | error | info
+
 window.showToast = function (message, type = 'info', ms = 3500) {
   const stack = document.getElementById('toastStack');
   if (!stack) return;
