@@ -3,9 +3,12 @@
  * app/views/reports/sales.php  (FR14)
  * ASSUMPTION: receives $financial, $selectedYear, $selectedMonth like financial.php.
  * Confirm the real variables with Aaron (ReportController).
+ *
+ * @var array|null $financial
+ * @var array|null $sales
+ * @var int|null   $selectedYear
+ * @var int|null   $selectedMonth
  */
-
-
 $data = is_array($financial ?? null) ? $financial : (is_array($sales ?? null) ? $sales : []);
 $val  = fn(string $key): float => (float) ($data[$key] ?? 0);
 
