@@ -1,220 +1,410 @@
+/* public/assets/js/seat-reservation.js  (FR2, FR4)
+ * Hold / release seats, live polling, and countdown timers.
+ * Reads window.SeatMatrixConfig (set by seat_matrix.php). */
 (function () {
   'use strict';
 
-  const root = document.getElementById('seatApp');
-  if (!root) return;
+  var cfg = window.SeatMatrixConfig;
+  var root = document.getElementById('seatMatrix');
+  if (!cfg || !root) { return; }
 
-  const cfg = {
-    screeningId: Number(root.dataset.screeningId),
-    base: root.dataset.baseUrl,
-    csrf: root.dataset.csrf,
-    holdTimeout: Number(root.dataset.holdTimeout) || 600,
-    mock: root.dataset.mock === '1',   // true = fake responses, no backend needed
-    pollMs: 5000
+  var CART_KEY = 'screenbites.ticketCart';
+  var WARN_AT = 60; // seconds left when the hold turns urgent
+
+  var els = {
+    msg: document.getElementById('seatMsg'),
+    live: document.getElementById('seatLive'),
+    list: document.getElementById('heldList'),
+    empty: document.getElementById('heldEmpty'),
+    clock: document.getElementById('holdClock'),
+    total: document.getElementById('heldTotal'),
+    checkout: document.getElementById('checkoutBtn'),
+    releaseAll: document.getElementById('releaseAllBtn'),
+    avail: document.getElementById('availCount')
   };
 
-  const grid        = document.getElementById('seatGrid');
-  const listEl      = document.getElementById('selectedList');
-  const totalEl     = document.getElementById('selectedTotal');
-  const timerEl     = document.getElementById('holdTimer');
-  const timerBox    = document.getElementById('holdTimerBox');
-  const checkoutBtn = document.getElementById('checkoutBtn');
+  var seats = {};      // seat_id -> state
+  var timeEls = {};    // seat_id -> countdown element in the side panel
+  var lastSig = '';
+  var msgTimer = null;
+  var pollInFlight = false;
+  var warnedShape = false;
 
-  const STATUS_CLASS = { Available: 'available', Held: 'held', HeldByMe: 'mine', Sold: 'sold' };
-  const STATUS_TEXT  = { Available: 'Available', Held: 'Reserved by someone else', HeldByMe: 'Held for you', Sold: 'Sold' };
+  var PHRASE = { available: 'available', held: 'held by another cashier', heldbyme: 'held by you', sold: 'sold' };
 
-  const seats = new Map();
-
-  /* ---------- State ---------- */
-  function setStatus(seat, status, secs) {
-    const wasMine = seat.status === 'HeldByMe';
-    seat.status = status;
-
-    if (status === 'HeldByMe') {
-      if (secs != null)  seat.expiresAt = Date.now() + secs * 1000;
-      else if (!wasMine || !seat.expiresAt) seat.expiresAt = Date.now() + cfg.holdTimeout * 1000;
-    } else {
-      seat.expiresAt = null;
-    }
-
-    const b = seat.btn;
-    b.classList.remove('available', 'held', 'mine', 'sold');
-    b.classList.add(STATUS_CLASS[status] || 'sold');
-    b.disabled = status === 'Held' || status === 'Sold';
-    b.dataset.status = status;
-    b.setAttribute('aria-pressed', status === 'HeldByMe' ? 'true' : 'false');
-    b.setAttribute('aria-label',
-      `Seat ${seat.label}, ${seat.tier}, ${formatPeso(seat.price)}, ${STATUS_TEXT[status] || status}`);
+  /* ---------- helpers ---------- */
+  function norm(v) { return String(v == null ? '' : v).toLowerCase(); }
+  function peso(n) {
+    return '\u20B1' + Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function mmss(sec) {
+    var m = Math.floor(sec / 60), s = sec % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+  function labelOf(s) { return s.row + s.number; }
+  function ariaFor(s) {
+    return 'Row ' + s.row + ', seat ' + s.number + ', ' + s.tier + ', ' + peso(s.price) + ', ' + PHRASE[s.status];
+  }
+  function byPosition(a, b) {
+    if (a.row !== b.row) { return a.row < b.row ? -1 : 1; }
+    return Number(a.number) - Number(b.number);
+  }
+  function mine() {
+    return Object.keys(seats).map(function (k) { return seats[k]; })
+      .filter(function (s) { return s.status === 'heldbyme'; })
+      .sort(byPosition);
+  }
+  function countStatus(status) {
+    return Object.keys(seats).filter(function (k) { return seats[k].status === status; }).length;
   }
 
-  grid.querySelectorAll('.seat').forEach((btn) => {
-    const secs = btn.dataset.seconds;
-    const seat = {
-      id: Number(btn.dataset.seatId),
-      btn,
-      row: btn.dataset.row,
-      num: Number(btn.dataset.num),
-      label: btn.dataset.row + btn.dataset.num,
-      tier: btn.dataset.tier,
-      price: Number(btn.dataset.price),
-      status: null,
-      expiresAt: null,
-      busy: false
+  function say(text, kind) {
+    els.msg.className = 'seat-msg is-' + (kind || 'info');
+    els.msg.textContent = text;
+    clearTimeout(msgTimer);
+    msgTimer = setTimeout(function () {
+      els.msg.textContent = '';
+      els.msg.className = 'seat-msg';
+    }, 7000);
+  }
+
+  function setConn(ok) {
+    els.live.textContent = ok ? 'Seat map updates live' : 'Live updates paused. Retrying...';
+    els.live.classList.toggle('is-down', !ok);
+  }
+
+  /* ---------- build state from the server-rendered grid ---------- */
+  Array.prototype.forEach.call(root.querySelectorAll('.seat[data-seat-id]'), function (el) {
+    var id = Number(el.getAttribute('data-seat-id'));
+    var status = norm(el.getAttribute('data-status'));
+    var secs = parseInt(el.getAttribute('data-seconds'), 10);
+    seats[id] = {
+      id: id,
+      el: el,
+      row: el.getAttribute('data-row'),
+      number: el.getAttribute('data-number'),
+      tier: el.getAttribute('data-tier'),
+      price: parseFloat(el.getAttribute('data-price')) || 0,
+      status: status,
+      expiresAt: status === 'heldbyme' ? Date.now() + (isNaN(secs) ? cfg.holdTimeout : secs) * 1000 : 0,
+      pending: false,
+      settleUntil: 0,
+      warned: false
     };
-    seats.set(seat.id, seat);
-    setStatus(seat, btn.dataset.status, secs !== '' ? Number(secs) : null);
   });
 
-  /* ---------- API ---------- */
-  async function api(path, method, body) {
-    if (cfg.mock) {
-      await new Promise((r) => setTimeout(r, 250));
-      return { ok: true, status: 200, data: { success: true, message: '(mock) OK' } };
-    }
-    const opts = {
-      method,
-      credentials: 'same-origin',
-      headers: {
-        'Accept': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-        'X-CSRF-Token': cfg.csrf
-      }
-    };
-    if (body) {
-      opts.headers['Content-Type'] = 'application/json';
-      opts.body = JSON.stringify(body);
-    }
-    const res = await fetch(cfg.base + path, opts);
-    let data = null;
-    try { data = await res.json(); } catch (e) { /* non-JSON response */ }
-    return { ok: res.ok, status: res.status, data };
-  }
-
-  /* ---------- Hold / release (FR4) ---------- */
-  async function toggle(seat) {
-    if (seat.busy) return;
-    seat.busy = true;
-    seat.btn.classList.add('busy');
-
-    const holding = seat.status === 'Available';
-    try {
-      const r = await api(
-        holding ? '/ticketing/hold-seat' : '/ticketing/release-seat',
-        'POST',
-        { screening_id: cfg.screeningId, seat_id: seat.id }
-      );
-
-      if (r.ok && r.data && r.data.success) {
-        setStatus(seat, holding ? 'HeldByMe' : 'Available');
-        showToast(holding ? `Seat ${seat.label} held for you` : `Seat ${seat.label} released`, 'success');
-      } else if (r.status === 409) {
-        setStatus(seat, 'Held');
-        showToast(`Seat ${seat.label} was just taken by someone else.`, 'warn');
-      } else {
-        showToast((r.data && r.data.message) || 'Something went wrong. Please try again.', 'error');
-      }
-    } catch (e) {
-      showToast('Network error. Check your connection.', 'error');
-    } finally {
-      seat.busy = false;
-      seat.btn.classList.remove('busy');
-      renderSummary();
-    }
-  }
-
-  grid.addEventListener('click', (e) => {
-    const btn = e.target.closest('.seat');
-    if (!btn) return;
-    const seat = seats.get(Number(btn.dataset.seatId));
-    if (seat && (seat.status === 'Available' || seat.status === 'HeldByMe')) toggle(seat);
-  });
-
-  /* ---------- Summary + countdown ---------- */
-  const mySeats = () =>
-    [...seats.values()]
-      .filter((s) => s.status === 'HeldByMe')
-      .sort((a, b) => a.row.localeCompare(b.row) || a.num - b.num);
-
-  function renderSummary() {
-    const mine = mySeats();
-    listEl.replaceChildren();
-
-    if (!mine.length) {
-      const li = document.createElement('li');
-      li.className = 'empty';
-      li.textContent = 'No seats selected yet.';
-      listEl.appendChild(li);
+  function applyStatus(s, status, seconds) {
+    s.status = status;
+    s.el.setAttribute('data-status', status);
+    s.el.setAttribute('aria-pressed', status === 'heldbyme' ? 'true' : 'false');
+    s.el.setAttribute('aria-disabled', (status === 'held' || status === 'sold') ? 'true' : 'false');
+    s.el.setAttribute('aria-label', ariaFor(s));
+    if (status === 'heldbyme') {
+      s.expiresAt = Date.now() + (typeof seconds === 'number' ? seconds : cfg.holdTimeout) * 1000;
+      s.warned = false;
     } else {
-      mine.forEach((s) => {
-        const li = document.createElement('li');
-        const name = document.createElement('span');
-        const price = document.createElement('span');
-        name.textContent = `${s.label} · ${s.tier}`;
-        price.textContent = formatPeso(s.price);
-        li.append(name, price);
-        listEl.appendChild(li);
-      });
+      s.expiresAt = 0;
     }
-
-    totalEl.textContent = formatPeso(mine.reduce((t, s) => t + s.price, 0));
-    checkoutBtn.disabled = mine.length === 0;
-    timerBox.hidden = mine.length === 0;
-    updateTimer();
   }
 
-  function updateTimer() {
-    const mine = mySeats();
-    if (!mine.length) return;
-    const soonest = Math.min(...mine.map((s) => s.expiresAt));
-    const left = Math.max(0, Math.ceil((soonest - Date.now()) / 1000));
-    const mm = String(Math.floor(left / 60)).padStart(2, '0');
-    const ss = String(left % 60).padStart(2, '0');
-    timerEl.textContent = `${mm}:${ss}`;
-    timerBox.classList.toggle('urgent', left <= 60);
+  function setPending(s, on) {
+    s.pending = on;
+    s.el.classList.toggle('is-pending', on);
+    s.el.setAttribute('aria-busy', on ? 'true' : 'false');
   }
 
-  // Runs every second: expire holds locally, then ask the server for the truth
-  setInterval(() => {
-    let expired = false;
-    seats.forEach((s) => {
-      if (s.status === 'HeldByMe' && s.expiresAt && Date.now() >= s.expiresAt) {
-        setStatus(s, 'Available');
-        expired = true;
+  /* ---------- side panel ---------- */
+  function renderList(items) {
+    els.list.textContent = '';
+    timeEls = {};
+    items.forEach(function (s) {
+      var li = document.createElement('li');
+      li.className = 'held-item';
+
+      var seat = document.createElement('div');
+      seat.className = 'held-seat';
+      var strong = document.createElement('strong');
+      strong.textContent = 'Seat ' + labelOf(s);
+      var small = document.createElement('small');
+      small.textContent = s.tier;
+      seat.appendChild(strong);
+      seat.appendChild(small);
+
+      var price = document.createElement('span');
+      price.className = 'held-price';
+      price.textContent = peso(s.price);
+
+      var rm = document.createElement('button');
+      rm.type = 'button';
+      rm.className = 'held-remove';
+      rm.textContent = 'Remove';
+      rm.setAttribute('data-seat-id', s.id);
+      rm.setAttribute('aria-label', 'Release seat ' + labelOf(s));
+
+      var time = document.createElement('span');
+      time.className = 'held-time';
+      timeEls[s.id] = time;
+
+      li.appendChild(seat);
+      li.appendChild(price);
+      li.appendChild(rm);
+      li.appendChild(time);
+      els.list.appendChild(li);
+    });
+  }
+
+  function paintTimes() {
+    var now = Date.now();
+    var soonest = Infinity;
+    mine().forEach(function (s) {
+      var remain = Math.max(0, Math.ceil((s.expiresAt - now) / 1000));
+      if (remain < soonest) { soonest = remain; }
+      var t = timeEls[s.id];
+      if (t) {
+        t.textContent = 'Expires in ' + mmss(remain);
+        t.classList.toggle('is-urgent', remain <= WARN_AT);
+      }
+      if (remain <= WARN_AT && remain > 0 && !s.warned) {
+        s.warned = true;
+        say('Your hold on seat ' + labelOf(s) + ' runs out in under a minute.', 'error');
       }
     });
-    if (expired) {
-      showToast('Your seat hold expired. Please pick your seats again.', 'warn');
-      renderSummary();
-      poll();
+    if (soonest === Infinity) {
+      els.clock.textContent = 'No seats held';
+      els.clock.classList.remove('is-urgent');
     } else {
-      updateTimer();
+      els.clock.textContent = 'Next hold runs out in ' + mmss(soonest);
+      els.clock.classList.toggle('is-urgent', soonest <= WARN_AT);
     }
-  }, 1000);
-
-  /* ---------- Live polling (FR2) ---------- */
-  async function poll() {
-    if (cfg.mock || document.hidden) return;
-    if ([...seats.values()].some((s) => s.busy)) return;   // don't fight an in-flight click
-
-    try {
-      const r = await api(`/ticketing/screening/${cfg.screeningId}`, 'GET');
-      if (!r.ok || !r.data) return;
-      const list = Array.isArray(r.data) ? r.data : r.data.seats;
-      if (!Array.isArray(list)) return;
-
-      list.forEach((d) => {
-        const seat = seats.get(Number(d.seat_id));
-        if (!seat || seat.busy) return;
-        if (d.seat_status !== seat.status || d.seat_status === 'HeldByMe') {
-          setStatus(seat, d.seat_status, d.seconds_remaining);
-        }
-      });
-      renderSummary();
-    } catch (e) { /* ignore, try again next tick */ }
   }
 
-  setInterval(poll, cfg.pollMs);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
+  function refresh() {
+    var items = mine();
+    var sig = items.map(function (s) { return s.id; }).join(',');
+    if (sig !== lastSig) {
+      lastSig = sig;
+      renderList(items);
+    }
+    var total = items.reduce(function (sum, s) { return sum + s.price; }, 0);
+    els.total.textContent = peso(total);
+    els.empty.hidden = items.length > 0;
+    els.checkout.disabled = items.length === 0;
+    els.releaseAll.disabled = items.length === 0;
+    els.avail.textContent = countStatus('available');
+    paintTimes();
+  }
 
-  renderSummary();
+  function tick() {
+    var now = Date.now();
+    var expired = mine().filter(function (s) { return s.expiresAt - now <= 0; });
+    if (expired.length) {
+      expired.forEach(function (s) {
+        applyStatus(s, 'available');
+        say('Your hold on seat ' + labelOf(s) + ' ran out, so the seat was released.', 'error');
+      });
+      refresh();
+      setTimeout(poll, 300);
+      return;
+    }
+    paintTimes();
+  }
+
+  /* ---------- server calls ---------- */
+  function post(path, body) {
+    return fetch(cfg.baseUrl + path, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-Token': cfg.csrfToken
+      },
+      body: JSON.stringify(body)
+    }).then(function (r) {
+      return r.text().then(function (text) {
+        var data = {};
+        try { data = text ? JSON.parse(text) : {}; } catch (e) { data = {}; }
+        return { ok: r.ok, status: r.status, data: data };
+      });
+    }).catch(function () {
+      return { ok: false, status: 0, data: { message: 'Could not reach the server. Check your connection and try again.' } };
+    });
+  }
+
+  function holdSeat(s) {
+    if (s.pending) { return Promise.resolve(); }
+    setPending(s, true);
+    return post('/ticketing/hold-seat', { screening_id: cfg.screeningId, seat_id: s.id }).then(function (res) {
+      setPending(s, false);
+      s.settleUntil = Date.now() + 1500;
+      if (res.ok && res.data.success !== false) {
+        applyStatus(s, 'heldbyme', cfg.holdTimeout);
+        say('Seat ' + labelOf(s) + ' is held for you for ' + Math.round(cfg.holdTimeout / 60) + ' minutes.', 'ok');
+      } else if (res.status === 409) {
+        applyStatus(s, 'held');
+        say(res.data.message || 'Seat ' + labelOf(s) + ' was just taken by someone else. Pick another seat.', 'error');
+      } else if (res.status === 401 || res.status === 403) {
+        say('Your session has expired or you do not have access. Sign in again to continue.', 'error');
+      } else {
+        say(res.data.message || 'Seat ' + labelOf(s) + ' could not be held. Try again.', 'error');
+      }
+      refresh();
+      setTimeout(poll, 400);
+    });
+  }
+
+  function releaseSeat(s, quiet) {
+    if (s.pending) { return Promise.resolve(false); }
+    setPending(s, true);
+    return post('/ticketing/release-seat', { screening_id: cfg.screeningId, seat_id: s.id }).then(function (res) {
+      setPending(s, false);
+      s.settleUntil = Date.now() + 1500;
+      var ok = res.ok && res.data.success !== false;
+      if (ok) {
+        applyStatus(s, 'available');
+        if (!quiet) { say('Seat ' + labelOf(s) + ' released.', 'info'); }
+      } else {
+        say(res.data.message || 'Seat ' + labelOf(s) + ' could not be released. Try again.', 'error');
+      }
+      refresh();
+      setTimeout(poll, 400);
+      return ok;
+    });
+  }
+
+  /* ---------- live polling ---------- */
+  function extractSeats(json) {
+    if (Array.isArray(json)) { return json; }
+    if (json && Array.isArray(json.seats)) { return json.seats; }
+    if (json && json.data && Array.isArray(json.data.seats)) { return json.data.seats; }
+    return null;
+  }
+
+  function sync(item) {
+    var s = seats[Number(item.seat_id)];
+    if (!s || s.pending || s.settleUntil > Date.now()) { return; }
+    var status = norm(item.seat_status || item.status);
+    if (!PHRASE[status]) { return; }
+    var secs = typeof item.seconds_remaining === 'number' ? item.seconds_remaining : undefined;
+    if (status === s.status) {
+      if (status === 'heldbyme' && secs !== undefined) { s.expiresAt = Date.now() + secs * 1000; }
+      return;
+    }
+    if (s.status === 'heldbyme') {
+      say('Your hold on seat ' + labelOf(s) + ' has ended.', 'error');
+    }
+    applyStatus(s, status, secs);
+  }
+
+  function poll() {
+    if (pollInFlight || document.hidden) { return Promise.resolve(); }
+    pollInFlight = true;
+    return fetch(cfg.screeningUrl, {
+      credentials: 'same-origin',
+      headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+    }).then(function (r) {
+      if (!r.ok) { throw new Error('HTTP ' + r.status); }
+      return r.json();
+    }).then(function (json) {
+      var list = extractSeats(json);
+      if (!list) {
+        if (!warnedShape) {
+          warnedShape = true;
+          if (window.console) { console.warn('Seat polling: unexpected JSON shape, expected an array or {seats: [...]}', json); }
+        }
+        return;
+      }
+      list.forEach(sync);
+      refresh();
+      setConn(true);
+    }).catch(function () {
+      setConn(false);
+    }).then(function () {
+      pollInFlight = false;
+    });
+  }
+
+  function loop() {
+    poll().then(function () { setTimeout(loop, cfg.pollMs || 5000); });
+  }
+
+  /* ---------- events ---------- */
+  root.addEventListener('click', function (e) {
+    var btn = e.target.closest('.seat[data-seat-id]');
+    if (!btn) { return; }
+    var s = seats[btn.getAttribute('data-seat-id')];
+    if (!s) { return; }
+    if (s.status === 'available') {
+      holdSeat(s);
+    } else if (s.status === 'heldbyme') {
+      releaseSeat(s);
+    } else if (s.status === 'sold') {
+      say('Seat ' + labelOf(s) + ' is already sold.', 'info');
+    } else {
+      say('Seat ' + labelOf(s) + ' is held by another cashier right now.', 'info');
+    }
+  });
+
+  els.list.addEventListener('click', function (e) {
+    var btn = e.target.closest('.held-remove');
+    if (!btn) { return; }
+    var s = seats[btn.getAttribute('data-seat-id')];
+    if (!s) { return; }
+    releaseSeat(s).then(function () { s.el.focus(); });
+  });
+
+  els.releaseAll.addEventListener('click', function () {
+    var items = mine();
+    if (!items.length) { return; }
+    els.releaseAll.disabled = true;
+    Promise.all(items.map(function (s) { return releaseSeat(s, true); })).then(function (results) {
+      var n = results.filter(Boolean).length;
+      if (n === items.length) {
+        say('Released ' + n + (n === 1 ? ' seat.' : ' seats.'), 'info');
+      } else {
+        say('Some seats could not be released. Try again.', 'error');
+      }
+    });
+  });
+
+  els.checkout.addEventListener('click', function () {
+    var items = mine();
+    if (!items.length) { return; }
+    var now = Date.now();
+    var tickets = items.map(function (s) {
+      return {
+        screening_id: cfg.screeningId,
+        seat_id: s.id,
+        price: s.price,
+        seat_label: labelOf(s),
+        tier_name: s.tier,
+        movie_title: cfg.movieTitle,
+        hall_name: cfg.hallName,
+        start_time: cfg.startTime,
+        held_until: s.expiresAt
+      };
+    });
+    try {
+      // Keep tickets from other screenings that are still held; replace this screening's
+      var existing = JSON.parse(sessionStorage.getItem(CART_KEY) || '{"tickets":[]}');
+      var others = (existing.tickets || []).filter(function (t) {
+        return t.screening_id !== cfg.screeningId && t.held_until > now;
+      });
+      sessionStorage.setItem(CART_KEY, JSON.stringify({ tickets: others.concat(tickets) }));
+    } catch (err) {
+      say('Your seats could not be saved for checkout. Check that browser storage is allowed.', 'error');
+      return;
+    }
+    window.location.href = cfg.checkoutUrl;
+  });
+
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) { poll(); }
+  });
+
+  /* ---------- start ---------- */
+  refresh();
+  setInterval(tick, 1000);
+  setTimeout(loop, cfg.pollMs || 5000);
 })();
