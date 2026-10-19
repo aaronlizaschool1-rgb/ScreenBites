@@ -447,3 +447,54 @@
 .app-shell { display: grid !important; grid-template-columns: 264px minmax(0, 1fr) !important; }
 .app-sidebar { position: sticky !important; top: 0 !important; height: 100vh !important; }
 @media (max-width: 900px) { .app-shell { display: block !important; } }
+
+/* =========================================================
+   Reports and charts (views/reports/*.php, js/chart-analytics.js)
+   ========================================================= */
+.report-filters { display:flex; flex-wrap:wrap; gap:.75rem; align-items:flex-end; margin-bottom:1.25rem; padding:1rem; background:var(--c-surface); border:1px solid var(--c-line); border-radius:10px; }
+.report-filters .field { display:flex; flex-direction:column; gap:.25rem; min-width:150px; }
+.report-filters label { font-size:.8rem; font-weight:600; color:var(--c-muted); }
+.report-filters select, .report-filters input[type="date"] { padding:.5rem .65rem; border:1.5px solid var(--c-line); border-radius:8px; background:#fff; color:var(--c-ink); font:inherit; }
+.report-filters select:focus-visible, .report-filters input:focus-visible { outline:3px solid var(--c-gold); outline-offset:1px; }
+
+.kpi-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:1rem; margin-bottom:1.25rem; }
+.kpi { padding:1rem 1.15rem; background:var(--c-surface); border:1px solid var(--c-line); border-radius:10px; }
+.kpi.is-key { border-top:4px solid var(--c-gold); }
+.kpi-label { margin:0; font-size:.85rem; font-weight:600; color:var(--c-muted); }
+.kpi-value { margin:.25rem 0 0; font-family:"Bricolage Grotesque","Figtree",system-ui,sans-serif; font-size:1.65rem; font-weight:800; letter-spacing:-.01em; font-variant-numeric:tabular-nums; }
+.kpi-note { margin:.15rem 0 0; font-size:.82rem; color:var(--c-muted); }
+.is-positive { color:#1b7a43; }
+.is-negative { color:var(--c-red); }
+
+.report-grid { display:grid; grid-template-columns:minmax(0, 3fr) minmax(0, 2fr); gap:1rem; align-items:start; margin-bottom:1rem; }
+.report-grid.is-even { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+.report-side { display:grid; gap:1rem; }
+@media (max-width:1100px) { .report-grid, .report-grid.is-even { grid-template-columns:1fr; } }
+.card-title { margin:0 0 .85rem; font-size:1.05rem; }
+
+.table-scroll { overflow-x:auto; }
+.ledger { width:100%; border-collapse:collapse; font-size:.93rem; }
+.ledger th, .ledger td { padding:.6rem .5rem; text-align:left; border-bottom:1px solid var(--c-line); }
+.ledger thead th { font-size:.82rem; color:var(--c-muted); white-space:nowrap; }
+.ledger td.num, .ledger th.num { text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
+.ledger .group th { padding-top:1.1rem; font-size:.82rem; color:var(--c-muted); border-bottom-width:2px; }
+.ledger .total th, .ledger .total td { font-weight:700; border-top:2px solid var(--c-ink); }
+.ledger small { display:block; font-weight:400; color:var(--c-muted); }
+
+.chart-box { position:relative; height:280px; }
+.chart-fallback { margin:0; padding:2rem 1rem; text-align:center; color:var(--c-muted); }
+.empty-note { padding:2rem 1rem; text-align:center; color:var(--c-muted); }
+
+.meter { display:flex; align-items:center; gap:.6rem; }
+.meter-bar { flex:1; min-width:80px; height:8px; background:#e7e9f5; border-radius:999px; overflow:hidden; }
+.meter-bar span { display:block; height:100%; background:var(--c-indigo); }
+.meter.is-high .meter-bar span { background:#2f9e55; }
+.meter.is-low .meter-bar span { background:var(--c-red); }
+.meter-pct { min-width:3.4rem; text-align:right; font-weight:600; font-variant-numeric:tabular-nums; }
+
+.link-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:1rem; }
+.link-card { display:block; padding:1.1rem 1.2rem; background:var(--c-surface); border:1px solid var(--c-line); border-left:4px solid var(--c-gold); border-radius:10px; color:var(--c-ink); text-decoration:none; }
+.link-card:hover { border-color:var(--c-indigo); }
+.link-card:focus-visible { outline:3px solid var(--c-gold); outline-offset:2px; }
+.link-card strong { display:block; }
+.link-card span { font-size:.88rem; color:var(--c-muted); }

@@ -2,6 +2,7 @@
 use Core\Auth;
 
 $user = Auth::user();
+$kpis = $kpis ?? []; // optional: [['label' => 'Tickets today', 'value' => '12'], ...]
 ?>
 <div class="page-head">
     <div>
@@ -10,14 +11,32 @@ $user = Auth::user();
     </div>
 </div>
 
-<div class="card">
-    <p>KPI cards and charts will go here once the dashboard data contract is confirmed with Aaron.</p>
-    <p>
-        <?php if (Auth::hasRole(ROLE_ADMIN)): ?>
-            <a class="btn" href="<?= BASE_URL; ?>/audit">Open audit logs</a>
-        <?php endif; ?>
-        <?php if (Auth::hasRole([ROLE_ADMIN, ROLE_CASHIER, ROLE_TICKETING])): ?>
-            <a class="btn btn-ghost" href="<?= BASE_URL; ?>/pos">Open snack bar POS</a>
-        <?php endif; ?>
-    </p>
+<?php if ($kpis): ?>
+<div class="kpi-grid">
+    <?php foreach ($kpis as $k): ?>
+        <div class="kpi">
+            <p class="kpi-label"><?= htmlspecialchars((string) $k['label']); ?></p>
+            <p class="kpi-value"><?= htmlspecialchars((string) $k['value']); ?></p>
+        </div>
+    <?php endforeach; ?>
+</div>
+<?php endif; ?>
+
+<div class="link-grid">
+    <a class="link-card" href="<?= BASE_URL; ?>/reports/financial">
+        <strong>Net income report</strong>
+        <span>Revenue, expenses and profit margin by month.</span>
+    </a>
+    <a class="link-card" href="<?= BASE_URL; ?>/reports/sales">
+        <strong>Sales report</strong>
+        <span>Box office compared with concessions.</span>
+    </a>
+    <a class="link-card" href="<?= BASE_URL; ?>/reports/occupancy">
+        <strong>Occupancy analytics</strong>
+        <span>Seats sold per screening and peak hours.</span>
+    </a>
+    <a class="link-card" href="<?= BASE_URL; ?>/audit">
+        <strong>Audit logs</strong>
+        <span>Cancellations, refunds, overrides and failed sign-ins.</span>
+    </a>
 </div>
