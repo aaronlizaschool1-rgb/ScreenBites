@@ -1,31 +1,47 @@
-// Mobile sidebar toggle
+/* public/assets/js/main.js: global layout behaviour */
 (function () {
-  const btn = document.getElementById('menuBtn');
-  const scrim = document.getElementById('scrim');
-  const toggle = (open) => document.body.classList.toggle('nav-open', open);
-  if (btn)   btn.addEventListener('click', () => toggle(!document.body.classList.contains('nav-open')));
-  if (scrim) scrim.addEventListener('click', () => toggle(false));
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') toggle(false); });
+  'use strict';
+
+  var body = document.body;
+  var toggle = document.getElementById('navToggle');
+  var scrim = document.getElementById('appScrim');
+  var sidebar = document.getElementById('appSidebar');
+
+  // Mobile drawer
+  function setNav(open) {
+    body.classList.toggle('nav-open', open);
+    if (toggle) {
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    }
+  }
+
+  if (toggle && sidebar) {
+    toggle.addEventListener('click', function () {
+      setNav(!body.classList.contains('nav-open'));
+    });
+    if (scrim) {
+      scrim.addEventListener('click', function () { setNav(false); });
+    }
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && body.classList.contains('nav-open')) {
+        setNav(false);
+        toggle.focus();
+      }
+    });
+    window.matchMedia('(min-width: 901px)').addEventListener('change', function (e) {
+      if (e.matches) { setNav(false); }
+    });
+  }
+
+  // Flash messages: dismiss button, success auto-hides after 6 seconds
+  document.querySelectorAll('.flash').forEach(function (el) {
+    function dismiss() {
+      el.classList.add('is-leaving');
+      setTimeout(function () { el.remove(); }, 300);
+    }
+    var close = el.querySelector('.flash-close');
+    if (close) { close.addEventListener('click', dismiss); }
+    if (el.classList.contains('flash-success')) { setTimeout(dismiss, 6000); }
+  });
 })();
-
-
-window.showToast = function (message, type = 'info', ms = 3500) {
-  const stack = document.getElementById('toastStack');
-  if (!stack) return;
-  const el = document.createElement('div');
-  el.className = 'toast toast-' + type;
-  el.textContent = message;
-  stack.appendChild(el);
-  setTimeout(() => el.remove(), ms);
-};
-
-// formatPeso(1234.5) -> "₱1,234.50"
-window.formatPeso = function (n) {
-  return '₱' + Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-};
-
-// <button data-confirm="Cancel this ticket?"> asks before proceeding
-document.addEventListener('click', (e) => {
-  const el = e.target.closest('[data-confirm]');
-  if (el && !confirm(el.dataset.confirm)) e.preventDefault();
-});

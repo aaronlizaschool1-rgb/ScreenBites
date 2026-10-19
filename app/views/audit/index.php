@@ -1,6 +1,3 @@
-   ini_set('display_errors', 1);
-   error_reporting(E_ALL);
-   
 <?php
 /**
  * app/views/audit/index.php  (FR16)
