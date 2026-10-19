@@ -498,3 +498,38 @@
 .link-card:focus-visible { outline:3px solid var(--c-gold); outline-offset:2px; }
 .link-card strong { display:block; }
 .link-card span { font-size:.88rem; color:var(--c-muted); }
+
+/* =========================================================
+   Screening schedule (views/ticketing/schedule.php)
+   ========================================================= */
+.sched-spacer { margin-left: auto; }
+.sched-hall { display: flex; align-items: baseline; gap: .6rem; margin: 1.5rem 0 .75rem; font-size: 1.05rem; }
+.sched-hall small { font-weight: 400; color: var(--c-muted); }
+.sched-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1rem; }
+
+.sched-card { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 1rem; padding: 1rem; background: var(--c-surface); border: 1px solid var(--c-line); border-radius: 10px; }
+.sched-poster { position: relative; width: 84px; height: 124px; display: grid; place-items: center; overflow: hidden; border-radius: 8px; background: var(--c-indigo); color: #fff; font: 800 2rem "Bricolage Grotesque", "Figtree", system-ui, sans-serif; }
+.sched-poster img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.sched-body { min-width: 0; display: flex; flex-direction: column; gap: .35rem; }
+.sched-body h3 { margin: 0; font-size: 1.05rem; line-height: 1.25; }
+.sched-meta { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem .75rem; margin: 0; font-size: .85rem; color: var(--c-muted); }
+.sched-time { margin: .1rem 0; font-size: 1.25rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.sched-time span { font-size: .9rem; font-weight: 500; color: var(--c-muted); }
+.sched-left { min-width: 4.5rem; text-align: right; font-size: .85rem; font-weight: 600; }
+.sched-body .btn { align-self: flex-start; margin-top: .35rem; }
+.rating-badge { display: inline-block; padding: .05rem .5rem; border: 1.5px solid var(--c-indigo); border-radius: 6px; color: var(--c-indigo); font-weight: 700; font-size: .78rem; }
+
+.sched-dialog { width: min(520px, calc(100vw - 2rem)); padding: 1.5rem; border: 0; border-radius: 12px; color: var(--c-ink); box-shadow: 0 20px 50px rgba(12, 13, 40, .35); }
+.sched-dialog::backdrop { background: rgba(12, 13, 40, .55); }
+.sched-dialog h2 { margin: 0 0 1rem; font-family: "Bricolage Grotesque", "Figtree", system-ui, sans-serif; }
+.sched-field { display: flex; flex-direction: column; gap: .3rem; margin-bottom: .9rem; min-width: 0; }
+.sched-field label { font-size: .82rem; font-weight: 600; color: var(--c-muted); }
+.sched-field input, .sched-field select { padding: .6rem .7rem; border: 1.5px solid var(--c-line); border-radius: 8px; background: #fff; color: var(--c-ink); font: inherit; }
+.sched-field input[readonly] { background: var(--c-page); }
+.sched-field input:focus-visible, .sched-field select:focus-visible { outline: 3px solid var(--c-gold); outline-offset: 1px; }
+.sched-row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+.sched-note { min-height: 1.2em; margin: 0 0 .5rem; font-size: .88rem; color: var(--c-muted); }
+.sched-actions { display: flex; justify-content: flex-end; gap: .5rem; margin-top: .5rem; }
+.sched-actions .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+@media (max-width: 420px) { .sched-list { grid-template-columns: 1fr; } .sched-row { grid-template-columns: 1fr; } }
