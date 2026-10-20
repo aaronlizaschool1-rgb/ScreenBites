@@ -1,9 +1,9 @@
 <?php
 /**
- * ScreenBites - Core Database Engine (PDO Singleton Wrapper)
+ * ScreenBites - Core Database Engine (PDO Singleton Wrapper with Auto-Migration)
  * 
  * Provides safe parameter-bound query execution, transaction management,
- * and connection pooling for native PHP.
+ * and automated schema/seed execution on first launch.
  * 
  * @author Aaron Louis F. Macapagal
  */
@@ -34,28 +34,61 @@ class Database
         }
 
         /** @var array $config */
-        $config = require $configFile;
-
-        $dsn = sprintf(
-            '%s:host=%s;port=%d;dbname=%s;charset=%s',
-            $config['driver'],
-            $config['host'],
-            $config['port'],
-            $config['database'],
-            $config['charset']
-        );
+        $config = require$configFile;
 
         try {
-            $this->connection = new PDO(
-                $dsn,
-                $config['username'],
-                $config['password'],
-                $config['options']
+            // 1. Initial connection without dbname to ensure the database can be created if missing
+            $initialDsn = sprintf(
+                '%s:host=%s;port=%d;charset=%s',
+                $config['driver'],$config['host'],
+                $config['port'],$config['charset']
             );
+
+            $this->connection = new PDO(
+                $initialDsn,$config['username'],
+                $config['password'],$config['options']
+            );
+
+            // 2. Ensure database exists and select it
+            $dbName = $config['database'];$this->connection->exec("CREATE DATABASE IF NOT EXISTS `{$dbName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
+            $this->connection->exec("USE `{$dbName}`;");
+
+            // 3. Automatically embed schema and seeds if tables are missing
+            $this->autoMigrateIfMissing();
+
         } catch (PDOException $e) {
-            // Log real error internally and hide sensitive credentials from user display
             error_log("[Database Connection Error] " . $e->getMessage());
             throw new RuntimeException("Could not connect to the database. Verify that MySQL is running in XAMPP.");
+        }
+    }
+
+    /**
+     * Automatically imports database/schema.sql and database/seeds.sql if tables are absent
+     */
+    private function autoMigrateIfMissing(): void
+    {
+        // Check if the foundational 'users' table exists
+        $stmt =$this->connection->query("SHOW TABLES LIKE 'users'");
+        $tableExists = $stmt &&$stmt->rowCount() > 0;
+
+        if (!$tableExists) {
+            $schemaFile = dirname(__DIR__) . '/database/schema.sql';$seedsFile  = dirname(__DIR__) . '/database/seeds.sql';
+
+            // Execute DDL Schema
+            if (file_exists($schemaFile)) {
+                $schemaSql = file_get_contents($schemaFile);
+                if (!empty($schemaSql)) {
+                    $this->connection->exec($schemaSql);
+                }
+            }
+
+            // Execute Baseline Seeds
+            if (file_exists($seedsFile)) {
+                $seedsSql = file_get_contents($seedsFile);
+                if (!empty($seedsSql)) {
+                    $this->connection->exec($seedsSql);
+                }
+            }
         }
     }
 
@@ -103,14 +136,14 @@ class Database
      * @return PDOStatement
      * @throws PDOException
      */
-    public function query(string $sql, array $params = []): PDOStatement
+    public function query(string $sql, array$params = []): PDOStatement
     {
         try {
             $stmt = $this->connection->prepare($sql);
             $stmt->execute($params);
             return $stmt;
         } catch (PDOException $e) {
-            error_log("[Query Error] {$e->getMessage()} | SQL: {$sql}");
+            error_log("[Query Error] {$e->getMessage()} \vert{} SQL: {$sql}");
             throw $e;
         }
     }
@@ -122,10 +155,10 @@ class Database
      * @param array $params
      * @return array|null
      */
-    public function fetchOne(string $sql, array $params = []): ?array
+    public function fetchOne(string $sql, array$params = []): ?array
     {
-        $stmt = $this->query($sql, $params);
-        $result = $stmt->fetch();
+        $stmt =$this->query($sql,$params);
+        $result =$stmt->fetch();
         return $result !== false ? $result : null;
     }
 
@@ -136,9 +169,9 @@ class Database
      * @param array $params
      * @return array
      */
-    public function fetchAll(string $sql, array $params = []): array
+    public function fetchAll(string $sql, array$params = []): array
     {
-        return $this->query($sql, $params)->fetchAll();
+        return $this->query($sql,$params)->fetchAll();
     }
 
     /**
@@ -148,10 +181,10 @@ class Database
      * @param array $params
      * @return mixed
      */
-    public function fetchColumn(string $sql, array $params = []): mixed
+    public function fetchColumn(string $sql, array$params = []): mixed
     {
-        $stmt = $this->query($sql, $params);
-        $result = $stmt->fetchColumn();
+        $stmt =$this->query($sql,$params);
+        $result =$stmt->fetchColumn();
         return $result !== false ? $result : null;
     }
 
@@ -162,9 +195,9 @@ class Database
      * @param array $params
      * @return int Number of affected rows
      */
-    public function execute(string $sql, array $params = []): int
+    public function execute(string $sql, array$params = []): int
     {
-        return $this->query($sql, $params)->rowCount();
+        return $this->query($sql,$params)->rowCount();
     }
 
     /**
@@ -219,7 +252,7 @@ class Database
     /**
      * Execute a closure inside a database transaction automatically rolling back on failure
      * 
-     * @param callable $callback function(Database $db): mixed
+     * @param callable $callback function(Database$db): mixed
      * @return mixed
      * @throws \Throwable
      */
@@ -227,11 +260,9 @@ class Database
     {
         $this->beginTransaction();
         try {
-            $result = $callback($this);
-            $this->commit();
+            $result =$callback($this);$this->commit();
             return $result;
-        } catch (\Throwable $e) {
-            $this->rollBack();
+        } catch (\Throwable $e) {$this->rollBack();
             error_log("[Transaction Failed] Rolled back: " . $e->getMessage());
             throw $e;
         }
