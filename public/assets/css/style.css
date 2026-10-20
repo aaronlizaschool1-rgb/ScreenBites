@@ -444,14 +444,34 @@
   .ticket-marquee::after { animation: none; }
 }
 
-.app-shell { display: grid !important; grid-template-columns: 264px minmax(0, 1fr) !important; }
-.app-sidebar { position: sticky !important; top: 0 !important; height: 100vh !important; }
-@media (max-width: 900px) { .app-shell { display: block !important; } }
+.app-shell { 
+  display: grid !important; grid-template-columns: 264px minmax(0, 1fr) !important; 
+}
+
+.app-sidebar {
+   position: sticky !important; top: 0 !important; height: 100vh !important;
+   }
+
+@media (max-width: 900px) { 
+  .app-shell { 
+    display: block !important; 
+  }
+ }
 
 /* =========================================================
    Reports and charts (views/reports/*.php, js/chart-analytics.js)
    ========================================================= */
-.report-filters { display:flex; flex-wrap:wrap; gap:.75rem; align-items:flex-end; margin-bottom:1.25rem; padding:1rem; background:var(--c-surface); border:1px solid var(--c-line); border-radius:10px; }
+.report-filters { 
+  display:flex;
+  flex-wrap:wrap; 
+  gap:.75rem; 
+  align-items:flex-end; 
+  margin-bottom:1.25rem; 
+  padding:1rem; 
+  background:var(--c-surface); 
+  border:1px solid var(--c-line); 
+  border-radius:10px; 
+}
 .report-filters .field { display:flex; flex-direction:column; gap:.25rem; min-width:150px; }
 .report-filters label { font-size:.8rem; font-weight:600; color:var(--c-muted); }
 .report-filters select, .report-filters input[type="date"] { padding:.5rem .65rem; border:1.5px solid var(--c-line); border-radius:8px; background:#fff; color:var(--c-ink); font:inherit; }
