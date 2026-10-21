@@ -1,5 +1,4 @@
 <?php
-// Utility expense model<?php
 /**
  * ScreenBites: Utility Expense Model
  * 

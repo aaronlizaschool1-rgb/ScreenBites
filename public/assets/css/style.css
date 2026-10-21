@@ -553,3 +553,1102 @@
 .sched-actions .btn:disabled { opacity: .5; cursor: not-allowed; }
 
 @media (max-width: 420px) { .sched-list { grid-template-columns: 1fr; } .sched-row { grid-template-columns: 1fr; } }
+
+
+/* =========================================================
+   Concessions POS & Split Checkout (views/concessions/pos.php)
+   ========================================================= */
+.pos-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(360px, 430px);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 1040px) {
+  .pos-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pos-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: .85rem;
+  margin-bottom: 1.25rem;
+}
+
+.pos-search-box input {
+  width: 100%;
+  padding: .7rem .95rem;
+  border: 1.5px solid var(--c-line);
+  border-radius: 8px;
+  background: var(--c-page);
+  color: var(--c-ink);
+  font: inherit;
+  font-size: .95rem;
+}
+
+.pos-search-box input:focus {
+  outline: none;
+  background: #fff;
+  border-color: var(--c-indigo);
+  box-shadow: 0 0 0 3px rgba(43, 45, 122, .18);
+}
+
+.pos-filter-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .45rem;
+}
+
+.pos-tab {
+  padding: .4rem .85rem;
+  border: 1px solid var(--c-line);
+  border-radius: 20px;
+  background: #fff;
+  color: var(--c-muted);
+  font: inherit;
+  font-size: .85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+
+.pos-tab:hover {
+  border-color: var(--c-indigo);
+  color: var(--c-indigo);
+}
+
+.pos-tab.active {
+  background: var(--c-indigo);
+  border-color: var(--c-indigo);
+  color: #fff;
+}
+
+.pos-section {
+  margin-bottom: 1.5rem;
+}
+
+.pos-section-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 .85rem;
+  padding-bottom: .4rem;
+  border-bottom: 1px solid var(--c-line);
+  color: var(--c-ink);
+}
+
+.pos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: .85rem;
+}
+
+.pos-item-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1rem;
+  background: #fff;
+  border: 1.5px solid var(--c-line);
+  border-radius: 10px;
+  transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+  position: relative;
+}
+
+.pos-item-card:hover {
+  border-color: var(--c-indigo);
+  box-shadow: 0 6px 16px rgba(43, 45, 122, .08);
+}
+
+.pos-item-card.is-out-of-stock {
+  opacity: .55;
+  background: #fafafc;
+}
+
+.pos-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: .5rem;
+  margin-bottom: .5rem;
+}
+
+.pos-category-tag {
+  display: inline-block;
+  padding: .15rem .5rem;
+  border-radius: 4px;
+  background: #eef0fa;
+  color: var(--c-indigo);
+  font-size: .75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.pos-stock-badge {
+  font-size: .75rem;
+  font-weight: 600;
+}
+
+.pos-stock-badge.in-badge { color: #1b7a43; }
+.pos-stock-badge.low-badge { color: #b86200; font-weight: 700; }
+.pos-stock-badge.out-badge { color: var(--c-red); font-weight: 700; }
+
+.pos-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: .75rem;
+}
+
+.pos-card-title {
+  font-size: .95rem;
+  font-weight: 700;
+  margin: 0 0 .35rem;
+  line-height: 1.3;
+}
+
+.pos-card-desc {
+  font-size: .8rem;
+  color: var(--c-muted);
+  margin: 0 0 .5rem;
+  flex: 1;
+}
+
+.pos-card-pricing {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: .4rem;
+}
+
+.pos-price {
+  font-family: "Bricolage Grotesque", "Figtree", system-ui, sans-serif;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--c-indigo);
+  font-variant-numeric: tabular-nums;
+}
+
+.pos-old-price {
+  font-size: .85rem;
+  color: var(--c-muted);
+}
+
+.pos-savings-tag {
+  display: inline-block;
+  padding: .1rem .4rem;
+  background: #e7f6ec;
+  color: #1b7a43;
+  border-radius: 4px;
+  font-size: .72rem;
+  font-weight: 700;
+}
+
+.combo-card {
+  border-color: #ffd880;
+  background: linear-gradient(180deg, #fffcf5 0%, #ffffff 100%);
+}
+
+.combo-badge {
+  position: absolute;
+  top: -.6rem;
+  right: .75rem;
+  background: var(--c-gold);
+  color: #1d1f3a;
+  font-size: .7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: .15rem .55rem;
+  border-radius: 999px;
+  letter-spacing: .02em;
+}
+
+.pos-add-btn {
+  width: 100%;
+  padding: .45rem .75rem;
+  font-size: .88rem;
+  text-align: center;
+}
+
+/* ---- POS Cart Sidebar ---- */
+.pos-cart-panel {
+  position: sticky;
+  top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  background: #fff;
+  border: 1px solid var(--c-line);
+}
+
+.pos-cart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: .5rem;
+  padding-bottom: .85rem;
+  border-bottom: 1.5px solid var(--c-line);
+}
+
+.pos-order-badge {
+  display: inline-block;
+  padding: .15rem .55rem;
+  border-radius: 999px;
+  background: #e8eafc;
+  color: var(--c-indigo);
+  font-size: .75rem;
+  font-weight: 700;
+  margin-top: .2rem;
+}
+
+.cart-section {
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+}
+
+.cart-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cart-section-title {
+  font-size: .82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--c-muted);
+}
+
+.cart-ticket-timer {
+  display: inline-block;
+  padding: .15rem .5rem;
+  border-radius: 4px;
+  background: #edf0fa;
+  color: var(--c-indigo);
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: .8rem;
+  font-weight: 700;
+}
+
+.cart-ticket-timer.urgent {
+  background: #fde4e4;
+  color: var(--c-red);
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .5; }
+}
+
+/* Held Cinema Tickets In Cart */
+.cart-tickets-list {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+}
+
+.cart-ticket-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: .5rem;
+  padding: .65rem .75rem;
+  background: #f7f8fe;
+  border-left: 3.5px solid var(--c-indigo);
+  border-radius: 6px;
+  font-size: .85rem;
+}
+
+.cart-ticket-info strong {
+  display: block;
+  font-size: .9rem;
+  line-height: 1.25;
+}
+
+.cart-ticket-info span {
+  display: block;
+  color: var(--c-muted);
+  font-size: .8rem;
+}
+
+.cart-ticket-actions {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+.cart-ticket-price {
+  font-weight: 700;
+  font-size: .9rem;
+  white-space: nowrap;
+}
+
+.btn-remove-ticket, .btn-remove-item, .btn-remove-tender {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  color: var(--c-muted);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.btn-remove-ticket:hover, .btn-remove-item:hover, .btn-remove-tender:hover {
+  background: #fde4e4;
+  color: var(--c-red);
+}
+
+/* Concessions Cart List */
+.cart-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: .55rem;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.cart-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: .5rem;
+  padding: .5rem 0;
+  border-bottom: 1px dashed var(--c-line);
+}
+
+.cart-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.cart-item-tag {
+  display: inline-block;
+  font-size: .68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: .05rem .35rem;
+  border-radius: 3px;
+  background: #eef0fa;
+  color: var(--c-indigo);
+}
+
+.cart-item-tag.is-combo {
+  background: #fff1d6;
+  color: #8a5300;
+}
+
+.cart-item-title {
+  font-size: .88rem;
+  font-weight: 600;
+  line-height: 1.25;
+  margin: .1rem 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cart-item-unit-price {
+  font-size: .78rem;
+  color: var(--c-muted);
+}
+
+.cart-item-controls {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+}
+
+.cart-qty-spinner {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--c-line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.btn-qty {
+  width: 24px;
+  height: 26px;
+  background: var(--c-page);
+  border: 0;
+  font-weight: 700;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  color: var(--c-ink);
+}
+
+.btn-qty:hover { background: #e2e4f0; }
+
+.qty-input {
+  width: 32px;
+  height: 26px;
+  border: 0;
+  text-align: center;
+  font: inherit;
+  font-size: .85rem;
+  font-weight: 600;
+  background: #fff;
+  -moz-appearance: textfield;
+}
+
+.qty-input::-webkit-outer-spin-button,
+.qty-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.cart-item-line-price {
+  min-width: 54px;
+  text-align: right;
+  font-weight: 700;
+  font-size: .88rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.empty-cart-msg {
+  margin: 0;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  color: var(--c-muted);
+  font-size: .88rem;
+}
+
+/* Cart Breakdown */
+.cart-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: .35rem;
+  padding: .85rem 0;
+  border-top: 1.5px solid var(--c-line);
+  border-bottom: 1.5px solid var(--c-line);
+  font-size: .88rem;
+}
+
+.cart-breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--c-muted);
+}
+
+.cart-total-row {
+  margin-top: .4rem;
+  padding-top: .4rem;
+  border-top: 1px dashed var(--c-line);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--c-ink);
+}
+
+.cart-grand-total {
+  font-family: "Bricolage Grotesque", "Figtree", system-ui, sans-serif;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--c-indigo);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Payment & Split Tender (FR9) */
+.cart-payment-section {
+  display: flex;
+  flex-direction: column;
+  gap: .85rem;
+}
+
+.payment-title {
+  margin: 0;
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--c-ink);
+}
+
+.tenders-list {
+  display: flex;
+  flex-direction: column;
+  gap: .4rem;
+}
+
+.tender-empty-hint {
+  margin: 0;
+  font-size: .82rem;
+  color: var(--c-muted);
+  font-style: italic;
+}
+
+.tender-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: .45rem .65rem;
+  background: var(--c-page);
+  border: 1px solid var(--c-line);
+  border-radius: 6px;
+  font-size: .85rem;
+}
+
+.tender-info {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .4rem;
+}
+
+.tender-method-tag {
+  display: inline-block;
+  padding: .1rem .4rem;
+  background: var(--c-indigo);
+  color: #fff;
+  border-radius: 4px;
+  font-size: .75rem;
+  font-weight: 700;
+}
+
+.tender-ref-text {
+  font-size: .78rem;
+  color: var(--c-muted);
+}
+
+.tender-entry-form {
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+  padding: .85rem;
+  background: var(--c-page);
+  border-radius: 8px;
+  border: 1px solid var(--c-line);
+}
+
+.tender-method-group {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: .35rem;
+}
+
+.tender-method-btn {
+  padding: .45rem .25rem;
+  border: 1px solid var(--c-line);
+  background: #fff;
+  border-radius: 6px;
+  font: inherit;
+  font-size: .75rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+}
+
+.tender-method-btn.active {
+  background: var(--c-indigo);
+  border-color: var(--c-indigo);
+  color: #fff;
+}
+
+.tender-inputs {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: .5rem;
+}
+
+.tender-field label {
+  display: block;
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--c-muted);
+  margin-bottom: .2rem;
+}
+
+.tender-field input {
+  width: 100%;
+  padding: .5rem .65rem;
+  border: 1.5px solid var(--c-line);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--c-ink);
+  font: inherit;
+  font-size: .95rem;
+}
+
+.tender-field input:focus {
+  outline: none;
+  border-color: var(--c-indigo);
+  box-shadow: 0 0 0 2px rgba(43, 45, 122, .18);
+}
+
+.quick-cash-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .3rem;
+}
+
+.quick-cash-btn {
+  flex: 1;
+  padding: .35rem .45rem;
+  background: #fff;
+  border: 1px solid var(--c-line);
+  border-radius: 4px;
+  font: inherit;
+  font-size: .78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.quick-cash-btn:hover {
+  background: #eef0fa;
+  border-color: var(--c-indigo);
+}
+
+.tender-add-btn {
+  width: 100%;
+  padding: .45rem;
+  font-size: .85rem;
+  border: 1px dashed var(--c-indigo);
+  color: var(--c-indigo);
+}
+
+.payment-summary-box {
+  display: flex;
+  flex-direction: column;
+  gap: .35rem;
+  padding: .75rem .85rem;
+  background: #fafafc;
+  border: 1px solid var(--c-line);
+  border-radius: 8px;
+  font-size: .9rem;
+}
+
+.payment-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.payment-summary-row.change-row {
+  padding-top: .35rem;
+  border-top: 1px dashed var(--c-line);
+  font-size: 1rem;
+}
+
+.checkout-submit-btn {
+  width: 100%;
+  padding: .85rem 1rem;
+  font-size: 1rem;
+  font-weight: 700;
+  margin-top: .35rem;
+}
+
+.checkout-msg {
+  margin: .35rem 0 0;
+  font-size: .85rem;
+  min-height: 1.2em;
+}
+
+.checkout-msg.is-error {
+  color: var(--c-red);
+  font-weight: 600;
+}
+
+/* Success Modal */
+.success-modal-content {
+  text-align: center;
+  padding: .5rem 0;
+}
+
+.success-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 1rem;
+  border-radius: 50%;
+  background: #e7f6ec;
+  color: #1b5e35;
+  display: grid;
+  place-items: center;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.order-ref-code {
+  font-size: 1.15rem;
+  margin: .35rem 0 1rem;
+  color: var(--c-muted);
+}
+
+.success-summary {
+  background: var(--c-page);
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--c-line);
+  margin-bottom: 1rem;
+}
+
+.success-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: .25rem 0;
+}
+
+/* =========================================================
+   Concessions Inventory & Stock Audits (views/concessions/inventory.php)
+   ========================================================= */
+.inv-alert-card {
+  border-left: 5px solid var(--c-red);
+  background: #fff8f8;
+  margin-bottom: 1.25rem;
+}
+
+.inv-alert-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.inv-alert-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+}
+
+.inv-alert-icon {
+  font-size: 1.8rem;
+  color: var(--c-red);
+}
+
+.inv-alert-title {
+  margin: 0;
+  font-size: 1.15rem;
+  color: #8f1f2c;
+}
+
+.inv-alert-subtitle {
+  margin: .15rem 0 0;
+  font-size: .88rem;
+  color: var(--c-muted);
+}
+
+.inv-alert-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: .75rem;
+}
+
+.inv-alert-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: .75rem;
+  padding: .75rem .85rem;
+  background: #fff;
+  border: 1px solid #f3b7be;
+  border-radius: 8px;
+}
+
+.inv-alert-item-info strong {
+  display: block;
+  font-size: .92rem;
+  color: var(--c-ink);
+}
+
+.inv-alert-meta {
+  display: block;
+  font-size: .8rem;
+  color: var(--c-muted);
+}
+
+.inv-alert-deficit {
+  display: block;
+  font-size: .78rem;
+  font-weight: 700;
+  color: var(--c-red);
+  margin-top: .15rem;
+}
+
+.inv-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: .75rem;
+  margin-bottom: 1rem;
+}
+
+.inv-search-wrap input {
+  padding: .5rem .75rem;
+  border: 1.5px solid var(--c-line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--c-ink);
+  font: inherit;
+  min-width: 250px;
+}
+
+.inv-search-wrap input:focus {
+  outline: none;
+  border-color: var(--c-indigo);
+  box-shadow: 0 0 0 2px rgba(43, 45, 122, .18);
+}
+
+.inv-filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem;
+}
+
+.inv-filter-btn {
+  padding: .35rem .75rem;
+  border: 1px solid var(--c-line);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--c-muted);
+  font: inherit;
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.inv-filter-btn.active {
+  background: var(--c-indigo);
+  border-color: var(--c-indigo);
+  color: #fff;
+}
+
+.stock-pill {
+  display: inline-block;
+  padding: .15rem .6rem;
+  border-radius: 999px;
+  font-size: .82rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.stock-pill.pill-ok {
+  background: #e7f6ec;
+  color: #1b5e35;
+}
+
+.stock-pill.pill-low {
+  background: #fff1d6;
+  color: #8a5300;
+}
+
+.stock-pill.pill-out {
+  background: #fde4e4;
+  color: #9b1c1c;
+}
+
+/* =========================================================
+   Combos & Bundles Builder (views/concessions/bundles.php)
+   ========================================================= */
+.bundle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.25rem;
+}
+
+.bundle-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-top: 4px solid var(--c-gold);
+}
+
+.bundle-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: .75rem;
+  margin-bottom: .6rem;
+}
+
+.bundle-title {
+  margin: .35rem 0 0;
+  font-size: 1.2rem;
+  line-height: 1.25;
+}
+
+.bundle-price-box {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.bundle-price {
+  display: block;
+  font-family: "Bricolage Grotesque", "Figtree", system-ui, sans-serif;
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--c-indigo);
+}
+
+.bundle-old-price {
+  font-size: .85rem;
+  color: var(--c-muted);
+}
+
+.bundle-desc {
+  margin: 0 0 .75rem;
+  color: var(--c-muted);
+  font-size: .9rem;
+}
+
+.bundle-items-box {
+  background: var(--c-page);
+  padding: .75rem .85rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.bundle-items-heading {
+  display: block;
+  font-size: .78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--c-muted);
+  margin-bottom: .25rem;
+}
+
+.bundle-breakdown-text {
+  margin: 0;
+  font-size: .88rem;
+  font-weight: 600;
+  color: var(--c-ink);
+}
+
+.bundle-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: .75rem;
+  border-top: 1px solid var(--c-line);
+}
+
+.bundle-badge-save {
+  display: inline-block;
+  padding: .2rem .6rem;
+  border-radius: 6px;
+  background: #e7f6ec;
+  color: #1b5e35;
+  font-size: .82rem;
+  font-weight: 700;
+}
+
+.bundle-inclusions-wrap {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: var(--c-page);
+  border-radius: 8px;
+  border: 1px solid var(--c-line);
+}
+
+.bundle-inclusions-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: .75rem;
+}
+
+.bundle-inclusions-head label {
+  font-size: .82rem;
+  font-weight: 700;
+  color: var(--c-ink);
+}
+
+.bundle-rows-container {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+}
+
+.bundle-item-row {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+.bundle-item-row .sched-field {
+  margin-bottom: 0;
+}
+
+.flex-1 { flex: 1; }
+.flex-2 { flex: 2.5; }
+
+.btn-remove-row {
+  width: 32px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 1px solid var(--c-line);
+  border-radius: 6px;
+  color: var(--c-muted);
+  font-size: 1.3rem;
+  cursor: pointer;
+}
+
+.btn-remove-row:hover {
+  background: #fde4e4;
+  color: var(--c-red);
+  border-color: #f3b7be;
+}
+
+.bundle-preview-card {
+  margin-top: .85rem;
+  padding: .75rem .85rem;
+  background: #fff;
+  border: 1px solid var(--c-line);
+  border-radius: 6px;
+  font-size: .88rem;
+}
+
+.preview-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: .15rem 0;
+}
+
+/* =========================================================
+   Utility Expense Ledger (views/expenses/utilities.php)
+   ========================================================= */
+.text-electricity { color: #d97706; }
+.text-water { color: #0284c7; }
+
+.utility-badge {
+  display: inline-block;
+  padding: .15rem .6rem;
+  border-radius: 999px;
+  font-size: .8rem;
+  font-weight: 700;
+}
+
+.utility-badge.badge-elec {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.utility-badge.badge-water {
+  background: #e0f2fe;
+  color: #075985;
+}
+
+.utility-amount {
+  font-family: "Bricolage Grotesque", "Figtree", system-ui, sans-serif;
+  font-size: 1.1rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.utility-notes-cell {
+  max-width: 280px;
+  word-break: break-word;
+  font-size: .88rem;
+}
