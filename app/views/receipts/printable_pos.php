@@ -71,7 +71,9 @@ foreach ($payments as $p) {
         /* Screen Action Toolbar (Hidden during printing) */
         .receipt-actions {
             display: flex;
-            gap: .75rem;
+            align-items: center;
+            justify-content: center;
+            gap: .85rem;
             margin-bottom: 1.5rem;
             width: 100%;
             max-width: var(--receipt-width);
@@ -79,26 +81,32 @@ foreach ($payments as $p) {
 
         .btn {
             flex: 1;
-            display: inline-block;
-            text-align: center;
-            padding: .65rem .85rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: .45rem;
+            height: 42px;
+            padding: 0 1rem;
             border-radius: 8px;
             font-family: 'Figtree', sans-serif;
-            font-size: 14px;
+            font-size: 13.5px;
             font-weight: 600;
             text-decoration: none;
             cursor: pointer;
-            border: none;
-            transition: background .15s ease;
+            white-space: nowrap;
+            transition: all .15s ease;
+            box-sizing: border-box;
         }
 
         .btn-print {
             background: #2b2d7a;
             color: #ffffff;
+            border: 1.5px solid #2b2d7a;
         }
 
         .btn-print:hover {
             background: #1d1f58;
+            border-color: #1d1f58;
         }
 
         .btn-pos {
@@ -356,7 +364,7 @@ foreach ($payments as $p) {
     <!-- On-screen Navigation Actions -->
     <div class="receipt-actions">
         <button type="button" class="btn btn-print" onclick="window.print();">
-            &#128424; Print Receipt (FR10)
+            &#128424; Print Receipt
         </button>
         <a href="<?= BASE_URL; ?>/pos" class="btn btn-pos">
             &larr; New Sale / POS
@@ -475,7 +483,7 @@ foreach ($payments as $p) {
 
         <!-- Payments & Split Tenders -->
         <div class="divider"></div>
-        <span class="section-label">Payment Breakdown (FR9)</span>
+        <span class="section-label">Payment Breakdown</span>
 
         <table class="payments-table">
             <?php foreach ($payments as $p): 

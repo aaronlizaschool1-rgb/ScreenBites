@@ -291,7 +291,7 @@ $taxRate  = (float)($taxRate ?? 0.12);
 
         <div class="sched-actions" style="justify-content: center; margin-top: 1.5rem; gap: .75rem;">
             <a href="#" id="viewReceiptBtn" class="btn" target="_blank" rel="noopener">
-                Print Official Receipt (FR10)
+                Print Official Receipt
             </a>
             <button type="button" class="btn btn-ghost" id="nextSaleBtn">
                 Start Next Sale

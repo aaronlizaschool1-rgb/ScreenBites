@@ -205,8 +205,9 @@ class CheckoutController extends Controller
     /**
      * Render the consolidated printable thermal receipt (FR10)
      */
-    public function viewReceipt(string $orderNumber): void
+    public function viewReceipt(string $order_number): void
     {
+        $orderNumber = $order_number;
         $order = $this->orderModel->findByOrderNumber($orderNumber);
         if (!$order) {
             $_SESSION['flash_error'] = 'Receipt not found.';

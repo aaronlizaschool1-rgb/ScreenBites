@@ -124,7 +124,7 @@ class Router
             return;
         }
 
-        call_user_func_array([$controllerInstance, $method], $params);
+        call_user_func_array([$controllerInstance, $method], array_values($params));
     }
 
     /**
