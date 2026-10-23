@@ -2225,3 +2225,707 @@
   line-height: 1.3;
   margin-top: .1rem;
 }
+
+
+/* =========================================================
+   SM Cinema-Inspired UI & Poster Showcase (views/movies/index.php)
+   ========================================================= */
+
+.sm-cinema-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.sm-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.sm-main-title {
+  margin: 0;
+  font-family: "Bricolage Grotesque", "Figtree", system-ui, sans-serif;
+  font-size: 2.25rem;
+  font-weight: 800;
+  letter-spacing: -.03em;
+  color: var(--c-ink);
+}
+
+.sm-main-subtitle {
+  margin: .25rem 0 0;
+  color: var(--c-muted);
+  font-size: .95rem;
+}
+
+.sm-btn-add {
+  padding: .65rem 1.25rem;
+  font-size: .95rem;
+  font-weight: 700;
+  border-radius: 8px;
+  background: #0056b3;
+  border-color: #0056b3;
+  box-shadow: 0 4px 14px rgba(0, 86, 179, 0.25);
+  transition: all .15s ease;
+}
+
+.sm-btn-add:hover {
+  background: #004494;
+  border-color: #004494;
+  transform: translateY(-1px);
+}
+
+/* ---- Tabs Bar (Now Showing only - No Coming Soon) ---- */
+.sm-tabs-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding-bottom: .5rem;
+  border-bottom: 2px solid #e2e5f0;
+}
+
+.sm-tab-group {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.sm-tab-item {
+  position: relative;
+  background: none;
+  border: none;
+  padding: .5rem 0 .75rem;
+  font-family: "Figtree", system-ui, sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a1e36;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+/* The signature SM Cinema blue underline indicator */
+.sm-tab-item.active::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 3.5px;
+  background: #0056b3;
+  border-radius: 3px;
+}
+
+.sm-tab-count {
+  display: inline-block;
+  padding: .15rem .5rem;
+  border-radius: 999px;
+  background: #e6f0fa;
+  color: #0056b3;
+  font-size: .78rem;
+  font-weight: 700;
+}
+
+/* Filter controls */
+.sm-filter-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .75rem;
+}
+
+.sm-search-box input {
+  padding: .5rem .85rem;
+  border: 1.5px solid var(--c-line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--c-ink);
+  font: inherit;
+  font-size: .88rem;
+  min-width: 200px;
+}
+
+.sm-search-box input:focus {
+  outline: none;
+  border-color: #0056b3;
+  box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.15);
+}
+
+.sm-rating-filters {
+  display: flex;
+  align-items: center;
+  gap: .3rem;
+}
+
+.sm-filter-pill {
+  padding: .35rem .7rem;
+  border: 1px solid var(--c-line);
+  border-radius: 6px;
+  background: #ffffff;
+  color: var(--c-muted);
+  font: inherit;
+  font-size: .8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+
+.sm-filter-pill:hover {
+  border-color: #0056b3;
+  color: #0056b3;
+}
+
+.sm-filter-pill.active {
+  background: #0056b3;
+  border-color: #0056b3;
+  color: #ffffff;
+}
+
+/* ---- Poster Grid (SM Cinema 2:3 Aspect Ratio) ---- */
+.sm-cinema-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.5rem 1.25rem;
+}
+
+@media (max-width: 540px) {
+  .sm-cinema-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem .75rem;
+  }
+}
+
+.sm-movie-card {
+  display: flex;
+  flex-direction: column;
+  transition: transform .25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ---- Poster Frame ---- */
+.sm-poster-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0f132a;
+  box-shadow: 0 6px 18px rgba(10, 15, 45, 0.12);
+  border: 1px solid rgba(220, 225, 240, 0.8);
+  transition: all .25s ease;
+}
+
+.sm-movie-card:hover .sm-poster-wrap {
+  transform: translateY(-6px);
+  box-shadow: 0 18px 36px rgba(0, 86, 179, 0.28);
+  border-color: #0056b3;
+}
+
+.sm-poster-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform .35s ease;
+}
+
+.sm-movie-card:hover .sm-poster-img {
+  transform: scale(1.05);
+}
+
+/* Format Ribbon (Top Left) */
+.sm-format-ribbon {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 4;
+  padding: .2rem .55rem;
+  background: rgba(15, 23, 42, 0.82);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 5px;
+  color: #ffffff;
+  font-size: .68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+/* MTRCB Rating Badge (Top Right) */
+.sm-rating-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 4;
+  padding: .2rem .55rem;
+  border-radius: 5px;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .02em;
+  background: rgba(0, 0, 0, 0.82);
+  color: #ffffff;
+  border: 1.5px solid #ffffff;
+  backdrop-filter: blur(4px);
+}
+
+.sm-rating-badge.rating-g { border-color: #22c55e; color: #22c55e; }
+.sm-rating-badge.rating-pg { border-color: #38bdf8; color: #38bdf8; }
+.sm-rating-badge.rating-pg13 { border-color: #f59e0b; color: #f59e0b; }
+.sm-rating-badge.rating-r16 { border-color: #ef4444; color: #ef4444; }
+.sm-rating-badge.rating-r18 { border-color: #dc2626; color: #ffffff; background: #dc2626; }
+
+/* Bookmark Icon */
+.sm-bookmark-btn {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  z-index: 4;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+
+.sm-bookmark-btn:hover {
+  background: #0056b3;
+  color: #fff;
+  transform: scale(1.1);
+}
+
+/* ---- Stylized Fallback Poster Artwork ---- */
+.sm-poster-art {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.25rem 1rem;
+  position: relative;
+  overflow: hidden;
+  color: #ffffff;
+  box-sizing: border-box;
+}
+
+.art-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.art-film-tag {
+  font-size: .72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  opacity: .85;
+  margin-top: 2rem;
+}
+
+.art-monogram {
+  font-family: "Bricolage Grotesque", sans-serif;
+  font-size: 5rem;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+  opacity: .95;
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.art-watermark {
+  font-family: "Bricolage Grotesque", sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  line-height: 1.15;
+  letter-spacing: -.01em;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+/* Cinema Movie Art Themes */
+.theme-avatar {
+  background: linear-gradient(180deg, #022b42 0%, #054c73 50%, #001f33 100%);
+}
+.theme-spiderman {
+  background: linear-gradient(180deg, #37063f 0%, #681177 50%, #15021c 100%);
+}
+.theme-oppenheimer {
+  background: linear-gradient(180deg, #441705 0%, #7c2e0b 50%, #180802 100%);
+}
+.theme-mario {
+  background: linear-gradient(180deg, #6b0c16 0%, #a81927 50%, #2f0307 100%);
+}
+.theme-default {
+  background: linear-gradient(180deg, #0d1b54 0%, #1a3db5 50%, #071033 100%);
+}
+
+/* Hover Overlay */
+.sm-poster-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(7, 10, 25, 0.3) 0%, rgba(7, 10, 25, 0.95) 75%);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 1.25rem 1rem;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all .25s ease;
+  z-index: 3;
+}
+
+.sm-movie-card:hover .sm-poster-overlay {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.overlay-meta {
+  display: flex;
+  flex-direction: column;
+  gap: .25rem;
+  color: #ffffff;
+  font-size: .82rem;
+  font-weight: 600;
+  margin-bottom: .85rem;
+}
+
+.overlay-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: .45rem;
+}
+
+.sm-btn-trailer {
+  padding: .5rem;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 6px;
+  color: #ffffff;
+  font: inherit;
+  font-size: .82rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+  transition: background .15s ease;
+}
+
+.sm-btn-trailer:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.sm-btn-book {
+  background: #0056b3;
+  border-color: #0056b3;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: .85rem;
+  text-align: center;
+  padding: .55rem;
+  box-shadow: 0 4px 12px rgba(0, 86, 179, 0.35);
+}
+
+.sm-btn-book:hover {
+  background: #004494;
+}
+
+/* ---- Details Below Poster (SM Cinema Signature) ---- */
+.sm-card-details {
+  padding: .75rem 0 .25rem;
+  display: flex;
+  flex-direction: column;
+  gap: .25rem;
+}
+
+.sm-card-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .4rem;
+}
+
+.sm-movie-title {
+  margin: 0;
+  font-family: "Figtree", system-ui, sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a1e36;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Blue rating badge pill next to title (as seen in SM Cinema reference: 2 Valid IDs [PG]) */
+.sm-inline-rating {
+  flex-shrink: 0;
+  display: inline-block;
+  padding: .1rem .4rem;
+  border-radius: 4px;
+  background: #0056b3;
+  color: #ffffff;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .02em;
+}
+
+.sm-inline-rating.sm-rating-g { background: #16a34a; }
+.sm-inline-rating.sm-rating-pg { background: #0284c7; }
+.sm-inline-rating.sm-rating-pg13 { background: #d97706; }
+.sm-inline-rating.sm-rating-r16 { background: #dc2626; }
+.sm-inline-rating.sm-rating-r18 { background: #991b1b; }
+
+.sm-card-meta-row {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  font-size: .82rem;
+  color: var(--c-muted);
+}
+
+.sm-dot { opacity: .6; }
+
+.sm-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+  margin-top: .4rem;
+  padding-top: .4rem;
+  border-top: 1px dashed #e2e5f0;
+}
+
+.sm-play-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #0056b3;
+  font: inherit;
+  font-size: .82rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+}
+
+.sm-play-link:hover {
+  text-decoration: underline;
+}
+
+.play-circle {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid #0056b3;
+  display: grid;
+  place-items: center;
+  font-size: .6rem;
+  line-height: 1;
+}
+
+.sm-link-schedules {
+  color: var(--c-muted);
+  font-size: .82rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.sm-link-schedules:hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
+/* ---- Trailer Interactive Modal ---- */
+.sm-trailer-modal {
+  width: min(840px, calc(100vw - 2rem));
+  max-width: 840px;
+  border: none;
+  border-radius: 14px;
+  padding: 0;
+  background: #0f132a;
+  color: #ffffff;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+
+.sm-trailer-modal::backdrop {
+  background: rgba(10, 15, 35, 0.75);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.sm-modal-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.sm-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  z-index: 10;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  font-size: 1.5rem;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+
+.sm-modal-close:hover {
+  background: var(--c-red);
+  border-color: var(--c-red);
+}
+
+.sm-modal-media {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+
+.sm-trailer-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.sm-player-screen {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #090e24 0%, #16224f 100%);
+  position: relative;
+}
+
+.sm-player-content {
+  text-align: center;
+  z-index: 2;
+}
+
+.sm-player-play-btn {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #0056b3;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 1.6rem;
+  margin: 0 auto .75rem;
+  box-shadow: 0 0 0 10px rgba(0, 86, 179, 0.25);
+  cursor: pointer;
+  transition: transform .15s ease;
+}
+
+.sm-player-play-btn:hover {
+  transform: scale(1.1);
+}
+
+.sm-modal-details {
+  padding: 1.5rem 1.75rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.sm-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.sm-modal-tags {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  margin-bottom: .35rem;
+}
+
+.sm-format-pill {
+  font-size: .75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #93c5fd;
+  background: rgba(59, 130, 246, 0.15);
+  padding: .15rem .5rem;
+  border-radius: 4px;
+}
+
+.sm-modal-title {
+  margin: 0;
+  font-family: "Bricolage Grotesque", sans-serif;
+  font-size: 1.85rem;
+  color: #ffffff;
+}
+
+.sm-modal-book-btn {
+  background: #0056b3;
+  border-color: #0056b3;
+  color: #ffffff;
+  font-weight: 700;
+  padding: .75rem 1.4rem;
+  border-radius: 8px;
+}
+
+.sm-modal-book-btn:hover {
+  background: #004494;
+}
+
+.sm-modal-synopsis h3 {
+  margin: 0 0 .35rem;
+  font-size: .95rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: #94a3b8;
+}
+
+.sm-modal-synopsis p {
+  margin: 0;
+  color: #e2e8f0;
+  font-size: .95rem;
+  line-height: 1.6;
+}
+
+
+/* ---- Schedules UI Polish ---- */
+.sched-card {
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+
+.sched-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(13, 27, 84, 0.12);
+  border-color: #0056b3;
+}
+
+.sched-poster {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
