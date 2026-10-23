@@ -22,8 +22,8 @@ class MovieController extends Controller
 
     public function __construct()
     {
-        // Enforce RBAC: Movie management requires Administrator permissions
-        Auth::requireRole(ROLE_ADMIN);
+        // Require authentication for movie catalog viewing
+        Auth::requireRole();
         $this->movieModel = new Movie();
     }
 
@@ -50,6 +50,9 @@ class MovieController extends Controller
      */
     public function create(): void
     {
+        // Enforce RBAC: Movie management requires Administrator permissions
+        Auth::requireRole(ROLE_ADMIN);
+
         if (!Auth::verifyCsrfToken((string)$this->post('csrf_token'))) {
             $_SESSION['flash_error'] = 'Invalid security token. Please try again.';
             $this->redirect('movies');

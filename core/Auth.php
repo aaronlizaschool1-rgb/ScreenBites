@@ -170,6 +170,14 @@ class Auth
     }
 
     /**
+     * Require the user to be authenticated (any active role)
+     */
+    public static function requireLogin(): void
+    {
+        self::requireRole();
+    }
+
+    /**
      * Generate or fetch the current CSRF token
      */
     public static function csrfToken(): string

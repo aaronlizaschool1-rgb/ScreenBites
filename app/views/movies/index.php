@@ -25,12 +25,41 @@ $durationText = function ($mins): string {
 
 $totalMovies = count($movies);
 
-// Format and theme lookup for initial movie showcase
+// Format, genre, theme, and trailer lookup for all cinema showcase titles
 $movieThemes = [
-    1 => ['theme' => 'theme-avatar',      'format' => 'IMAX 3D',          'genre' => 'Sci-Fi / Adventure', 'trailer_id' => 'd9MyW72ELq0', 'synopsis' => 'Jake Sully lives with his newfound family formed on the extrasolar moon Pandora. Once a familiar threat returns to finish what was previously started, Jake must work with Neytiri and the army of the Na\'vi race to protect their home.'],
-    2 => ['theme' => 'theme-spiderman',   'format' => 'CINEMA 1 &bull; 2D', 'genre' => 'Animation / Action', 'trailer_id' => 'cqGjhVJWtEg', 'synopsis' => 'Miles Morales catapults across the Multiverse, where he encounters a team of Spider-People charged with protecting its very existence. When the heroes clash on how to handle a new threat, Miles must redefine what it means to be a hero.'],
-    3 => ['theme' => 'theme-oppenheimer', 'format' => 'DIRECTOR\'S CLUB', 'genre' => 'Biography / Drama',   'trailer_id' => 'uYPbbksJxIg', 'synopsis' => 'The story of American scientist J. Robert Oppenheimer and his role in the development of the atomic bomb during World War II, exploring the moral and scientific dilemmas of the Manhattan Project.'],
-    4 => ['theme' => 'theme-mario',       'format' => 'CINEMA 2 &bull; 2D', 'genre' => 'Family / Comedy',    'trailer_id' => 'TnGl01FkMMo', 'synopsis' => 'A Brooklyn plumber named Mario travels through the Mushroom Kingdom with a princess named Peach and an anthropomorphic mushroom named Toad to find Mario\'s brother, Luigi, and to save the world from Bowser.']
+    // Original Seeded Movies
+    1  => ['theme' => 'theme-avatar',      'format' => 'IMAX 3D',            'genre' => 'Sci-Fi / Adventure',              'trailer_id' => 'd9MyW72ELq0', 'synopsis' => 'Jake Sully lives with his newfound family formed on the extrasolar moon Pandora. Once a familiar threat returns to finish what was previously started, Jake must work with Neytiri and the army of the Na\'vi race to protect their home.'],
+    2  => ['theme' => 'theme-spiderman',   'format' => 'CINEMA 1 &bull; 2D', 'genre' => 'Animation / Action',              'trailer_id' => 'cqGjhVJWtEg', 'synopsis' => 'Miles Morales catapults across the Multiverse, where he encounters a team of Spider-People charged with protecting its very existence. When the heroes clash on how to handle a new threat, Miles must redefine what it means to be a hero.'],
+    3  => ['theme' => 'theme-oppenheimer', 'format' => 'DIRECTOR\'S CLUB',   'genre' => 'Biography / Drama',               'trailer_id' => 'uYPbbksJxIg', 'synopsis' => 'The story of American scientist J. Robert Oppenheimer and his role in the development of the atomic bomb during World War II, exploring the moral and scientific dilemmas of the Manhattan Project.'],
+    4  => ['theme' => 'theme-mario',       'format' => 'CINEMA 2 &bull; 2D', 'genre' => 'Family / Comedy',                'trailer_id' => 'TnGl01FkMMo', 'synopsis' => 'A Brooklyn plumber named Mario travels through the Mushroom Kingdom with a princess named Peach and an anthropomorphic mushroom named Toad to find Mario\'s brother, Luigi, and to save the world from Bowser.'],
+
+    // 26 Blockbusters Requested
+    5  => ['theme' => 'theme-spiderman',   'format' => 'IMAX 3D',            'genre' => 'Action / Superhero',              'trailer_id' => 'U4MFvAL02Vg', 'synopsis' => 'Peter Parker navigates a fresh start in New York City with no one remembering his identity, facing emerging street-level threats and new allies in a brand new era.'],
+    6  => ['theme' => 'theme-default',     'format' => 'IMAX 3D &bull; ATMOS', 'genre' => 'Action / Sci-Fi / Adventure',     'trailer_id' => 'TcMBFSGVi1c', 'synopsis' => 'After the devastating events of Infinity War, the universe is in ruins. With the help of remaining allies, the Avengers assemble once more to reverse Thanos\' actions and restore balance.'],
+    7  => ['theme' => 'theme-spiderman',   'format' => 'IMAX 3D',            'genre' => 'Action / Sci-Fi / Adventure',     'trailer_id' => 'JfVOs4VSpmA', 'synopsis' => 'With Spider-Man\'s identity revealed, Peter asks Doctor Strange for help. When a spell goes wrong, dangerous foes from other worlds appear, forcing Peter to discover what being Spider-Man truly means.'],
+    8  => ['theme' => 'theme-spiderman',   'format' => 'CINEMA 1 &bull; 2D', 'genre' => 'Action / Sci-Fi / Comedy',        'trailer_id' => 'Nt9L1jCKGnE', 'synopsis' => 'Following the events of Avengers: Endgame, Spider-Man must step up to take on new threats in a world that has changed forever during a European school trip.'],
+    9  => ['theme' => 'theme-mario',       'format' => 'DIGITAL 2D',         'genre' => 'Animation / Family / Comedy',     'trailer_id' => 'yRUAzGQ3nSY', 'synopsis' => 'After young Riley is uprooted from her Midwest life and moved to San Francisco, her emotions - Joy, Fear, Anger, Disgust and Sadness - conflict on how best to navigate a new city, house, and school.'],
+    10 => ['theme' => 'theme-oppenheimer', 'format' => 'DOLBY ATMOS',        'genre' => 'Horror / Sci-Fi / Drama',         'trailer_id' => 'WR7cc5t7tv8', 'synopsis' => 'In a desolate world overrun by blind monsters with ultra-sensitive hearing, a family must navigate their lives in absolute silence to survive.'],
+    11 => ['theme' => 'theme-avatar',      'format' => 'IMAX 2D',            'genre' => 'Epic / Adventure / Myth',         'trailer_id' => 'rdu1q0TxFG4', 'synopsis' => 'Homer\'s legendary epic brought to the big screen: Odysseus embarks on a perilous ten-year journey home from the Trojan War, facing mythical beasts, wrathful gods, and treacherous seas.'],
+    12 => ['theme' => 'theme-mario',       'format' => 'DIGITAL 2D',         'genre' => 'Animation / Adventure / Comedy',  'trailer_id' => 'PJmX4vFEEQc', 'synopsis' => 'A young animal lover uses a scientific breakthrough to \'hop\' her consciousness into an adorable robotic beaver, uncovering high-stakes secrets in the animal kingdom.'],
+    13 => ['theme' => 'theme-oppenheimer', 'format' => 'DIRECTOR\'S CLUB',   'genre' => 'Horror / Psychological Thriller', 'trailer_id' => 'TaaDkbG3I7g', 'synopsis' => 'Bear, a hopeless romantic shop clerk, breaks a supernatural \'One Wish Willow\' artifact to win his crush Nikki\'s heart, only to unleash an obsessive, violent nightmare.'],
+    14 => ['theme' => 'theme-mario',       'format' => 'DIGITAL 2D',         'genre' => 'Animation / Family / Adventure',  'trailer_id' => 'wmiIUN-7qhE', 'synopsis' => 'Woody, Buzz Lightyear, and their beloved toy family reunite to confront their biggest modern challenge yet: winning kids\' attention back from electronic screens and smart gadgets.'],
+    15 => ['theme' => 'theme-oppenheimer', 'format' => 'DIRECTOR\'S CLUB',   'genre' => 'Crime / Drama / Period',          'trailer_id' => 'oVzVdvGIC7U', 'synopsis' => 'Tommy Shelby and the notorious Birmingham razor gang face their definitive confrontation on the eve of World War II, battling rival syndicates and shifting political powers.'],
+    16 => ['theme' => 'theme-oppenheimer', 'format' => 'DIRECTOR\'S CLUB',   'genre' => 'Horror / Comedy / Analog Horror', 'trailer_id' => 'ZFy8ZgLd574', 'synopsis' => 'A bright orange 1990s television unicorn mascot named Buddy returns from the analog airwaves in this unsettling horror-comedy about vintage children\'s programming harboring a malevolent secret.'],
+    17 => ['theme' => 'theme-oppenheimer', 'format' => 'DOLBY ATMOS',        'genre' => 'Horror / Mystery / Sci-Fi',       'trailer_id' => 'H4dGpz6cnHo', 'synopsis' => 'A young videographer accidentally noclipped out of reality into an endless labyrinth of yellow-wallpapered, fluorescent-lit empty rooms where terrifying entities lurk.'],
+    18 => ['theme' => 'theme-default',     'format' => 'IMAX 2D',            'genre' => 'Action / Sci-Fi / Thriller',      'trailer_id' => 'iO2Br5WWCII', 'synopsis' => 'An elite field operative and special forces agent returns from retirement to confront an international syndicate in this high-octane spectacle.'],
+    19 => ['theme' => 'theme-avatar',      'format' => 'CINEMA 2 &bull; 2D', 'genre' => 'Sci-Fi / Survival / Action',      'trailer_id' => 'kRfXdS2q08k', 'synopsis' => 'In an ice-age subterranean biosphere, survivors of a global cataclysm must venture into the frozen wasteland when an enigmatic transmission signals a thriving sanctuary.'],
+    20 => ['theme' => 'theme-default',     'format' => 'IMAX 2D',            'genre' => 'Action / Crime / High-Octane',    'trailer_id' => '2TAOizOnNPo', 'synopsis' => 'Dominic Toretto and Brian O\'Conner reunite behind the wheel to infiltrate a ruthless heroin cartel across the Los Angeles streets and Mexican desert.'],
+    21 => ['theme' => 'theme-spiderman',   'format' => 'CINEMA 1 &bull; 2D', 'genre' => 'Anime / Supernatural / Action',   'trailer_id' => 'eGJWEVnvqO4', 'synopsis' => 'Yuta Okkotsu is haunted by the cursed spirit of his childhood friend Rika. Mentored by Satoru Gojo at Tokyo Jujutsu High, he learns to wield his curse to protect humanity.'],
+    22 => ['theme' => 'theme-oppenheimer', 'format' => 'DIRECTOR\'S CLUB',   'genre' => 'Horror / Survival / Dark Comedy', 'trailer_id' => 'R4wiXj9NmEE', 'synopsis' => 'Sam Raimi directs this razor-sharp survival black comedy where corporate coworkers stranded on a remote tropical island after a plane crash engage in a twisted battle of wits and survival.'],
+    23 => ['theme' => 'theme-avatar',      'format' => 'DIRECTOR\'S CLUB',   'genre' => 'Romance / Comedy / Indie Drama',  'trailer_id' => 'PsD0NpFSADM', 'synopsis' => 'An offbeat romantic comedy about a woman who doesn\'t believe in true love, and the hopeless romantic greeting card writer who falls head over heels for her over 500 days.'],
+    24 => ['theme' => 'theme-mario',       'format' => 'DIGITAL 2D',         'genre' => 'Animation / Music / Fantasy',     'trailer_id' => 'Rvr68u6k5sI', 'synopsis' => 'Aspiring young musician Miguel confronts his family\'s ancestral ban on music and enters the vibrant, colorful Land of the Dead to uncover his great-great-grandfather\'s legacy.'],
+    25 => ['theme' => 'theme-spiderman',   'format' => 'DIRECTOR\'S CLUB',   'genre' => 'Romance / Sci-Fi / Drama',        'trailer_id' => '07-QBnEkgXU', 'synopsis' => 'When their relationship turns sour, a heartbroken couple undergoes a radical medical procedure to have each other permanently erased from their memories.'],
+    26 => ['theme' => 'theme-oppenheimer', 'format' => 'DIRECTOR\'S CLUB',   'genre' => 'Romance / War / Drama',           'trailer_id' => '-J1VUwagte4', 'synopsis' => 'Thirteen-year-old fledgling writer Briony Tallis irrevocably changes the course of several lives when she accuses her older sister\'s lover of a crime he did not commit.'],
+    27 => ['theme' => 'theme-oppenheimer', 'format' => 'DIRECTOR\'S CLUB',   'genre' => 'Crime / Drama / Fantasy',         'trailer_id' => 'Ki4haFrqSrw', 'synopsis' => 'A death row corrections officer during the Great Depression discovers that an imposing, gentle inmate convicted of a horrific crime possesses a miraculous healing power.'],
+    28 => ['theme' => 'theme-default',     'format' => 'CINEMA 1 &bull; 2D', 'genre' => 'Drama / Romance / Comedy',        'trailer_id' => 'bLvqoHBptjg', 'synopsis' => 'The presidencies of Kennedy and Johnson, the Vietnam War, and other historical events unfold through the perspective of an Alabama man with an IQ of 75.'],
+    29 => ['theme' => 'theme-avatar',      'format' => 'DIRECTOR\'S CLUB',   'genre' => 'Drama / Thriller',                'trailer_id' => 'E_Ci-pAL4eE', 'synopsis' => 'Held captive for years in an enclosed shed, a young woman and her 5-year-old son gain their freedom, allowing the boy to experience the outside world for the first time.'],
+    30 => ['theme' => 'theme-avatar',      'format' => 'IMAX 3D &bull; ATMOS', 'genre' => 'Romance / Drama / Historical',    'trailer_id' => '2e-eXJ6HgkQ', 'synopsis' => 'A seventeen-year-old aristocrat falls in love with a kind but poor artist aboard the luxurious, ill-fated R.M.S. Titanic on its maiden voyage across the Atlantic in 1912.']
 ];
 ?>
 
@@ -384,7 +413,7 @@ $movieThemes = [
             // Load YouTube embed if available
             if (videoContainer) {
                 if (trailer) {
-                    videoContainer.innerHTML = '<iframe class="sm-trailer-iframe" src="https://www.youtube-nocookie.com/embed/' + trailer + '?autoplay=1&rel=0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';
+                    videoContainer.innerHTML = '<iframe class="sm-trailer-iframe" src="https://www.youtube-nocookie.com/embed/' + trailer + '?autoplay=1&rel=0&modestbranding=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>';
                 } else {
                     videoContainer.innerHTML = '<div class="sm-player-screen"><div class="sm-player-content"><p class="sm-player-label">Official Trailer for ' + title + '</p></div></div>';
                 }
@@ -405,6 +434,18 @@ $movieThemes = [
 
     if (closeTrailerBtn) closeTrailerBtn.addEventListener('click', closeTrailer);
     if (modalBackdrop) modalBackdrop.addEventListener('click', closeTrailer);
+
+    if (trailerModal) {
+        trailerModal.addEventListener('cancel', closeTrailer);
+        trailerModal.addEventListener('click', function(e) {
+            var rect = trailerModal.getBoundingClientRect();
+            var isInDialog = (rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
+                              rect.left <= e.clientX && e.clientX <= rect.left + rect.width);
+            if (!isInDialog) {
+                closeTrailer();
+            }
+        });
+    }
 
     // 3. Add Movie Dialog
     var addModal    = document.getElementById('addMovieModal');
