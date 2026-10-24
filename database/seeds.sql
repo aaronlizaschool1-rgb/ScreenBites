@@ -5,42 +5,62 @@
 -- Target RDBMS: MySQL 8.0+ / MariaDB 10.4+ (XAMPP Default)
 -- Engine: InnoDB | Character Set: utf8mb4 | Collation: utf8mb4_unicode_ci
 -- Description: Baseline seed data for development, testing, and UI verification.
+-- Safe to re-run: it clears every table first and restarts the ID counters.
 -- ============================================================================
 
 USE screenbites_db;
 
 SET FOREIGN_KEY_CHECKS = 0;
 
--- Clean existing data prior to seeding
-TRUNCATE TABLE audit_logs;
-TRUNCATE TABLE utility_expenses;
-TRUNCATE TABLE payments;
-TRUNCATE TABLE order_items;
-TRUNCATE TABLE tickets;
-TRUNCATE TABLE orders;
-TRUNCATE TABLE combo_items;
-TRUNCATE TABLE combos;
-TRUNCATE TABLE products;
-TRUNCATE TABLE seat_holds;
-TRUNCATE TABLE seats;
-TRUNCATE TABLE seat_tiers;
-TRUNCATE TABLE screenings;
-TRUNCATE TABLE halls;
-TRUNCATE TABLE movies;
-TRUNCATE TABLE users;
+-- Clean existing data prior to seeding.
+-- DELETE (child tables first) is used instead of TRUNCATE because TRUNCATE is
+-- refused on tables referenced by foreign keys (error 1701) in some setups.
+DELETE FROM audit_logs;
+DELETE FROM utility_expenses;
+DELETE FROM payments;
+DELETE FROM order_items;
+DELETE FROM tickets;
+DELETE FROM orders;
+DELETE FROM seat_holds;
+DELETE FROM combo_items;
+DELETE FROM combos;
+DELETE FROM products;
+DELETE FROM seats;
+DELETE FROM seat_tiers;
+DELETE FROM screenings;
+DELETE FROM halls;
+DELETE FROM movies;
+DELETE FROM users;
+
+-- Restart AUTO_INCREMENT counters so a re-run starts from a clean slate.
+ALTER TABLE audit_logs       AUTO_INCREMENT = 1;
+ALTER TABLE utility_expenses AUTO_INCREMENT = 1;
+ALTER TABLE payments         AUTO_INCREMENT = 1;
+ALTER TABLE order_items      AUTO_INCREMENT = 1;
+ALTER TABLE tickets          AUTO_INCREMENT = 1;
+ALTER TABLE orders           AUTO_INCREMENT = 1;
+ALTER TABLE combos           AUTO_INCREMENT = 1;
+ALTER TABLE products         AUTO_INCREMENT = 1;
+ALTER TABLE seats            AUTO_INCREMENT = 1;
+ALTER TABLE seat_tiers       AUTO_INCREMENT = 1;
+ALTER TABLE screenings       AUTO_INCREMENT = 1;
+ALTER TABLE halls            AUTO_INCREMENT = 1;
+ALTER TABLE movies           AUTO_INCREMENT = 1;
+ALTER TABLE users            AUTO_INCREMENT = 1;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ----------------------------------------------------------------------------
 -- 1. USERS & RBAC (FR13)
 -- All accounts default to the password: Password123
--- BCRYPT Hash: $2y$10$wN1iN2QWl5X1Q9X4C7dK0.pA9VbM0y5tD8XoA.Wz2fK1S6E9D7V0y
+-- BCRYPT Hash: $2y$10$QcuXYsoJREs5OSFs9ISeH.9uDAlq9dHaq0SHIRYRMwp6rD1/ILmsW
+-- (checked with password_verify: this hash matches "Password123")
 -- ----------------------------------------------------------------------------
 INSERT INTO users (user_id, full_name, username, password_hash, role, status) VALUES
-(1, 'Luzada, John Rey D.', 'admin_john', '$2y$10$wN1iN2QWl5X1Q9X4C7dK0.pA9VbM0y5tD8XoA.Wz2fK1S6E9D7V0y', 'Administrator', 'Active'),
-(2, 'Macapagal, Aaron Louis F.', 'admin_aaron', '$2y$10$wN1iN2QWl5X1Q9X4C7dK0.pA9VbM0y5tD8XoA.Wz2fK1S6E9D7V0y', 'Administrator', 'Active'),
-(3, 'Maria Santos', 'ticketing_maria', '$2y$10$wN1iN2QWl5X1Q9X4C7dK0.pA9VbM0y5tD8XoA.Wz2fK1S6E9D7V0y', 'Ticketing Staff', 'Active'),
-(4, 'Carlos Reyes', 'cashier_carlos', '$2y$10$wN1iN2QWl5X1Q9X4C7dK0.pA9VbM0y5tD8XoA.Wz2fK1S6E9D7V0y', 'Snackbar Cashier', 'Active');
+(1, 'Luzada, John Rey D.', 'admin_john', '$2y$10$QcuXYsoJREs5OSFs9ISeH.9uDAlq9dHaq0SHIRYRMwp6rD1/ILmsW', 'Administrator', 'Active'),
+(2, 'Macapagal, Aaron Louis F.', 'admin_aaron', '$2y$10$QcuXYsoJREs5OSFs9ISeH.9uDAlq9dHaq0SHIRYRMwp6rD1/ILmsW', 'Administrator', 'Active'),
+(3, 'Maria Santos', 'ticketing_maria', '$2y$10$QcuXYsoJREs5OSFs9ISeH.9uDAlq9dHaq0SHIRYRMwp6rD1/ILmsW', 'Ticketing Staff', 'Active'),
+(4, 'Carlos Reyes', 'cashier_carlos', '$2y$10$QcuXYsoJREs5OSFs9ISeH.9uDAlq9dHaq0SHIRYRMwp6rD1/ILmsW', 'Snackbar Cashier', 'Active');
 
 -- ----------------------------------------------------------------------------
 -- 2. CINEMA HALLS & SEAT TIERS (FR1, FR3)
@@ -58,21 +78,26 @@ INSERT INTO seat_tiers (tier_id, tier_name, tier_surcharge) VALUES
 -- 3. SEAT MATRIX GENERATION (FR2)
 -- Hall 1: Rows A-D (Standard, 8 seats each), Row E (Deluxe Couple, 8 seats) -> 40 Seats
 -- Hall 2: Rows A-D (VIP Recliner, 6 seats each) -> 24 Seats
+-- seat_id is set explicitly (not left to AUTO_INCREMENT) so the IDs are identical on
+-- every machine; the tickets and the seat hold below rely on them:
+--   Hall 1: A1-A8 = 1-8, B1-B8 = 9-16, C1-C8 = 17-24, D1-D8 = 25-32, E1-E8 = 33-40
+--   Hall 2: A1-A6 = 41-46, B1-B6 = 47-52, C1-C6 = 53-58, D1-D6 = 59-64
+-- (is_active is left out on purpose: it defaults to TRUE.)
 -- ----------------------------------------------------------------------------
 -- Hall 1: Rows A through D (Standard)
-INSERT INTO seats (hall_id, tier_id, seat_row, seat_number, is_active)
-SELECT 1, 1, r.r_label, c.c_num
+INSERT INTO seats (seat_id, hall_id, tier_id, seat_row, seat_number)
+SELECT (ASCII(r.r_label) - 65) * 8 + c.c_num, 1, 1, r.r_label, c.c_num
 FROM (SELECT 'A' AS r_label UNION SELECT 'B' UNION SELECT 'C' UNION SELECT 'D') r
 CROSS JOIN (SELECT 1 AS c_num UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8) c;
 
 -- Hall 1: Row E (Deluxe Couple)
-INSERT INTO seats (hall_id, tier_id, seat_row, seat_number, is_active)
-SELECT 1, 2, 'E', c.c_num
+INSERT INTO seats (seat_id, hall_id, tier_id, seat_row, seat_number)
+SELECT 32 + c.c_num, 1, 2, 'E', c.c_num
 FROM (SELECT 1 AS c_num UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8) c;
 
 -- Hall 2: Rows A through D (VIP Recliner)
-INSERT INTO seats (hall_id, tier_id, seat_row, seat_number, is_active)
-SELECT 2, 3, r.r_label, c.c_num
+INSERT INTO seats (seat_id, hall_id, tier_id, seat_row, seat_number)
+SELECT 40 + (ASCII(r.r_label) - 65) * 6 + c.c_num, 2, 3, r.r_label, c.c_num
 FROM (SELECT 'A' AS r_label UNION SELECT 'B' UNION SELECT 'C' UNION SELECT 'D') r
 CROSS JOIN (SELECT 1 AS c_num UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6) c;
 
@@ -153,10 +178,14 @@ INSERT INTO combo_items (combo_id, product_id, quantity) VALUES
 
 -- ----------------------------------------------------------------------------
 -- 6. ORDERS, TICKETS, ORDER ITEMS & PAYMENTS (FR8, FR9, FR10)
+-- Prices are VAT-inclusive: total = sum of line items, subtotal = total / 1.12,
+-- tax_amount = total - subtotal, so subtotal_amount + tax_amount = total.
 -- ----------------------------------------------------------------------------
 -- Order 1: Ticketing + Snack combo transaction processed by Maria Santos
+-- 2 tickets (640.00) + 1 combo (160.00) = 800.00 total
+-- 800.00 / 1.12 = 714.29 subtotal, 85.71 VAT
 INSERT INTO orders (order_id, order_number, user_id, subtotal_amount, tax_amount, order_status, created_at) VALUES
-(1, 'ORD-20261010-0001', 3, 767.86, 92.14, 'Completed', '2026-10-10 12:30:15');
+(1, 'ORD-20261010-0001', 3, 714.29, 85.71, 'Completed', '2026-10-10 12:30:15');
 
 -- 2 Standard Tickets for Screening 1 (Cinema 1: Row C, Seats 4 and 5)
 -- Base price: 320.00 each
@@ -165,21 +194,19 @@ INSERT INTO tickets (ticket_id, order_id, screening_id, seat_id, hall_id, price_
 (2, 1, 1, 21, 1, 320.00, 'Valid'); -- C5
 
 -- Concession item: Solo Movie Treat Combo (160.00)
--- 640.00 + 160.00 = 800.00 total (767.86 subtotal + 92.14 12% VAT)
 INSERT INTO order_items (order_item_id, order_id, product_id, combo_id, quantity, unit_price_charged) VALUES
 (1, 1, NULL, 1, 1, 160.00);
 
--- Payment via Cash: Tendered 1000.00, Change 200.00
+-- Payment via Cash: Tendered 1000.00 for 800.00, Change 200.00
 INSERT INTO payments (payment_id, order_id, payment_method, amount_paid, change_returned, reference_number, payment_date) VALUES
 (1, 1, 'Cash', 1000.00, 200.00, NULL, '2026-10-10 12:31:02');
 
 -- Order 2: Walk-in Concession purchase only processed by Carlos Reyes
+-- 1 Nacho Platter (150.00) + 1 Cola sold at a discounted 60.00 (list price 65.00) = 210.00 total
+-- 210.00 / 1.12 = 187.50 subtotal, 22.50 VAT
 INSERT INTO orders (order_id, order_number, user_id, subtotal_amount, tax_amount, order_status, created_at) VALUES
 (2, 'ORD-20261010-0002', 4, 187.50, 22.50, 'Completed', '2026-10-10 12:45:20');
 
--- 1 Nacho Platter (150.00) + 1 Bottled Water (40.00) + 1 Soda (65.00) = 255.00 (Tax incl.)
--- Let's match line items cleanly:
--- 1 Nachos (150.00) + 1 Soda (60.00 discounted) = 210.00 total (187.50 subtotal + 22.50 tax)
 INSERT INTO order_items (order_item_id, order_id, product_id, combo_id, quantity, unit_price_charged) VALUES
 (2, 2, 7, NULL, 1, 150.00),
 (3, 2, 4, NULL, 1, 60.00);
@@ -209,4 +236,4 @@ INSERT INTO utility_expenses (expense_id, utility_type, billing_month, billing_y
 -- ----------------------------------------------------------------------------
 INSERT INTO audit_logs (log_id, user_id, action_type, target_table, record_id, details, ip_address, created_at) VALUES
 (1, 1, 'EXPENSE_MODIFIED', 'utility_expenses', 3, 'Recorded initial monthly Meralco billing statement for September 2026', '127.0.0.1', '2026-10-04 09:30:00'),
-(2, 2, 'INVENTORY_OVERRIDE', 'products', 9, 'Restocked Milk Chocolate Bars by 50 units following distributor shipment', '127.0.0.1', '2026-10-08 15:45:12');
+(2, 2, 'INVENTORY_OVERRIDE', 'products', 9, 'Restocked Milk Chocolate Bars by 50 units following distributor shipment', '127.0.0.1', '2026-10-08 15:45:12'); 
