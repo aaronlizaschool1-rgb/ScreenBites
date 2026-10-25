@@ -205,8 +205,8 @@ CREATE TABLE tickets (
     hall_id SMALLINT UNSIGNED NOT NULL,
     price_charged DECIMAL(8, 2) NOT NULL,
     ticket_status ENUM('Valid', 'Cancelled') NOT NULL DEFAULT 'Valid',
-    -- Enforces that a seat can only be sold once per screening
-    CONSTRAINT uq_tickets_seat_screening UNIQUE (screening_id, seat_id),
+    -- Index for seat screening lookups (seat hold engine enforces single active holder; valid tickets enforce availability)
+    INDEX idx_tickets_seat_screening (screening_id, seat_id),
     CONSTRAINT fk_tickets_orders FOREIGN KEY (order_id) 
         REFERENCES orders (order_id) ON DELETE CASCADE ON UPDATE CASCADE,
     -- Multi-column FK enforces that ticket hall matches screening hall
@@ -267,7 +267,9 @@ CREATE TABLE utility_expenses (
     billing_month TINYINT UNSIGNED NOT NULL,
     billing_year SMALLINT UNSIGNED NOT NULL,
     bill_amount DECIMAL(10, 2) NOT NULL,
-    payment_date DATE NOT NULL,
+    payment_status ENUM('Unpaid', 'Paid') NOT NULL DEFAULT 'Paid',
+    due_date DATE NULL,
+    payment_date DATE NULL,
     notes TEXT NULL,
     recorded_by INT UNSIGNED NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

@@ -163,61 +163,206 @@ class ReportController extends Controller
 
     /**
      * FR14: Box Office & Concession Sales Reports
-     * Itemized daily and monthly performance segregating tickets, food, and tender methods.
+     * Itemized monthly and daily performance segregating tickets, concessions, movies, and tender methods.
      */
     public function salesReport(): void
     {
-        $startDate = (string)$this->get('start_date', date('Y-m-01'));
-        $endDate   = (string)$this->get('end_date', date('Y-m-d'));
+        $selectedYear  = (int)$this->get('year', (int)date('Y'));
+        $selectedMonth = (int)$this->get('month', (int)date('n'));
 
-        // Daily breakdown of tickets vs concessions
+        if ($selectedMonth < 1 || $selectedMonth > 12) {
+            $selectedMonth = (int)date('n');
+        }
+        if ($selectedYear < 2020) {
+            $selectedYear = (int)date('Y');
+        }
+
+        $startDate = sprintf('%04d-%02d-01', $selectedYear, $selectedMonth);
+        $endDate   = date('Y-m-t', strtotime($startDate));
+
+        // 1. Box Office Sales Aggregation (Tickets)
+        $ticketSql = "SELECT COALESCE(SUM(t.price_charged), 0.00) AS ticket_revenue,
+                             COUNT(t.ticket_id) AS tickets_sold
+                      FROM tickets t
+                      INNER JOIN orders o ON t.order_id = o.order_id
+                      WHERE o.order_status = 'Completed'
+                        AND t.ticket_status = 'Valid'
+                        AND YEAR(o.created_at) = :year
+                        AND MONTH(o.created_at) = :month";
+
+        $ticketData = $this->db->fetchOne($ticketSql, [
+            ':year'  => $selectedYear,
+            ':month' => $selectedMonth
+        ]);
+        $ticketRevenue = (float)($ticketData['ticket_revenue'] ?? 0.00);
+        $ticketsSold   = (int)($ticketData['tickets_sold'] ?? 0);
+
+        // 2. Concessions Sales Aggregation (Snacks & Combos)
+        $concessionSql = "SELECT COALESCE(SUM(oi.quantity * oi.unit_price_charged), 0.00) AS concession_revenue,
+                                 COALESCE(SUM(oi.quantity), 0) AS items_sold
+                          FROM order_items oi
+                          INNER JOIN orders o ON oi.order_id = o.order_id
+                          WHERE o.order_status = 'Completed'
+                            AND YEAR(o.created_at) = :year
+                            AND MONTH(o.created_at) = :month";
+
+        $concessionData = $this->db->fetchOne($concessionSql, [
+            ':year'  => $selectedYear,
+            ':month' => $selectedMonth
+        ]);
+        $concessionRevenue = (float)($concessionData['concession_revenue'] ?? 0.00);
+        $itemsSold         = (int)($concessionData['items_sold'] ?? 0);
+
+        // 3. Total Sales & Order Count
+        $totalSales = $ticketRevenue + $concessionRevenue;
+
+        $ordersCount = (int)$this->db->fetchColumn(
+            "SELECT COUNT(*) FROM orders 
+             WHERE order_status = 'Completed' 
+               AND YEAR(created_at) = :year 
+               AND MONTH(created_at) = :month",
+            [':year' => $selectedYear, ':month' => $selectedMonth]
+        );
+        $avgOrderValue = $ordersCount > 0 ? round($totalSales / $ordersCount, 2) : 0.00;
+
+        $monthName = date('F', mktime(0, 0, 0, $selectedMonth, 10, $selectedYear));
+        $salesSummary = [
+            'period'             => "{$monthName} {$selectedYear}",
+            'ticket_revenue'     => $ticketRevenue,
+            'tickets_sold'       => $ticketsSold,
+            'concession_revenue' => $concessionRevenue,
+            'items_sold'         => $itemsSold,
+            'total_sales'        => $totalSales,
+            'orders_count'       => $ordersCount,
+            'avg_order_value'    => $avgOrderValue
+        ];
+
+        // 4. Daily Sales Timeline (Isolated subqueries to prevent Cartesian product)
         $timelineSql = "SELECT 
-                            DATE(o.created_at) AS sale_date,
-                            COALESCE(SUM(t.price_charged), 0.00) AS box_office_sales,
-                            COALESCE(SUM(oi.quantity * oi.unit_price_charged), 0.00) AS concession_sales,
-                            (COALESCE(SUM(t.price_charged), 0.00) + COALESCE(SUM(oi.quantity * oi.unit_price_charged), 0.00)) AS total_sales
-                        FROM orders o
-                        LEFT JOIN tickets t ON o.order_id = t.order_id AND t.ticket_status = 'Valid'
-                        LEFT JOIN order_items oi ON o.order_id = oi.order_id
-                        WHERE o.order_status = 'Completed'
-                          AND DATE(o.created_at) BETWEEN :start_date AND :end_date
-                        GROUP BY DATE(o.created_at)
-                        ORDER BY sale_date DESC";
+                            d.sale_date,
+                            COALESCE(t.daily_ticket_sales, 0.00) AS box_office_sales,
+                            COALESCE(c.daily_concession_sales, 0.00) AS concession_sales,
+                            (COALESCE(t.daily_ticket_sales, 0.00) + COALESCE(c.daily_concession_sales, 0.00)) AS total_sales
+                        FROM (
+                            SELECT DISTINCT DATE(created_at) AS sale_date
+                            FROM orders
+                            WHERE order_status = 'Completed'
+                              AND YEAR(created_at) = :year1
+                              AND MONTH(created_at) = :month1
+                        ) d
+                        LEFT JOIN (
+                            SELECT DATE(o.created_at) AS sale_date,
+                                   SUM(tk.price_charged) AS daily_ticket_sales
+                            FROM tickets tk
+                            INNER JOIN orders o ON tk.order_id = o.order_id
+                            WHERE o.order_status = 'Completed' AND tk.ticket_status = 'Valid'
+                              AND YEAR(o.created_at) = :year2 AND MONTH(o.created_at) = :month2
+                            GROUP BY DATE(o.created_at)
+                        ) t ON d.sale_date = t.sale_date
+                        LEFT JOIN (
+                            SELECT DATE(o.created_at) AS sale_date,
+                                   SUM(oi.quantity * oi.unit_price_charged) AS daily_concession_sales
+                            FROM order_items oi
+                            INNER JOIN orders o ON oi.order_id = o.order_id
+                            WHERE o.order_status = 'Completed'
+                              AND YEAR(o.created_at) = :year3 AND MONTH(o.created_at) = :month3
+                            GROUP BY DATE(o.created_at)
+                        ) c ON d.sale_date = c.sale_date
+                        ORDER BY d.sale_date DESC";
 
         $salesTimeline = $this->db->fetchAll($timelineSql, [
-            ':start_date' => $startDate,
-            ':end_date'   => $endDate
+            ':year1'  => $selectedYear,
+            ':month1' => $selectedMonth,
+            ':year2'  => $selectedYear,
+            ':month2' => $selectedMonth,
+            ':year3'  => $selectedYear,
+            ':month3' => $selectedMonth
         ]);
 
-        // Revenue by Payment Tender Method
+        // 5. Revenue by Payment Tender Method
         $paymentSql = "SELECT 
                            p.payment_method,
-                           COUNT(p.payment_id) AS transaction_count,
+                           COUNT(DISTINCT p.order_id) AS transaction_count,
                            SUM(p.amount_paid - p.change_returned) AS net_collected
                        FROM payments p
                        INNER JOIN orders o ON p.order_id = o.order_id
                        WHERE o.order_status = 'Completed'
-                         AND DATE(o.created_at) BETWEEN :start_date AND :end_date
-                       GROUP BY p.payment_method";
+                         AND YEAR(o.created_at) = :year
+                         AND MONTH(o.created_at) = :month
+                       GROUP BY p.payment_method
+                       ORDER BY net_collected DESC";
 
         $paymentBreakdown = $this->db->fetchAll($paymentSql, [
-            ':start_date' => $startDate,
-            ':end_date'   => $endDate
+            ':year'  => $selectedYear,
+            ':month' => $selectedMonth
+        ]);
+
+        // 6. Box Office by Movie
+        $movieSql = "SELECT 
+                         m.title AS movie_title,
+                         m.rating AS movie_rating,
+                         COUNT(t.ticket_id) AS tickets_sold,
+                         COALESCE(SUM(t.price_charged), 0.00) AS movie_gross
+                     FROM tickets t
+                     INNER JOIN orders o ON t.order_id = o.order_id
+                     INNER JOIN screenings sc ON t.screening_id = sc.screening_id
+                     INNER JOIN movies m ON sc.movie_id = m.movie_id
+                     WHERE o.order_status = 'Completed'
+                       AND t.ticket_status = 'Valid'
+                       AND YEAR(o.created_at) = :year
+                       AND MONTH(o.created_at) = :month
+                     GROUP BY m.movie_id
+                     ORDER BY movie_gross DESC";
+
+        $topMovies = $this->db->fetchAll($movieSql, [
+            ':year'  => $selectedYear,
+            ':month' => $selectedMonth
+        ]);
+
+        // 7. Top Concession Items & Combos
+        $itemSql = "SELECT 
+                        COALESCE(p.product_name, c.combo_name) AS item_name,
+                        CASE WHEN oi.combo_id IS NOT NULL THEN 'Bundle' ELSE p.category END AS category,
+                        SUM(oi.quantity) AS units_sold,
+                        SUM(oi.quantity * oi.unit_price_charged) AS total_sales
+                    FROM order_items oi
+                    INNER JOIN orders o ON oi.order_id = o.order_id
+                    LEFT JOIN products p ON oi.product_id = p.product_id
+                    LEFT JOIN combos c ON oi.combo_id = c.combo_id
+                    WHERE o.order_status = 'Completed'
+                      AND YEAR(o.created_at) = :year
+                      AND MONTH(o.created_at) = :month
+                    GROUP BY oi.product_id, oi.combo_id
+                    ORDER BY total_sales DESC
+                    LIMIT 10";
+
+        $topConcessions = $this->db->fetchAll($itemSql, [
+            ':year'  => $selectedYear,
+            ':month' => $selectedMonth
         ]);
 
         if ($this->isAjaxOrJson()) {
             $this->json([
                 'success'           => true,
+                'sales'             => $salesSummary,
                 'sales_timeline'    => $salesTimeline,
-                'payment_breakdown' => $paymentBreakdown
+                'payment_breakdown' => $paymentBreakdown,
+                'top_movies'        => $topMovies,
+                'top_concessions'   => $topConcessions
             ]);
             return;
         }
 
         // Renders app/views/reports/sales.php
         $this->view('reports/sales', [
+            'sales'            => $salesSummary,
+            'financial'        => $salesSummary,
+            'selectedYear'     => $selectedYear,
+            'selectedMonth'    => $selectedMonth,
             'salesTimeline'    => $salesTimeline,
             'paymentBreakdown' => $paymentBreakdown,
+            'topMovies'        => $topMovies,
+            'topConcessions'   => $topConcessions,
             'startDate'        => $startDate,
             'endDate'          => $endDate
         ]);

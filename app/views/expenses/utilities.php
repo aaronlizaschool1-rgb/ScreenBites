@@ -1,10 +1,10 @@
 <?php
 /**
- * ScreenBites: Utility Overhead Expense Logging View (FR11)
+ * ScreenBites: Utility Overhead Expense Logging View (FR11, FR12, FR13)
  * 
  * Historical ledger and entry interface for cinema operational utilities:
  * Electric bills (projectors, HVAC, sound) and Water bills (restrooms, concessions).
- * Restricted to Administrators (FR13).
+ * Strictly restricted to Administrators (FR13).
  * 
  * @var array<int, array<string, mixed>> $expenses
  * @var int                              $selectedYear
@@ -126,13 +126,13 @@ $monthNames = [
         <table class="ledger utility-table" id="utilityLedgerTable">
             <thead>
                 <tr>
-                    <th>Billing Period</th>
-                    <th>Utility Type</th>
-                    <th class="num">Invoice Amount</th>
-                    <th>Payment Date</th>
+                    <th style="min-width: 140px;">Billing Period</th>
+                    <th style="min-width: 150px;">Utility Type</th>
+                    <th class="num" style="min-width: 130px;">Invoice Amount</th>
+                    <th style="min-width: 120px;">Payment Date</th>
                     <th>Operational Notes / Equipment Allocation</th>
-                    <th>Recorded By</th>
-                    <th style="text-align: right;">Action</th>
+                    <th style="min-width: 120px;">Recorded By</th>
+                    <th style="text-align: right; min-width: 100px;">Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -158,9 +158,21 @@ $monthNames = [
                                 <strong><?= $mName . ' ' . $year; ?></strong>
                             </td>
                             <td>
-                                <span class="utility-badge <?= $isElec ? 'badge-elec' : 'badge-water'; ?>">
-                                    <?= $isElec ? '&#9889; Electricity' : '&#128167; Water'; ?>
-                                </span>
+                                <?php if ($isElec): ?>
+                                    <span class="utility-badge badge-elec">
+                                        <svg class="utility-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                                        </svg>
+                                        <span>Electricity</span>
+                                    </span>
+                                <?php else: ?>
+                                    <span class="utility-badge badge-water">
+                                        <svg class="utility-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+                                        </svg>
+                                        <span>Water</span>
+                                    </span>
+                                <?php endif; ?>
                             </td>
                             <td class="num">
                                 <strong class="utility-amount"><?= $peso . $fmt($amount); ?></strong>
@@ -181,7 +193,7 @@ $monthNames = [
                                         data-month="<?= $month; ?>"
                                         data-year="<?= $year; ?>"
                                         data-amount="<?= $amount; ?>"
-                                        data-date="<?= $e($row['payment_date']); ?>"
+                                        data-date="<?= $e($row['payment_date'] ?? date('Y-m-d')); ?>"
                                         data-notes="<?= $e($row['notes'] ?? ''); ?>"
                                         title="Modify recorded bill amount or notes (FR16)">
                                     Edit Bill

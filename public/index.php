@@ -70,8 +70,9 @@ $router->post('inventory/adjust', 'InventoryController@adjustStock');
 $router->get('bundles', 'BundleController@index');
 $router->post('bundles/create', 'BundleController@create');
 
-// --- Checkout, Split Payments & Receipt Generation (FR9, FR10) ---
+// --- Checkout, Split Payments & Receipt Generation (FR9, FR10, FR16) ---
 $router->post('checkout/process', 'CheckoutController@processOrder');
+$router->post('checkout/refund', 'CheckoutController@refund');
 $router->get('receipt/{order_number}', 'CheckoutController@viewReceipt');
 
 // --- Utility Overhead Expense Logging & Net Income (FR11, FR12) ---

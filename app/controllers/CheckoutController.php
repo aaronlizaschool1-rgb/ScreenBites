@@ -225,7 +225,88 @@ class CheckoutController extends Controller
             'order'    => $order,
             'tickets'  => $tickets,
             'items'    => $items,
-            'payments' => $payments
+            'payments' => $payments,
+            'csrfToken'=> Auth::csrfToken()
         ], null);
+    }
+
+    /**
+     * Process an order refund and cancel tickets (FR10, FR16)
+     * Re-opens booked seats on matrix and restocks concessions.
+     */
+    public function refund(): void
+    {
+        // Enforce RBAC: Only Admin and Ticketing Staff can authorize refunds
+        Auth::requireRole([ROLE_ADMIN, ROLE_TICKETING]);
+
+        $payload = $this->getJsonBody();
+        $isJson = !empty($payload) || (!empty($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json'));
+
+        $token = (string)($this->post('csrf_token') ?: ($payload['csrf_token'] ?? ''));
+        if (!Auth::verifyCsrfToken($token)) {
+            if ($isJson) {
+                $this->json(['success' => false, 'message' => 'CSRF validation failed.'], 403);
+                return;
+            }
+            $_SESSION['flash_error'] = 'Security validation failed. Please try again.';
+            $this->redirect('dashboard');
+            return;
+        }
+
+        $orderNumber = trim((string)($this->post('order_number') ?: ($payload['order_number'] ?? '')));
+        $reason      = trim((string)($this->post('reason') ?: ($payload['reason'] ?? 'Customer Request')));
+        if ($reason === '') {
+            $reason = 'Customer Request';
+        }
+
+        if (empty($orderNumber)) {
+            if ($isJson) {
+                $this->json(['success' => false, 'message' => 'Order number is required.'], 400);
+                return;
+            }
+            $_SESSION['flash_error'] = 'Order number is required.';
+            $this->redirect('dashboard');
+            return;
+        }
+
+        $order = $this->orderModel->findByOrderNumber($orderNumber);
+        if (!$order) {
+            if ($isJson) {
+                $this->json(['success' => false, 'message' => "Order {$orderNumber} not found."], 404);
+                return;
+            }
+            $_SESSION['flash_error'] = "Order {$orderNumber} not found.";
+            $this->redirect('dashboard');
+            return;
+        }
+
+        try {
+            $this->orderModel->refundOrder((int)$order['order_id'], Auth::id() ?? 1, $reason);
+
+            $successMsg = "Order {$orderNumber} successfully refunded. Tickets cancelled, seats released, and concessions restocked.";
+            if ($isJson) {
+                $this->json([
+                    'success'      => true,
+                    'message'      => $successMsg,
+                    'order_number' => $orderNumber
+                ]);
+                return;
+            }
+
+            $_SESSION['flash_success'] = $successMsg;
+            $referrer = $_SERVER['HTTP_REFERER'] ?? '';
+            if ($referrer && str_contains($referrer, 'receipt/' . $orderNumber)) {
+                $this->redirect('receipt/' . $orderNumber);
+            } else {
+                $this->redirect('dashboard');
+            }
+        } catch (Throwable $e) {
+            if ($isJson) {
+                $this->json(['success' => false, 'message' => $e->getMessage()], 500);
+                return;
+            }
+            $_SESSION['flash_error'] = 'Refund failed: ' . $e->getMessage();
+            $this->redirect('dashboard');
+        }
     }
 }

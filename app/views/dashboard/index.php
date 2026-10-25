@@ -272,10 +272,24 @@ $activeMoviesCount= (int)($kpis['active_movies_count'] ?? 30);
                                             <strong class="dash-price-tag"><?= $peso . $fmt($tTotal); ?></strong>
                                         </td>
                                         <td style="text-align: right;">
-                                            <a href="<?= BASE_URL; ?>/receipt/<?= $e($ordNum); ?>" class="btn btn-sm dash-slip-btn" target="_blank" rel="noopener">
-                                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                                                <span>Slip</span>
-                                            </a>
+                                            <div style="display: inline-flex; align-items: center; justify-content: flex-end; gap: .4rem;">
+                                                <?php if (($order['order_status'] ?? '') === 'Refunded'): ?>
+                                                    <span class="badge badge-refunded" title="Order refunded, tickets cancelled and seats released">Refunded</span>
+                                                <?php else: ?>
+                                                    <button type="button" 
+                                                            class="btn btn-sm btn-dash-refund"
+                                                            data-order="<?= $e($ordNum); ?>"
+                                                            data-amount="<?= $peso . $fmt($tTotal); ?>"
+                                                            data-items="<?= $e(implode(' + ', $itemsDesc)); ?>"
+                                                            title="Issue full refund, cancel tickets, and restock concessions">
+                                                        Refund
+                                                    </button>
+                                                <?php endif; ?>
+                                                <a href="<?= BASE_URL; ?>/receipt/<?= $e($ordNum); ?>" class="btn btn-sm dash-slip-btn" target="_blank" rel="noopener">
+                                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                                                    <span>Slip</span>
+                                                </a>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -465,3 +479,86 @@ $activeMoviesCount= (int)($kpis['active_movies_count'] ?? 30);
     </div>
 
 </div>
+
+<!-- Modal: Confirm Ticket & Order Refund (FR10, FR16) -->
+<dialog class="sched-dialog" id="refundOrderModal" aria-labelledby="refundModalTitle">
+    <form method="POST" action="<?= BASE_URL; ?>/checkout/refund" id="refundOrderForm">
+        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(\Core\Auth::csrfToken(), ENT_QUOTES, 'UTF-8'); ?>">
+        <input type="hidden" name="order_number" id="refundOrderNumberInput" value="">
+
+        <h2 id="refundModalTitle" style="color: #ef4444; display: flex; align-items: center; gap: 8px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+            Refund Transaction &amp; Cancel Tickets
+        </h2>
+        <p class="sched-note">This action will cancel all cinema tickets on this order, release the seats back to available on the seating chart, and return any concession snacks to inventory.</p>
+
+        <div class="bill-summary-box" style="border-left: 4px solid #ef4444; background: #fef2f2;">
+            <div class="bill-summary-row">
+                <span class="summary-lbl">Order Reference:</span>
+                <span class="summary-val" id="refundSummaryOrder" style="font-family: monospace; font-weight: 700;">ORD-XXXX</span>
+            </div>
+            <div class="bill-summary-row">
+                <span class="summary-lbl">Purchased Items:</span>
+                <span class="summary-val" id="refundSummaryItems">1x Ticket</span>
+            </div>
+            <div class="bill-summary-row bill-due-total">
+                <span class="summary-lbl">Refund Amount:</span>
+                <span class="summary-val summary-highlight" id="refundSummaryAmount" style="color: #dc2626;"><?= $peso; ?> 0.00</span>
+            </div>
+        </div>
+
+        <div class="sched-field">
+            <label for="refundReason">Reason for Refund *</label>
+            <select id="refundReason" name="reason" required>
+                <option value="Customer Cancellation Request">Customer Cancellation Request</option>
+                <option value="Screening Schedule Rescheduled">Screening Schedule Rescheduled</option>
+                <option value="Incorrect Seat / Movie Selection">Incorrect Seat / Movie Selection</option>
+                <option value="Cashier / POS Billing Error">Cashier / POS Billing Error</option>
+                <option value="Operational Facility Issue">Operational Facility Issue</option>
+            </select>
+        </div>
+
+        <div class="sched-actions">
+            <button type="button" class="btn btn-ghost" id="closeRefundModalBtn">Abort</button>
+            <button type="submit" class="btn" style="background: #dc2626; border-color: #dc2626; color: #fff;">
+                Confirm Order Refund
+            </button>
+        </div>
+    </form>
+</dialog>
+
+<script>
+(function() {
+    'use strict';
+    var refundModal     = document.getElementById('refundOrderModal');
+    var closeRefundBtn  = document.getElementById('closeRefundModalBtn');
+    var orderInput      = document.getElementById('refundOrderNumberInput');
+    var sumOrder        = document.getElementById('refundSummaryOrder');
+    var sumItems        = document.getElementById('refundSummaryItems');
+    var sumAmount       = document.getElementById('refundSummaryAmount');
+    var refundBtns      = document.querySelectorAll('.btn-dash-refund');
+
+    refundBtns.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var orderNum = btn.getAttribute('data-order');
+            var amount   = btn.getAttribute('data-amount');
+            var items    = btn.getAttribute('data-items');
+
+            if (orderInput) orderInput.value = orderNum;
+            if (sumOrder) sumOrder.textContent = orderNum;
+            if (sumItems) sumItems.textContent = items || 'General Cinema Transaction';
+            if (sumAmount) sumAmount.textContent = amount;
+
+            if (refundModal && typeof refundModal.showModal === 'function') {
+                refundModal.showModal();
+            }
+        });
+    });
+
+    if (closeRefundBtn && refundModal) {
+        closeRefundBtn.addEventListener('click', function() {
+            refundModal.close();
+        });
+    }
+})();
+</script>

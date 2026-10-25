@@ -120,6 +120,128 @@ foreach ($payments as $p) {
             background: #f0f2fa;
         }
 
+        .btn-refund {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1.5px solid #f87171;
+        }
+
+        .btn-refund:hover {
+            background: #fee2e2;
+            border-color: #ef4444;
+        }
+
+        .btn-refunded-badge {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1.5px solid #f87171;
+            cursor: default;
+        }
+
+        /* Refund Stamp & Watermark */
+        .refund-stamp-banner {
+            border: 2px dashed #dc2626;
+            background: #fef2f2;
+            color: #dc2626;
+            text-align: center;
+            padding: .65rem .5rem;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+        }
+
+        .refund-stamp-text {
+            font-size: 14.5px;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .refund-stamp-sub {
+            font-size: 10px;
+            margin-top: 3px;
+            text-transform: uppercase;
+            letter-spacing: .03em;
+        }
+
+        .watermark-void {
+            position: absolute;
+            top: 48%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-28deg);
+            font-size: 44px;
+            font-weight: 800;
+            color: rgba(220, 38, 38, 0.16);
+            border: 4px solid rgba(220, 38, 38, 0.22);
+            padding: .4rem 1.25rem;
+            pointer-events: none;
+            user-select: none;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            white-space: nowrap;
+            border-radius: 8px;
+            z-index: 10;
+        }
+
+        /* Modal styling */
+        .sched-dialog {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1.5rem;
+            max-width: 440px;
+            width: 90vw;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .sched-dialog::backdrop {
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(2px);
+        }
+
+        .sched-dialog h2 {
+            margin: 0 0 .35rem;
+            font-size: 17px;
+            font-family: 'Figtree', sans-serif;
+        }
+
+        .sched-dialog p {
+            margin: 0 0 1rem;
+            font-size: 12px;
+            color: #64748b;
+            font-family: 'Figtree', sans-serif;
+            line-height: 1.45;
+        }
+
+        .sched-field {
+            margin-bottom: 1rem;
+            font-family: 'Figtree', sans-serif;
+        }
+
+        .sched-field label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: .35rem;
+            color: #334155;
+        }
+
+        .sched-field select, .sched-field input {
+            width: 100%;
+            padding: .6rem .75rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 13px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        .sched-actions {
+            display: flex;
+            gap: .5rem;
+            justify-content: flex-end;
+            margin-top: 1.25rem;
+        }
+
         /* Thermal Slip Styling */
         .thermal-slip {
             width: 100%;
@@ -370,18 +492,37 @@ foreach ($payments as $p) {
 </head>
 <body>
 
+<?php
+$isRefunded = (($order['order_status'] ?? '') === 'Refunded');
+$canRefund  = \Core\Auth::hasRole([\ROLE_ADMIN, \ROLE_TICKETING]);
+?>
     <!-- On-screen Navigation Actions -->
     <div class="receipt-actions">
         <button type="button" class="btn btn-print" onclick="window.print();">
             &#128424; Print Receipt
         </button>
         <a href="<?= BASE_URL; ?>/pos" class="btn btn-pos">
-            &larr; New Sale / POS
+            &larr; POS Counter
         </a>
+        <?php if ($isRefunded): ?>
+            <span class="btn btn-refunded-badge">&#10006; Void / Refunded</span>
+        <?php elseif ($canRefund): ?>
+            <button type="button" class="btn btn-refund" id="openRefundModalBtn">
+                &#8634; Refund Order
+            </button>
+        <?php endif; ?>
     </div>
 
     <!-- Thermal Paper Receipt Container -->
     <main class="thermal-slip" aria-label="Official Receipt">
+        <?php if ($isRefunded): ?>
+            <div class="refund-stamp-banner">
+                <div class="refund-stamp-text">*** VOID / REFUNDED ***</div>
+                <div class="refund-stamp-sub">Tickets Cancelled &bull; Concessions Restocked &bull; Seats Released</div>
+            </div>
+            <div class="watermark-void" aria-hidden="true">VOID / REFUNDED</div>
+        <?php endif; ?>
+
         <header class="slip-header">
             <img src="<?= BASE_URL; ?>/assets/img/logo.png" alt="ScreenBites" class="slip-logo">
             <h1 class="slip-brand">ScreenBites Cinema</h1>
@@ -394,7 +535,7 @@ foreach ($payments as $p) {
         <table class="meta-table">
             <tr>
                 <td>RECEIPT #:</td>
-                <td><?= $e($order['order_number'] ?? 'N/A'); ?></td>
+                <td><strong style="<?= $isRefunded ? 'color:#dc2626;' : ''; ?>"><?= $e($order['order_number'] ?? 'N/A'); ?></strong></td>
             </tr>
             <tr>
                 <td>DATE &amp; TIME:</td>
@@ -406,7 +547,13 @@ foreach ($payments as $p) {
             </tr>
             <tr>
                 <td>STATUS:</td>
-                <td><?= $e($order['order_status'] ?? 'COMPLETED'); ?></td>
+                <td>
+                    <?php if ($isRefunded): ?>
+                        <strong style="color: #dc2626;">REFUNDED / VOID</strong>
+                    <?php else: ?>
+                        <strong><?= $e($order['order_status'] ?? 'COMPLETED'); ?></strong>
+                    <?php endif; ?>
+                </td>
             </tr>
         </table>
 
@@ -525,6 +672,57 @@ foreach ($payments as $p) {
             <span class="official-tag">*** Official Digital Sales Invoice ***</span>
         </footer>
     </main>
+
+    <?php if (!$isRefunded && $canRefund): ?>
+        <!-- Refund Confirmation Modal -->
+        <dialog class="sched-dialog" id="refundSlipModal">
+            <form method="POST" action="<?= BASE_URL; ?>/checkout/refund">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(\Core\Auth::csrfToken(), ENT_QUOTES, 'UTF-8'); ?>">
+                <input type="hidden" name="order_number" value="<?= $e($order['order_number'] ?? ''); ?>">
+
+                <h2 style="color: #dc2626;">Authorize Order Refund</h2>
+                <p>Are you sure you want to refund Order <strong><?= $e($order['order_number'] ?? ''); ?></strong>? This will void all cinema tickets, free up reserved seats on the seating matrix, and restock items into inventory.</p>
+
+                <div class="sched-field">
+                    <label for="refundSlipReason">Reason for Refund *</label>
+                    <select id="refundSlipReason" name="reason" required>
+                        <option value="Customer Cancellation Request">Customer Cancellation Request</option>
+                        <option value="Screening Schedule Rescheduled">Screening Schedule Rescheduled</option>
+                        <option value="Incorrect Seat / Movie Selection">Incorrect Seat / Movie Selection</option>
+                        <option value="POS Billing Error">POS Billing Error</option>
+                        <option value="Operational Facility Issue">Operational Facility Issue</option>
+                    </select>
+                </div>
+
+                <div class="sched-actions">
+                    <button type="button" class="btn btn-pos" id="closeRefundModalBtn" style="height:38px;">Cancel</button>
+                    <button type="submit" class="btn btn-refund" style="height:38px; background:#dc2626; color:#fff; border-color:#dc2626;">Confirm Full Refund</button>
+                </div>
+            </form>
+        </dialog>
+
+        <script>
+        (function() {
+            var openBtn = document.getElementById('openRefundModalBtn');
+            var closeBtn = document.getElementById('closeRefundModalBtn');
+            var modal = document.getElementById('refundSlipModal');
+
+            if (openBtn && modal) {
+                openBtn.addEventListener('click', function() {
+                    if (typeof modal.showModal === 'function') {
+                        modal.showModal();
+                    }
+                });
+            }
+
+            if (closeBtn && modal) {
+                closeBtn.addEventListener('click', function() {
+                    modal.close();
+                });
+            }
+        })();
+        </script>
+    <?php endif; ?>
 
 </body>
 </html>

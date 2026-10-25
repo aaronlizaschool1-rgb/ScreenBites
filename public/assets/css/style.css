@@ -2752,21 +2752,45 @@
 .text-water { color: #0284c7; }
 
 .utility-badge {
-  display: inline-block;
-  padding: .15rem .6rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.42rem;
+  padding: 0.3rem 0.75rem;
   border-radius: 999px;
-  font-size: .8rem;
+  font-size: 0.82rem;
   font-weight: 700;
+  white-space: nowrap;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.utility-badge .utility-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: middle;
 }
 
 .utility-badge.badge-elec {
   background: #fef3c7;
   color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.utility-badge.badge-elec .utility-icon {
+  color: #d97706;
 }
 
 .utility-badge.badge-water {
   background: #e0f2fe;
   color: #075985;
+  border: 1px solid #bae6fd;
+}
+
+.utility-badge.badge-water .utility-icon {
+  color: #0284c7;
 }
 
 .utility-amount {
@@ -2777,9 +2801,82 @@
 }
 
 .utility-notes-cell {
-  max-width: 280px;
+  max-width: 320px;
   word-break: break-word;
   font-size: .88rem;
+}
+
+/* Modal Summary Box (Used by Refund & Utilities Dialogs) */
+.bill-summary-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.bill-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.88rem;
+}
+
+.bill-summary-row .summary-lbl {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.bill-summary-row .summary-val {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.bill-summary-row.bill-due-total {
+  margin-top: 0.45rem;
+  padding-top: 0.45rem;
+  border-top: 1px dashed #cbd5e1;
+}
+
+.bill-summary-row .summary-highlight {
+  font-family: "Bricolage Grotesque", "Figtree", system-ui, sans-serif;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+/* Order Refund Badges and Buttons */
+.badge-refunded {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.btn-dash-refund {
+  background: transparent;
+  color: #dc2626;
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  font-weight: 600;
+  padding: 0.3rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  transition: all 0.15s ease;
+}
+
+.btn-dash-refund:hover {
+  background: #fef2f2;
+  border-color: #dc2626;
+  color: #b91c1c;
 }
 
 

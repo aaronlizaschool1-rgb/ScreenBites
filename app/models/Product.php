@@ -118,6 +118,25 @@ class Product
     }
 
     /**
+     * Atomically increment product stock upon ticket/concession order refund (FR5, FR16)
+     * 
+     * @param int $productId
+     * @param int $quantity
+     * @return bool True if successfully incremented
+     */
+    public function incrementStock(int $productId, int $quantity): bool
+    {
+        $sql = "UPDATE products 
+                SET current_stock = current_stock + :qty 
+                WHERE product_id = :id";
+
+        return $this->db->execute($sql, [
+            ':qty' => $quantity,
+            ':id'  => $productId
+        ]) > 0;
+    }
+
+    /**
      * Adjust or restock physical inventory units (FR5)
      * 
      * @param int $productId

@@ -30,7 +30,7 @@ class UtilityController extends Controller
     }
 
     /**
-     * Display the utility ledger interface and historical expense lists
+     * Display the utility ledger interface and historical expense lists (FR11)
      */
     public function index(): void
     {
@@ -56,7 +56,7 @@ class UtilityController extends Controller
     }
 
     /**
-     * Process recording or modification of a utility billing entry (FR11)
+     * Process recording or modification of a utility billing entry (FR11, FR16)
      */
     public function store(): void
     {
