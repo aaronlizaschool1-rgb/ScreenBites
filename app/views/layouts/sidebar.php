@@ -128,16 +128,7 @@ $navGroups = [
     <div class="app-brand">
         <a href="<?= BASE_URL; ?>/" class="app-brand-link">
             <span class="app-brand-badge">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="2" y="2" width="20" height="20" rx="3"></rect>
-                    <path d="M7 2v20"></path>
-                    <path d="M17 2v20"></path>
-                    <path d="M2 12h20"></path>
-                    <path d="M2 7h5"></path>
-                    <path d="M2 17h5"></path>
-                    <path d="M17 17h5"></path>
-                    <path d="M17 7h5"></path>
-                </svg>
+                <img src="<?= BASE_URL; ?>/assets/img/logo.png" alt="ScreenBites Logo" class="brand-logo-img">
             </span>
             <div class="app-brand-text">
                 <span class="app-brand-title">Screen<span class="brand-accent">Bites</span></span>

@@ -13,6 +13,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Sign in | ScreenBites Cinema Lounge</title>
+    <link rel="icon" type="image/png" href="<?= BASE_URL; ?>/assets/img/logo.png">
+    <link rel="apple-touch-icon" href="<?= BASE_URL; ?>/assets/img/logo.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -41,16 +43,7 @@
                 <div class="ticket-header-content">
                     <div class="ticket-brand-row">
                         <div class="ticket-brand-badge">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="2" y="2" width="20" height="20" rx="3"></rect>
-                                <path d="M7 2v20"></path>
-                                <path d="M17 2v20"></path>
-                                <path d="M2 12h20"></path>
-                                <path d="M2 7h5"></path>
-                                <path d="M2 17h5"></path>
-                                <path d="M17 17h5"></path>
-                                <path d="M17 7h5"></path>
-                            </svg>
+                            <img src="<?= BASE_URL; ?>/assets/img/logo.png" alt="ScreenBites Logo" class="ticket-logo-img">
                         </div>
                         <div class="ticket-stub-tag">ADMIT ONE &bull; VIP CINEMA</div>
                     </div>

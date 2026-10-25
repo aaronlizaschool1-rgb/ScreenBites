@@ -86,16 +86,24 @@
   text-decoration: none;
 }
 .app-brand-badge {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, var(--c-red) 0%, #ff6b6b 100%);
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(217, 58, 74, 0.35);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(245, 185, 58, 0.35);
+  padding: 3px;
   flex-shrink: 0;
+}
+.brand-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.35));
 }
 .app-brand-text {
   display: flex;
@@ -311,9 +319,21 @@
   background: var(--c-indigo-dark); color: #fff;
 }
 .app-topbar-brand {
-  color: #fff; text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: #fff;
+  text-decoration: none;
   font-family: "Bricolage Grotesque", "Figtree", system-ui, sans-serif;
-  font-weight: 800; font-size: 1.2rem;
+  font-weight: 800;
+  font-size: 1.2rem;
+}
+.topbar-logo-img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 .app-topbar-btn {
   width: 42px; height: 42px;
@@ -953,13 +973,21 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(245, 185, 58, 0.45);
-  color: var(--cinema-gold);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(245, 185, 58, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  padding: 3px;
+  flex-shrink: 0;
+}
+.ticket-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 .ticket-stub-tag {
   font-family: "Space Mono", monospace;

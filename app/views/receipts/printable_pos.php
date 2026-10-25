@@ -38,6 +38,7 @@ foreach ($payments as $p) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Receipt #<?= $e($order['order_number'] ?? 'RECEIPT'); ?> | ScreenBites</title>
+    <link rel="icon" type="image/png" href="<?= BASE_URL; ?>/assets/img/logo.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Figtree:wght@400;600&display=swap" rel="stylesheet">
@@ -147,6 +148,14 @@ foreach ($payments as $p) {
         .slip-header {
             text-align: center;
             margin-bottom: 1rem;
+        }
+
+        .slip-logo {
+            width: 46px;
+            height: 46px;
+            border-radius: 8px;
+            margin: 0 auto .5rem;
+            display: block;
         }
 
         .slip-brand {
@@ -374,6 +383,7 @@ foreach ($payments as $p) {
     <!-- Thermal Paper Receipt Container -->
     <main class="thermal-slip" aria-label="Official Receipt">
         <header class="slip-header">
+            <img src="<?= BASE_URL; ?>/assets/img/logo.png" alt="ScreenBites" class="slip-logo">
             <h1 class="slip-brand">ScreenBites Cinema</h1>
             <p class="slip-subtitle">Cinema Reservation &amp; Concessions POS</p>
             <p class="slip-tin">VAT REG TIN: 009-876-543-000<br>Mall of Asia Complex, Pasay City</p>
