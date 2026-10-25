@@ -24,11 +24,17 @@ $taxRate  = (float)($taxRate ?? 0.12);
 <div class="page-head">
     <div>
         <h1>Snackbar Point-of-Sale</h1>
-        <p>Process walk-in concession sales, promotional combos, and held movie tickets (FR8, FR9).</p>
+        <p>Process walk-in concession sales, promotional combos, and held movie tickets.</p>
     </div>
     <div class="pos-head-actions">
-        <a href="<?= BASE_URL; ?>/schedules" class="btn btn-ghost" title="Pick cinema screening to reserve seats">
-            &larr; Movie Schedules &amp; Seats
+        <a href="<?= BASE_URL; ?>/schedules" class="btn btn-ghost pos-sched-link" title="Pick cinema screening to reserve seats">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;">
+                <rect x="2" y="2" width="20" height="20" rx="3"></rect>
+                <path d="M7 2v20"></path><path d="M17 2v20"></path>
+                <path d="M2 12h20"></path><path d="M2 7h5"></path><path d="M2 17h5"></path>
+                <path d="M17 17h5"></path><path d="M17 7h5"></path>
+            </svg>
+            <span>Movie Schedules &amp; Seats</span>
         </a>
     </div>
 </div>
@@ -144,15 +150,19 @@ $taxRate  = (float)($taxRate ?? 0.12);
         </div>
     </section>
 
-    <!-- RIGHT: Guest Cart & Split Checkout Panel -->
-    <aside class="pos-cart-panel card" aria-label="Guest Order &amp; Checkout">
+    <!-- RIGHT: Guest Cart & Modern Checkout Panel -->
+    <aside class="pos-cart-panel card" id="posCartPanel" aria-label="Guest Order &amp; Checkout">
         <div class="pos-cart-header">
             <div>
                 <h2 class="card-title">Current Order</h2>
-                <span class="pos-order-badge" id="orderTypeBadge">Walk-in Order</span>
+                <span class="pos-order-badge" id="orderTypeBadge">Walk-in Concessions</span>
             </div>
-            <button type="button" class="btn btn-ghost btn-sm" id="clearCartBtn" title="Empty order cart">
-                Clear Cart
+            <button type="button" class="btn btn-ghost btn-sm btn-clear-cart" id="clearCartBtn" title="Empty order cart" disabled>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+                <span>Clear</span>
             </button>
         </div>
 
@@ -168,19 +178,29 @@ $taxRate  = (float)($taxRate ?? 0.12);
         </div>
 
         <!-- Concessions Items List -->
-        <div class="cart-section">
-            <span class="cart-section-title">Concessions Items</span>
+        <div class="cart-section" id="concessionsSection">
+            <div class="cart-section-head">
+                <span class="cart-section-title">Order Items</span>
+            </div>
             <div class="cart-items-list" id="cartConcessionsList">
                 <!-- Populated dynamically -->
             </div>
-            <p class="empty-cart-msg" id="cartEmptyMsg">
-                No concessions or tickets added yet.<br>
-                <small>Select snack items or choose cinema tickets to begin.</small>
-            </p>
+            
+            <!-- Modern Empty State -->
+            <div class="empty-cart-state" id="cartEmptyMsg">
+                <div class="empty-cart-icon" aria-hidden="true">
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle>
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                    </svg>
+                </div>
+                <h4>Your order is empty</h4>
+                <p>Click <strong>+ Add to Order</strong> on any concession or combo to begin.</p>
+            </div>
         </div>
 
         <!-- Financial Breakdown -->
-        <div class="cart-breakdown">
+        <div class="cart-breakdown" id="cartBreakdown">
             <div class="cart-breakdown-row" id="rowTicketsSubtotal" style="display: none;">
                 <span>Tickets Total</span>
                 <strong id="ticketsSubtotal"><?= $peso; ?>0.00</strong>
@@ -203,68 +223,83 @@ $taxRate  = (float)($taxRate ?? 0.12);
             </div>
         </div>
 
-        <!-- Split Payment Tenders (FR9) -->
-        <div class="cart-payment-section">
-            <h3 class="payment-title">Payment &amp; Split Tender (FR9)</h3>
-
-            <!-- Added Tenders List -->
-            <div class="tenders-list" id="tendersList">
-                <!-- Populated as cashier records payments -->
+        <!-- Payment Section (Clean Single-Payment by default, Split on demand) -->
+        <div class="cart-payment-section" id="cartPaymentSection">
+            <div class="payment-section-header">
+                <h3 class="payment-title">Payment Method</h3>
+                <button type="button" class="btn-split-toggle" id="splitToggleBtn" title="Split payment across multiple payment methods">
+                    <span id="splitToggleText">⇄ Split Payment</span>
+                </button>
             </div>
 
-            <!-- Add Tender Form -->
+            <!-- Single or Split Payment Entry Form -->
             <div class="tender-entry-form">
                 <div class="tender-method-group">
-                    <button type="button" class="tender-method-btn active" data-method="Cash">Cash</button>
-                    <button type="button" class="tender-method-btn" data-method="E-Wallet">E-Wallet (GCash/Maya)</button>
-                    <button type="button" class="tender-method-btn" data-method="Card">Credit/Debit Card</button>
+                    <button type="button" class="tender-method-btn active" data-method="Cash">
+                        <span class="method-icon">💵</span>
+                        <span>Cash</span>
+                    </button>
+                    <button type="button" class="tender-method-btn" data-method="E-Wallet">
+                        <span class="method-icon">📱</span>
+                        <span>GCash / Maya</span>
+                    </button>
+                    <button type="button" class="tender-method-btn" data-method="Card">
+                        <span class="method-icon">💳</span>
+                        <span>Card</span>
+                    </button>
                 </div>
 
                 <div class="tender-inputs">
-                    <div class="tender-field">
-                        <label for="tenderAmount">Tendered Amount (<?= $peso; ?>)</label>
+                    <div class="tender-field" id="cashTenderField">
+                        <label for="tenderAmount" id="tenderAmountLabel">Cash Received (<?= $peso; ?>)</label>
                         <input type="number" id="tenderAmount" step="0.01" min="0.01" placeholder="0.00" inputmode="decimal">
                     </div>
 
                     <div class="tender-field" id="referenceField" style="display: none;">
-                        <label for="tenderRef">Reference / Approval #</label>
-                        <input type="text" id="tenderRef" placeholder="e.g. GCash Txn # or Card Auth">
+                        <label for="tenderRef" id="tenderRefLabel">Reference / Approval #</label>
+                        <input type="text" id="tenderRef" placeholder="e.g. GCash Ref # or Card Auth">
                     </div>
                 </div>
 
-                <!-- Quick Cash Presets -->
+                <!-- Quick Cash Presets (for fast 1-click cash handling) -->
                 <div class="quick-cash-row" id="quickCashRow">
                     <button type="button" class="quick-cash-btn" data-quick="exact">Exact</button>
                     <button type="button" class="quick-cash-btn" data-quick="100">+100</button>
                     <button type="button" class="quick-cash-btn" data-quick="200">+200</button>
                     <button type="button" class="quick-cash-btn" data-quick="500">+500</button>
-                    <button type="button" class="quick-cash-btn" data-quick="1000">+1,000</button>
+                    <button type="button" class="quick-cash-btn" data-quick="1000">1,000</button>
                 </div>
 
-                <button type="button" class="btn btn-ghost tender-add-btn" id="addTenderBtn">
-                    + Add Payment Tender
+                <!-- Add Tender Button (Shown only when in Split Payment mode) -->
+                <button type="button" class="btn btn-ghost tender-add-btn" id="addTenderBtn" style="display: none;">
+                    + Add This Payment Tender
                 </button>
             </div>
 
+            <!-- Added Split Tenders List (Shown only when split mode or tenders recorded) -->
+            <div class="tenders-list" id="tendersList" style="display: none;">
+                <!-- Populated as cashier records split payments -->
+            </div>
+
             <!-- Payment Balance & Change Due Tracker -->
-            <div class="payment-summary-box">
-                <div class="payment-summary-row">
-                    <span>Total Tendered:</span>
+            <div class="payment-summary-box" id="paymentSummaryBox">
+                <div class="payment-summary-row" id="totalTenderedRow">
+                    <span id="totalTenderedLabel">Amount Received:</span>
                     <strong id="totalTendered"><?= $peso; ?>0.00</strong>
                 </div>
-                <div class="payment-summary-row" id="remainingRow">
+                <div class="payment-summary-row" id="remainingRow" style="display: none;">
                     <span>Remaining Balance:</span>
                     <strong class="text-danger" id="remainingBalance"><?= $peso; ?>0.00</strong>
                 </div>
-                <div class="payment-summary-row change-row" id="changeRow" style="display: none;">
+                <div class="payment-summary-row change-row" id="changeRow">
                     <span>Change Due:</span>
                     <strong class="text-success" id="changeDue"><?= $peso; ?>0.00</strong>
                 </div>
             </div>
 
-            <!-- Complete Order Action -->
+            <!-- Primary Action Button: 1-Click Pay & Order Completion -->
             <button type="button" class="btn btn-primary btn-block checkout-submit-btn" id="submitOrderBtn" disabled>
-                Complete Transaction (FR8, FR9)
+                Select Items to Order
             </button>
             <p class="checkout-msg" id="checkoutMsg" role="status" aria-live="polite"></p>
         </div>

@@ -27,6 +27,7 @@
 
     var activeCategory = 'all';
     var activeMethod = 'Cash';
+    var isSplitMode = false;
     var ticketTimerInterval = null;
 
     // DOM Elements
@@ -38,6 +39,7 @@
         comboCards: document.querySelectorAll('.combo-card'),
         productCards: document.querySelectorAll('#productsGrid .pos-item-card'),
 
+        posCartPanel: document.getElementById('posCartPanel'),
         ticketsSection: document.getElementById('ticketsSection'),
         ticketCount: document.getElementById('ticketCount'),
         ticketTimer: document.getElementById('ticketTimer'),
@@ -48,6 +50,7 @@
         cartEmptyMsg: document.getElementById('cartEmptyMsg'),
         clearCartBtn: document.getElementById('clearCartBtn'),
 
+        cartBreakdown: document.getElementById('cartBreakdown'),
         rowTicketsSubtotal: document.getElementById('rowTicketsSubtotal'),
         ticketsSubtotal: document.getElementById('ticketsSubtotal'),
         concessionsSubtotal: document.getElementById('concessionsSubtotal'),
@@ -55,14 +58,22 @@
         vatAmount: document.getElementById('vatAmount'),
         grandTotal: document.getElementById('grandTotal'),
 
+        cartPaymentSection: document.getElementById('cartPaymentSection'),
+        splitToggleBtn: document.getElementById('splitToggleBtn'),
+        splitToggleText: document.getElementById('splitToggleText'),
         tendersList: document.getElementById('tendersList'),
         methodBtns: document.querySelectorAll('.tender-method-btn'),
+        cashTenderField: document.getElementById('cashTenderField'),
+        tenderAmountLabel: document.getElementById('tenderAmountLabel'),
         tenderAmount: document.getElementById('tenderAmount'),
         referenceField: document.getElementById('referenceField'),
+        tenderRefLabel: document.getElementById('tenderRefLabel'),
         tenderRef: document.getElementById('tenderRef'),
         quickCashRow: document.getElementById('quickCashRow'),
         addTenderBtn: document.getElementById('addTenderBtn'),
 
+        totalTenderedRow: document.getElementById('totalTenderedRow'),
+        totalTenderedLabel: document.getElementById('totalTenderedLabel'),
         totalTendered: document.getElementById('totalTendered'),
         remainingRow: document.getElementById('remainingRow'),
         remainingBalance: document.getElementById('remainingBalance'),
@@ -417,26 +428,138 @@
         if (els.vatAmount) els.vatAmount.textContent = peso(totals.vat);
         if (els.grandTotal) els.grandTotal.textContent = peso(totals.grossTotal);
 
-        // 5. Update Payments List
-        renderPayments(totals);
+        var hasItems = (cart.tickets.length > 0 || cart.concessions.length > 0);
 
-        // 6. Update Tender Form defaults
-        if (els.tenderAmount && document.activeElement !== els.tenderAmount) {
-            els.tenderAmount.value = totals.remaining > 0 ? totals.remaining.toFixed(2) : '';
+        if (els.posCartPanel) {
+            if (hasItems) {
+                els.posCartPanel.classList.remove('is-empty-cart');
+            } else {
+                els.posCartPanel.classList.add('is-empty-cart');
+            }
         }
 
-        // 7. Enable/disable Complete Order Button
-        var hasItems = (cart.tickets.length > 0 || cart.concessions.length > 0);
-        var isFullyPaid = (totals.grossTotal > 0 && totals.remaining <= 0.001);
+        if (els.clearCartBtn) {
+            els.clearCartBtn.disabled = !hasItems;
+        }
 
-        if (els.submitOrderBtn) {
-            els.submitOrderBtn.disabled = !(hasItems && isFullyPaid);
-            if (!hasItems) {
-                els.submitOrderBtn.textContent = 'Add Items to Checkout';
-            } else if (!isFullyPaid) {
-                els.submitOrderBtn.textContent = 'Tender Payment Due: ' + peso(totals.remaining);
+        if (els.splitToggleBtn) {
+            els.splitToggleBtn.style.display = hasItems ? 'inline-flex' : 'none';
+        }
+
+        if (!hasItems) {
+            if (els.submitOrderBtn) {
+                els.submitOrderBtn.disabled = true;
+                els.submitOrderBtn.textContent = 'Select Items to Order';
+            }
+            if (els.remainingRow) els.remainingRow.style.display = 'none';
+            if (els.changeRow) els.changeRow.style.display = 'none';
+            if (els.totalTendered) els.totalTendered.textContent = peso(0);
+            if (els.tenderAmount) els.tenderAmount.value = '';
+            if (els.tenderRef) els.tenderRef.value = '';
+            if (els.tendersList) els.tendersList.style.display = 'none';
+            if (els.addTenderBtn) els.addTenderBtn.style.display = 'none';
+            return;
+        }
+
+        // 5. Render Payment UI depending on mode
+        if (!isSplitMode) {
+            // Standard 1-Click Payment Mode (No need to add tender first)
+            if (els.splitToggleBtn) els.splitToggleBtn.classList.remove('active');
+            if (els.splitToggleText) els.splitToggleText.textContent = '⇄ Split Payment';
+            if (els.addTenderBtn) els.addTenderBtn.style.display = 'none';
+            if (els.tendersList) els.tendersList.style.display = 'none';
+
+            if (activeMethod === 'Cash') {
+                if (els.cashTenderField) els.cashTenderField.style.display = 'block';
+                if (els.quickCashRow) els.quickCashRow.style.display = 'flex';
+                if (els.referenceField) els.referenceField.style.display = 'none';
+                if (els.tenderAmountLabel) els.tenderAmountLabel.textContent = 'Cash Received (' + (cfg.currencySymbol || '\u20B1') + ')';
+
+                if (els.tenderAmount && document.activeElement !== els.tenderAmount) {
+                    var curVal = parseFloat(els.tenderAmount.value);
+                    if (isNaN(curVal) || curVal <= 0 || curVal < totals.grossTotal) {
+                        els.tenderAmount.value = totals.grossTotal.toFixed(2);
+                    }
+                }
+
+                var cashVal = parseFloat(els.tenderAmount ? els.tenderAmount.value : '') || 0;
+                if (els.totalTenderedLabel) els.totalTenderedLabel.textContent = 'Cash Received:';
+                if (els.totalTendered) els.totalTendered.textContent = peso(cashVal);
+
+                if (cashVal >= totals.grossTotal) {
+                    var changeAmt = Math.max(0, cashVal - totals.grossTotal);
+                    if (els.changeRow) els.changeRow.style.display = 'flex';
+                    if (els.changeDue) els.changeDue.textContent = peso(changeAmt);
+                    if (els.remainingRow) els.remainingRow.style.display = 'none';
+
+                    if (els.submitOrderBtn) {
+                        els.submitOrderBtn.disabled = false;
+                        if (changeAmt > 0) {
+                            els.submitOrderBtn.textContent = 'Complete Order • Change: ' + peso(changeAmt);
+                        } else {
+                            els.submitOrderBtn.textContent = 'Complete Order • ' + peso(totals.grossTotal);
+                        }
+                    }
+                } else {
+                    var diff = totals.grossTotal - cashVal;
+                    if (els.remainingRow) els.remainingRow.style.display = 'flex';
+                    if (els.remainingBalance) els.remainingBalance.textContent = peso(diff);
+                    if (els.changeRow) els.changeRow.style.display = 'none';
+
+                    if (els.submitOrderBtn) {
+                        els.submitOrderBtn.disabled = true;
+                        els.submitOrderBtn.textContent = 'Need ' + peso(diff) + ' More Cash';
+                    }
+                }
             } else {
-                els.submitOrderBtn.textContent = 'Complete Transaction (FR8, FR9)';
+                // E-Wallet or Card
+                if (els.cashTenderField) els.cashTenderField.style.display = 'none';
+                if (els.quickCashRow) els.quickCashRow.style.display = 'none';
+                if (els.referenceField) els.referenceField.style.display = 'block';
+                if (els.tenderRef) {
+                    els.tenderRef.placeholder = activeMethod === 'E-Wallet' ? 'e.g. GCash / Maya Ref #' : 'e.g. Card Authorization / Last 4';
+                }
+
+                if (els.totalTenderedLabel) els.totalTenderedLabel.textContent = 'Amount to Charge:';
+                if (els.totalTendered) els.totalTendered.textContent = peso(totals.grossTotal);
+                if (els.remainingRow) els.remainingRow.style.display = 'none';
+                if (els.changeRow) els.changeRow.style.display = 'none';
+
+                if (els.submitOrderBtn) {
+                    els.submitOrderBtn.disabled = false;
+                    els.submitOrderBtn.textContent = 'Pay via ' + (activeMethod === 'E-Wallet' ? 'GCash / Maya' : 'Card') + ' • ' + peso(totals.grossTotal);
+                }
+            }
+        } else {
+            // Split Payment Mode (FR9)
+            if (els.splitToggleBtn) els.splitToggleBtn.classList.add('active');
+            if (els.splitToggleText) els.splitToggleText.textContent = '✓ Standard Payment';
+            if (els.addTenderBtn) els.addTenderBtn.style.display = 'block';
+            if (els.tendersList) els.tendersList.style.display = 'flex';
+            if (els.cashTenderField) els.cashTenderField.style.display = 'block';
+            if (els.tenderAmountLabel) els.tenderAmountLabel.textContent = 'Tender Amount (' + (cfg.currencySymbol || '\u20B1') + ')';
+
+            if (els.referenceField) {
+                els.referenceField.style.display = (activeMethod === 'Cash') ? 'none' : 'block';
+            }
+            if (els.quickCashRow) {
+                els.quickCashRow.style.display = (activeMethod === 'Cash') ? 'flex' : 'none';
+            }
+
+            if (els.tenderAmount && document.activeElement !== els.tenderAmount) {
+                els.tenderAmount.value = totals.remaining > 0 ? totals.remaining.toFixed(2) : '';
+            }
+
+            renderSplitTendersList(totals);
+
+            var isFullyPaid = (totals.grossTotal > 0 && totals.remaining <= 0.001);
+            if (els.submitOrderBtn) {
+                els.submitOrderBtn.disabled = !isFullyPaid;
+                if (isFullyPaid) {
+                    els.submitOrderBtn.textContent = 'Complete Order (' + cart.payments.length + ' Tenders) • ' + peso(totals.grossTotal);
+                } else {
+                    els.submitOrderBtn.textContent = 'Remaining Balance: ' + peso(totals.remaining);
+                }
             }
         }
     }
@@ -444,11 +567,11 @@
     /* -------------------------------------------------------------
        5. SPLIT PAYMENT RENDERING & HANDLING
        ------------------------------------------------------------- */
-    function renderPayments(totals) {
+    function renderSplitTendersList(totals) {
         if (!els.tendersList) return;
 
         if (cart.payments.length === 0) {
-            els.tendersList.innerHTML = '<p class="tender-empty-hint">No payment tenders recorded yet.</p>';
+            els.tendersList.innerHTML = '<p class="tender-empty-hint">No split tenders recorded yet. Enter amount and click "+ Add This Payment Tender".</p>';
         } else {
             els.tendersList.innerHTML = cart.payments.map(function (p, idx) {
                 return '<div class="tender-row">' +
@@ -462,6 +585,7 @@
             }).join('');
         }
 
+        if (els.totalTenderedLabel) els.totalTenderedLabel.textContent = 'Total Tendered:';
         if (els.totalTendered) els.totalTendered.textContent = peso(totals.totalPaid);
 
         if (els.remainingRow && els.remainingBalance) {
@@ -483,26 +607,35 @@
         }
     }
 
+    // Toggle split mode
+    if (els.splitToggleBtn) {
+        els.splitToggleBtn.addEventListener('click', function () {
+            isSplitMode = !isSplitMode;
+            if (!isSplitMode) {
+                cart.payments = [];
+            }
+            clearMsg();
+            renderCart();
+        });
+    }
+
+    // Tender amount real-time change calculation
+    if (els.tenderAmount) {
+        els.tenderAmount.addEventListener('input', function () {
+            if (!isSplitMode) {
+                renderCart();
+            }
+        });
+    }
+
     // Payment method selector
     els.methodBtns.forEach(function (btn) {
         btn.addEventListener('click', function () {
             els.methodBtns.forEach(function (b) { b.classList.remove('active'); });
             btn.classList.add('active');
             activeMethod = btn.getAttribute('data-method');
-
-            // Reference input toggle for E-Wallet or Card
-            if (els.referenceField) {
-                if (activeMethod === 'Cash') {
-                    els.referenceField.style.display = 'none';
-                    if (els.quickCashRow) els.quickCashRow.style.display = 'flex';
-                } else {
-                    els.referenceField.style.display = 'block';
-                    if (els.quickCashRow) els.quickCashRow.style.display = 'none';
-                    if (els.tenderRef) {
-                        els.tenderRef.placeholder = activeMethod === 'E-Wallet' ? 'e.g. GCash / Maya Ref #' : 'e.g. Card Authorization / Last 4';
-                    }
-                }
-            }
+            clearMsg();
+            renderCart();
         });
     });
 
@@ -515,16 +648,20 @@
             var totals = calculateTotals();
 
             if (action === 'exact') {
-                els.tenderAmount.value = totals.remaining > 0 ? totals.remaining.toFixed(2) : '0.00';
+                els.tenderAmount.value = totals.grossTotal.toFixed(2);
+            } else if (action === '1000') {
+                els.tenderAmount.value = '1000.00';
             } else {
                 var addVal = parseFloat(action) || 0;
-                var currentVal = parseFloat(els.tenderAmount.value) || 0;
+                var currentVal = parseFloat(els.tenderAmount.value) || totals.grossTotal;
                 els.tenderAmount.value = (currentVal + addVal).toFixed(2);
             }
+
+            renderCart();
         });
     }
 
-    // Add Tender button
+    // Add Tender button (Split Mode)
     if (els.addTenderBtn) {
         els.addTenderBtn.addEventListener('click', function () {
             var amount = parseFloat(els.tenderAmount.value);
@@ -692,13 +829,53 @@
         els.submitOrderBtn.addEventListener('click', function () {
             var totals = calculateTotals();
             if (!cart.tickets.length && !cart.concessions.length) {
-                showMsg('Your order cart is empty.', 'error');
+                showMsg('Your order cart is empty. Add items to order.', 'error');
                 return;
             }
 
-            if (totals.remaining > 0.001) {
-                showMsg('Payment incomplete. Outstanding balance of ' + peso(totals.remaining) + ' must be tendered.', 'error');
-                return;
+            var paymentsPayload = [];
+
+            if (!isSplitMode) {
+                // Standard 1-Click Payment mode
+                if (activeMethod === 'Cash') {
+                    var cashVal = parseFloat(els.tenderAmount ? els.tenderAmount.value : '') || totals.grossTotal;
+                    if (cashVal < totals.grossTotal) {
+                        showMsg('Cash received cannot be less than total amount due of ' + peso(totals.grossTotal), 'error');
+                        if (els.tenderAmount) els.tenderAmount.focus();
+                        return;
+                    }
+                    paymentsPayload.push({
+                        method: 'Cash',
+                        amount: cashVal,
+                        reference: null
+                    });
+                } else {
+                    var ref = els.tenderRef ? els.tenderRef.value.trim() : '';
+                    if (!ref && (activeMethod === 'E-Wallet' || activeMethod === 'Card')) {
+                        if (!confirm(activeMethod + ' transaction is missing an approval reference number. Proceed anyway?')) {
+                            if (els.tenderRef) els.tenderRef.focus();
+                            return;
+                        }
+                    }
+                    paymentsPayload.push({
+                        method: activeMethod,
+                        amount: totals.grossTotal,
+                        reference: ref || null
+                    });
+                }
+            } else {
+                // Split Payment mode
+                if (totals.remaining > 0.001) {
+                    showMsg('Payment incomplete. Outstanding balance of ' + peso(totals.remaining) + ' must be tendered.', 'error');
+                    return;
+                }
+                paymentsPayload = cart.payments.map(function (p) {
+                    return {
+                        method: p.method,
+                        amount: parseFloat(p.amount),
+                        reference: p.reference || null
+                    };
+                });
             }
 
             els.submitOrderBtn.disabled = true;
@@ -721,13 +898,7 @@
                         price: parseFloat(c.price)
                     };
                 }),
-                payments: cart.payments.map(function (p) {
-                    return {
-                        method: p.method,
-                        amount: parseFloat(p.amount),
-                        reference: p.reference || null
-                    };
-                })
+                payments: paymentsPayload
             };
 
             fetch(cfg.baseUrl + '/checkout/process', {

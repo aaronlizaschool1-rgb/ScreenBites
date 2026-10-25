@@ -1,0 +1,20 @@
+# ==============================================================================
+# ScreenBites - Root Apache Configuration
+# ==============================================================================
+
+# Prevent directory indexing
+Options -Indexes -MultiViews
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /ScreenBites/
+
+    # Redirect root request to public/
+    RewriteRule ^$ public/ [L,R=302]
+</IfModule>
+
+# Protect sensitive source directories from direct web inspection
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
