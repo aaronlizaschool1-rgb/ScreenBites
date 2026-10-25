@@ -846,40 +846,76 @@
   overflow-x: hidden;
 }
 
-/* Background Projector Spotlight Beam */
-.cinema-spotlight {
+/* Netflix-Style Low-Opacity Movie Poster Backdrop */
+.netflix-poster-backdrop {
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 0;
   overflow: hidden;
+  background: #080a18;
 }
-.spotlight-beam {
+
+.netflix-poster-grid {
   position: absolute;
-  top: -150px;
+  inset: -14% -10%;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 14px;
+  transform: rotate(-5deg) scale(1.12);
+  transform-origin: center center;
+  opacity: 0.28;
+  filter: saturate(1.15) contrast(1.1);
+  will-change: transform;
+  animation: netflixDrift 45s ease-in-out infinite alternate;
+}
+
+@keyframes netflixDrift {
+  0% {
+    transform: rotate(-5deg) scale(1.12) translateY(0);
+  }
+  100% {
+    transform: rotate(-4.5deg) scale(1.14) translateY(-25px);
+  }
+}
+
+.netflix-poster-card {
+  aspect-ratio: 2 / 3;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #12152b;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+}
+
+.netflix-poster-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Layered Netflix Cinema Overlays (Deep Vignette + Gradients) */
+.netflix-overlay-radial {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(14, 17, 36, 0.45) 0%, rgba(8, 10, 24, 0.78) 55%, rgba(6, 7, 16, 0.95) 100%);
+}
+
+.netflix-overlay-linear {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(6, 8, 18, 0.92) 0%, rgba(6, 8, 18, 0.25) 20%, rgba(6, 8, 18, 0.25) 80%, rgba(6, 8, 18, 0.96) 100%);
+}
+
+.netflix-spotlight-beam {
+  position: absolute;
+  top: -160px;
   left: 50%;
   transform: translateX(-50%);
-  width: 900px;
-  height: 900px;
-  background: radial-gradient(ellipse at top, rgba(245, 185, 58, 0.12) 0%, rgba(217, 58, 74, 0.06) 35%, transparent 70%);
-  filter: blur(40px);
-}
-.spotlight-ambient {
-  position: absolute;
-  inset: 0;
-  background: 
-    radial-gradient(circle at 15% 20%, rgba(217, 58, 74, 0.08) 0%, transparent 40%),
-    radial-gradient(circle at 85% 80%, rgba(43, 45, 122, 0.15) 0%, transparent 50%);
-}
-.spotlight-stars {
-  position: absolute;
-  inset: 0;
-  opacity: 0.25;
-  background-image: 
-    radial-gradient(rgba(255, 255, 255, 0.75) 1px, transparent 1px),
-    radial-gradient(rgba(245, 185, 58, 0.6) 1px, transparent 1px);
-  background-size: 56px 56px, 88px 88px;
-  background-position: 0 0, 24px 36px;
+  width: 850px;
+  height: 850px;
+  background: radial-gradient(ellipse at top, rgba(245, 185, 58, 0.12) 0%, rgba(217, 58, 74, 0.05) 40%, transparent 70%);
+  filter: blur(55px);
 }
 
 /* Ticket Container & 3D Card */
@@ -1358,6 +1394,14 @@
   text-align: center;
 }
 
+@media (max-width: 480px) {
+  .netflix-poster-grid {
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 8px;
+    inset: -20% -15%;
+  }
+}
+
 @media (max-width: 440px) {
   .ticket-top { padding-left: 1.25rem; padding-right: 1.25rem; }
   .ticket-body { padding-left: 1.25rem; padding-right: 1.25rem; }
@@ -1368,6 +1412,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .netflix-poster-grid { animation: none; }
   .ticket-container { animation: none; }
   .ticket-marquee::before,
   .ticket-marquee::after { animation: none; }

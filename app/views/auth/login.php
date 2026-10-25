@@ -1,11 +1,29 @@
 <?php
 /**
  * app/views/auth/login.php  (FR13)
- * Modern Cinematic Ticket Login Interface
+ * Modern Cinematic Ticket Login Interface with Netflix-style poster backdrop
  *
  * @var string|null $error
  * @var string      $csrfToken
  */
+
+// Gather movie posters for Netflix-style low-opacity cinematic background
+$posterDir = ROOT_PATH . '/public/uploads/posters';
+$posterFiles = glob($posterDir . '/*.{jpg,jpeg,png,webp}', GLOB_BRACE) ?: [];
+$posters = [];
+foreach ($posterFiles as $file) {
+    $bn = basename($file);
+    if ($bn !== '.gitkeep') {
+        $posters[] = $bn;
+    }
+}
+if (!empty($posters)) {
+    // Repeat list to fill a dense grid across large screens
+    while (count($posters) < 48) {
+        $posters = array_merge($posters, $posters);
+    }
+    $posters = array_slice($posters, 0, 48);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -22,11 +40,19 @@
 </head>
 <body class="login-page">
 
-    <!-- Cinema Projector Spotlight Background -->
-    <div class="cinema-spotlight" aria-hidden="true">
-        <div class="spotlight-beam"></div>
-        <div class="spotlight-ambient"></div>
-        <div class="spotlight-stars"></div>
+    <!-- Netflix-Style Cinematic Movie Poster Mosaic Backdrop -->
+    <div class="netflix-poster-backdrop" aria-hidden="true">
+        <div class="netflix-poster-grid">
+            <?php foreach ($posters as $idx => $p): ?>
+                <div class="netflix-poster-card">
+                    <img src="<?= BASE_URL; ?>/uploads/posters/<?= htmlspecialchars($p); ?>" alt="" loading="lazy">
+                </div>
+            <?php endforeach; ?>
+        </div>
+        <!-- Deep Cinema Vignette & Gradients -->
+        <div class="netflix-overlay-radial"></div>
+        <div class="netflix-overlay-linear"></div>
+        <div class="netflix-spotlight-beam"></div>
     </div>
 
     <main class="ticket-container">
