@@ -3284,20 +3284,34 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.3rem 0.65rem;
+  padding: 0.32rem 0.75rem;
   border-radius: 6px;
-  border: 1px solid var(--c-line);
-  color: var(--c-indigo);
+  background: var(--c-indigo);
+  border: 1px solid var(--c-indigo);
+  color: #ffffff !important;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
   text-decoration: none;
   transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.dash-slip-btn svg {
+  color: #ffffff !important;
+  stroke: currentColor;
+  flex-shrink: 0;
+}
+
+.dash-slip-btn span {
+  color: #ffffff !important;
 }
 
 .dash-slip-btn:hover {
-  background: var(--c-indigo);
-  color: #ffffff;
-  border-color: var(--c-indigo);
+  background: var(--c-indigo-dark);
+  border-color: var(--c-indigo-dark);
+  color: #ffffff !important;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(43, 45, 122, 0.3);
 }
 
 /* Screening Schedule Cards */
