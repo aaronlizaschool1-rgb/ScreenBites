@@ -1,12 +1,4 @@
 <?php
-/**
- * ScreenBites: Request Router Engine
- * 
- * Handles URL extraction, regex parameter compiling, HTTP verb validation,
- * and controller delegation.
- * 
- * @author Aaron Louis F. Macapagal
- */
 
 declare(strict_types=1);
 
@@ -14,36 +6,23 @@ namespace Core;
 
 class Router
 {
-    /**
-     * Registered route registry
-     * @var array<int, array{method: string, pattern: string, handler: string}>
-     */
+
     private array $routes = [];
 
-    /**
-     * Register a GET route
-     */
     public function get(string $path, string $handler): void
     {
         $this->addRoute('GET', $path, $handler);
     }
 
-    /**
-     * Register a POST route
-     */
     public function post(string $path, string $handler): void
     {
         $this->addRoute('POST', $path, $handler);
     }
 
-    /**
-     * Internal method to compile parameterized route paths to regex patterns
-     */
     private function addRoute(string $method, string $path, string $handler): void
     {
         $trimmedPath = trim($path, '/');
 
-        // Transform {param} segments into named regex capturing groups
         $pattern = preg_replace('/\{([a-zA-Z0-9_]+)\}/', '(?P<$1>[^/]+)', $trimmedPath);
         $regex = '#^' . ($pattern === '' ? '' : $pattern) . '$#';
 
@@ -54,16 +33,12 @@ class Router
         ];
     }
 
-    /**
-     * Normalize the current request URI across root domains or subdirectories in XAMPP
-     */
     private function getRequestUri(): string
     {
         $requestUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
         $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
         $baseDir = dirname($scriptName);
 
-        // Normalize Windows backslashes
         $baseDir = str_replace('\\', '/', $baseDir);
 
         if ($baseDir !== '/' && strpos($requestUri, $baseDir) === 0) {
@@ -73,9 +48,6 @@ class Router
         return trim($requestUri, '/');
     }
 
-    /**
-     * Match current request against registry and dispatch
-     */
     public function dispatch(): void
     {
         $requestMethod = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
@@ -90,7 +62,7 @@ class Router
             }
 
             if (preg_match($route['pattern'], $requestUri, $matches)) {
-                // Filter only named parameter captures
+
                 $params = array_filter(
                     $matches,
                     fn($key) => !is_numeric($key),
@@ -105,9 +77,6 @@ class Router
         $this->sendNotFoundResponse();
     }
 
-    /**
-     * Instantiate the controller and call the targeted action
-     */
     private function executeHandler(string $handler, array $params): void
     {
         [$controllerName, $method] = explode('@', $handler);
@@ -130,9 +99,6 @@ class Router
         call_user_func_array([$controllerInstance, $method], array_values($params));
     }
 
-    /**
-     * Return 404 response for unresolved endpoints
-     */
     private function sendNotFoundResponse(): void
     {
         http_response_code(404);
@@ -154,9 +120,6 @@ class Router
         echo '</div>';
     }
 
-    /**
-     * Check if the incoming request expects a JSON payload
-     */
     private function isAjaxOrJsonRequest(): bool
     {
         return (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')

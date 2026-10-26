@@ -1,11 +1,4 @@
 <?php
-/**
- * ScreenBites: Ticket Model
- * 
- * Manages ticket generation, screening seat assignments, and seat hold releases.
- * 
- * @author Aaron Louis F. Macapagal
- */
 
 declare(strict_types=1);
 
@@ -22,16 +15,6 @@ class Ticket
         $this->db = Database::getInstance();
     }
 
-    /**
-     * Issue an official cinema ticket for a reserved seat
-     * 
-     * @param int $orderId
-     * @param int $screeningId
-     * @param int $seatId
-     * @param int $hallId Multi-column FK validation
-     * @param float $priceCharged
-     * @return int Inserted ticket_id
-     */
     public function createTicket(
         int $orderId,
         int $screeningId,
@@ -53,9 +36,6 @@ class Ticket
         return (int)$this->db->lastInsertId();
     }
 
-    /**
-     * Retrieve all issued tickets belonging to an order
-     */
     public function getTicketsByOrderId(int $orderId): array
     {
         $sql = "SELECT t.ticket_id, t.order_id, t.screening_id, t.seat_id, t.price_charged, t.ticket_status,

@@ -1,6 +1,3 @@
-/* public/assets/js/chart-analytics.js  (FR12, FR14, FR15)
- * Reads window.ScreenBitesCharts (set by each report view) and draws every
- * chart whose <canvas> exists on the current page. */
 (function () {
   'use strict';
 
@@ -17,7 +14,6 @@
     canvas.parentNode.replaceChild(p, canvas);
   }
 
-  // Chart.js comes from a CDN, so it can be missing when offline
   if (typeof Chart === 'undefined') {
     IDS.forEach(function (id) {
       var c = byId(id);
@@ -45,7 +41,6 @@
     return (h % 12 || 12) + ':' + (parts[1] || '00') + ' ' + suffix;
   }
 
-  /* ---- FR15: peak-hour curve (last 30 days) ---- */
   var peakCanvas = byId('peakHourChart');
   if (peakCanvas) {
     var peak = (cfg.peakHours || []).slice().sort(function (a, b) { return a.hour_of_day - b.hour_of_day; });
@@ -83,7 +78,6 @@
     }
   }
 
-  /* ---- FR15: occupancy per screening ---- */
   var occCanvas = byId('occupancyChart');
   if (occCanvas) {
     var rows = cfg.occupancy || [];
@@ -125,7 +119,6 @@
     }
   }
 
-  /* ---- FR12 / FR14: ticket vs concession revenue ---- */
   var splitCanvas = byId('revenueSplitChart');
   if (splitCanvas) {
     var split = cfg.revenueSplit || { ticket: 0, concession: 0 };
@@ -164,7 +157,6 @@
     }
   }
 
-  /* ---- FR12: revenue vs expenses vs net income ---- */
   var financeCanvas = byId('financeChart');
   if (financeCanvas) {
     var fin = cfg.finance || {};

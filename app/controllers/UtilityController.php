@@ -1,12 +1,4 @@
 <?php
-/**
- * ScreenBites: Utility Expense Controller
- * 
- * Handles logging and management of monthly electric and water bills (FR11).
- * Restricted to Administrators (FR13).
- * 
- * @author Aaron Louis F. Macapagal
- */
 
 declare(strict_types=1);
 
@@ -23,15 +15,12 @@ class UtilityController extends Controller
 
     public function __construct()
     {
-        // Enforce RBAC: Overhead utility financial logging is strictly restricted to Administrators (FR13)
+
         Auth::requireRole(ROLE_ADMIN);
 
         $this->expenseModel = new UtilityExpense();
     }
 
-    /**
-     * Display the utility ledger interface and historical expense lists (FR11)
-     */
     public function index(): void
     {
         $selectedYear = (int)$this->get('year', (int)date('Y'));
@@ -43,7 +32,6 @@ class UtilityController extends Controller
         $flashError   = $_SESSION['flash_error'] ?? null;
         unset($_SESSION['flash_success'], $_SESSION['flash_error']);
 
-        // Renders app/views/expenses/utilities.php
         $this->view('expenses/utilities', [
             'expenses'     => $expenses,
             'selectedYear' => $selectedYear,
@@ -55,9 +43,6 @@ class UtilityController extends Controller
         ]);
     }
 
-    /**
-     * Process recording or modification of a utility billing entry (FR11, FR16)
-     */
     public function store(): void
     {
         if (!Auth::verifyCsrfToken((string)$this->post('csrf_token'))) {
@@ -73,7 +58,6 @@ class UtilityController extends Controller
         $paymentDate = trim((string)$this->post('payment_date', ''));
         $notes       = trim((string)$this->post('notes', ''));
 
-        // Input validations
         if (!in_array($utilityType, UTILITY_TYPES, true)) {
             $_SESSION['flash_error'] = 'Invalid utility category selected.';
             $this->redirect('expenses/utilities');
@@ -98,7 +82,6 @@ class UtilityController extends Controller
 
         $recordedBy = Auth::id() ?? 1;
 
-        // Check for existing record to determine audit log action
         $existing = $this->expenseModel->findByPeriod($utilityType, $year, $month);
 
         $result = $this->expenseModel->saveExpense(
@@ -113,7 +96,6 @@ class UtilityController extends Controller
 
         $monthName = date('F', mktime(0, 0, 0, $month, 10));
 
-        // Audit Logging (FR16)
         if ($result['action'] === 'updated' && $existing) {
             Logger::log(
                 AUDIT_EXPENSE_MODIFIED,

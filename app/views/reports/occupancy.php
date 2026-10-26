@@ -1,16 +1,9 @@
 <?php
-/**
- * app/views/reports/occupancy.php  (FR15)
- *
- * @var array  $screeningOccupancies
- * @var array  $peakHourStats
- * @var string $selectedDate
- */
+
 $rows = is_array($screeningOccupancies ?? null) ? $screeningOccupancies : [];
 $peak = is_array($peakHourStats ?? null) ? $peakHourStats : [];
 $selectedDate = (string) ($selectedDate ?? date('Y-m-d'));
 
-// The rate is computed here from sold / capacity so it never depends on the DB value's format
 $occ = [];
 $totalSold = 0;
 $totalCap  = 0;

@@ -1,11 +1,5 @@
 <?php
-/**
- * app/views/layouts/header.php
- * Opens <html>, <body>, the mobile top bar and .app-shell (closed in footer.php).
- *
- * @var string|null $pageTitle  optional, only if the controller passes it
- * @var string|null $csrfToken
- */
+
 $fullTitle = !empty($pageTitle) ? $pageTitle . ' | ScreenBites' : 'ScreenBites';
 ?>
 <!DOCTYPE html>

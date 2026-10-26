@@ -1,12 +1,4 @@
 <?php
-/**
- * ScreenBites: Movie Controller
- * 
- * Handles movie catalog view rendering and movie creation.
- * Restricted to Administrators (FR13).
- * 
- * @author Aaron Louis F. Macapagal
- */
 
 declare(strict_types=1);
 
@@ -22,14 +14,11 @@ class MovieController extends Controller
 
     public function __construct()
     {
-        // Require authentication for movie catalog viewing
+
         Auth::requireRole();
         $this->movieModel = new Movie();
     }
 
-    /**
-     * Display list of all active movies and registration modal
-     */
     public function index(): void
     {
         $movies = $this->movieModel->getActiveMovies();
@@ -45,12 +34,9 @@ class MovieController extends Controller
         ]);
     }
 
-    /**
-     * Process creation of a new movie record with optional poster upload
-     */
     public function create(): void
     {
-        // Enforce RBAC: Movie management requires Administrator permissions
+
         Auth::requireRole(ROLE_ADMIN);
 
         if (!Auth::verifyCsrfToken((string)$this->post('csrf_token'))) {
@@ -74,7 +60,6 @@ class MovieController extends Controller
             $rating = 'PG';
         }
 
-        // Process poster file upload if provided
         $posterRelativePath = null;
         if (isset($_FILES['poster']) && $_FILES['poster']['error'] === UPLOAD_ERR_OK) {
             $posterRelativePath = $this->handlePosterUpload($_FILES['poster']);
@@ -90,12 +75,6 @@ class MovieController extends Controller
         $this->redirect('movies');
     }
 
-    /**
-     * Validate and upload movie poster to uploads/posters/
-     * 
-     * @param array<string, mixed> $file
-     * @return string|false Path string or false on upload error
-     */
     private function handlePosterUpload(array $file): string|false
     {
         $allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
@@ -108,7 +87,6 @@ class MovieController extends Controller
             return false;
         }
 
-        // 5MB limit
         if ($file['size'] > 5 * 1024 * 1024) {
             $_SESSION['flash_error'] = 'Poster image exceeds the 5MB size limit.';
             return false;

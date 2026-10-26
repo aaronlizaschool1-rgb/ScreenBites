@@ -1,15 +1,4 @@
 <?php
-/**
- * ScreenBites: Consolidated Printable Thermal Receipt View (FR10)
- * 
- * Standalone thermal POS receipt rendering cinema tickets, itemized
- * concession purchases, 12% VAT calculations, and split-tender payment proofs.
- * 
- * @var array<string, mixed>             $order
- * @var array<int, array<string, mixed>> $tickets
- * @var array<int, array<string, mixed>> $items
- * @var array<int, array<string, mixed>> $payments
- */
 
 $e = fn($v): string => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
 $peso = "\u{20B1}";
@@ -24,7 +13,6 @@ $subtotal   = (float)($order['subtotal_amount'] ?? 0);
 $taxAmount  = (float)($order['tax_amount'] ?? 0);
 $totalGross = (float)($order['total_amount'] ?? ($subtotal + $taxAmount));
 
-// Calculate payment tenders summary
 $totalPaid = 0.00;
 $totalChange = 0.00;
 foreach ($payments as $p) {
@@ -496,7 +484,7 @@ foreach ($payments as $p) {
 $isRefunded = (($order['order_status'] ?? '') === 'Refunded');
 $canRefund  = \Core\Auth::hasRole([\ROLE_ADMIN, \ROLE_TICKETING]);
 ?>
-    <!-- On-screen Navigation Actions -->
+
     <div class="receipt-actions">
         <button type="button" class="btn btn-print" onclick="window.print();">
             &#128424; Print Receipt
@@ -513,7 +501,6 @@ $canRefund  = \Core\Auth::hasRole([\ROLE_ADMIN, \ROLE_TICKETING]);
         <?php endif; ?>
     </div>
 
-    <!-- Thermal Paper Receipt Container -->
     <main class="thermal-slip" aria-label="Official Receipt">
         <?php if ($isRefunded): ?>
             <div class="refund-stamp-banner">
@@ -557,13 +544,12 @@ $canRefund  = \Core\Auth::hasRole([\ROLE_ADMIN, \ROLE_TICKETING]);
             </tr>
         </table>
 
-        <!-- Cinema Tickets Section (If Any) -->
         <?php if (!empty($tickets)): ?>
             <div class="divider"></div>
             <span class="section-label">Cinema Admission Tickets</span>
-            
+
             <div class="tickets-container">
-                <?php foreach ($tickets as $t): 
+                <?php foreach ($tickets as $t):
                     $tPrice = (float)$t['price_charged'];
                     $sDate = !empty($t['screening_date']) ? date('M d, Y', strtotime($t['screening_date'])) : '';
                     $sTime = !empty($t['start_time']) ? date('g:i A', strtotime($t['start_time'])) : '';
@@ -584,7 +570,6 @@ $canRefund  = \Core\Auth::hasRole([\ROLE_ADMIN, \ROLE_TICKETING]);
             </div>
         <?php endif; ?>
 
-        <!-- Concessions Section (If Any) -->
         <?php if (!empty($items)): ?>
             <div class="divider"></div>
             <span class="section-label">Concessions &amp; Snacks</span>
@@ -599,7 +584,7 @@ $canRefund  = \Core\Auth::hasRole([\ROLE_ADMIN, \ROLE_TICKETING]);
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($items as $item): 
+                    <?php foreach ($items as $item):
                         $qty = (int)$item['quantity'];
                         $uPrice = (float)$item['unit_price_charged'];
                         $lTotal = (float)($item['total_line_price'] ?? ($qty * $uPrice));
@@ -620,7 +605,6 @@ $canRefund  = \Core\Auth::hasRole([\ROLE_ADMIN, \ROLE_TICKETING]);
             </table>
         <?php endif; ?>
 
-        <!-- Financial Summary Breakdown -->
         <div class="divider-double"></div>
 
         <table class="totals-table">
@@ -638,12 +622,11 @@ $canRefund  = \Core\Auth::hasRole([\ROLE_ADMIN, \ROLE_TICKETING]);
             </tr>
         </table>
 
-        <!-- Payments & Split Tenders -->
         <div class="divider"></div>
         <span class="section-label">Payment Breakdown</span>
 
         <table class="payments-table">
-            <?php foreach ($payments as $p): 
+            <?php foreach ($payments as $p):
                 $method = (string)$p['payment_method'];
                 $amt = (float)$p['amount_paid'];
                 $ref = !empty($p['reference_number']) ? ' (Ref: ' . $e($p['reference_number']) . ')' : '';
@@ -662,7 +645,6 @@ $canRefund  = \Core\Auth::hasRole([\ROLE_ADMIN, \ROLE_TICKETING]);
             <?php endif; ?>
         </table>
 
-        <!-- Digital Barcode & Footer -->
         <div class="divider"></div>
 
         <footer class="slip-footer">
@@ -674,7 +656,7 @@ $canRefund  = \Core\Auth::hasRole([\ROLE_ADMIN, \ROLE_TICKETING]);
     </main>
 
     <?php if (!$isRefunded && $canRefund): ?>
-        <!-- Refund Confirmation Modal -->
+
         <dialog class="sched-dialog" id="refundSlipModal">
             <form method="POST" action="<?= BASE_URL; ?>/checkout/refund">
                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(\Core\Auth::csrfToken(), ENT_QUOTES, 'UTF-8'); ?>">

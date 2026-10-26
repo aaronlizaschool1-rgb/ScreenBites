@@ -1,17 +1,4 @@
 <?php
-/**
- * ScreenBites: Modern Command Center Dashboard (FR12, FR13, FR14, FR15)
- * 
- * Central operational dashboard displaying real-time financial KPIs,
- * today's screening schedule, recent POS orders, inventory watchlist,
- * and quick-access operational launchpads.
- * 
- * @var array<string, mixed>             $kpis
- * @var array<int, array<string, mixed>> $todayScreenings
- * @var array<int, array<string, mixed>> $recentOrders
- * @var array<int, array<string, mixed>> $lowStockAlerts
- * @var string                           $todayDate
- */
 
 use Core\Auth;
 
@@ -37,7 +24,6 @@ $activeMoviesCount= (int)($kpis['active_movies_count'] ?? 30);
 
 <div class="sb-dash-wrapper">
 
-    <!-- Dashboard Hero Header -->
     <div class="dash-hero card">
         <div class="dash-hero-backdrop" aria-hidden="true">
             <div class="dash-hero-glow"></div>
@@ -59,7 +45,7 @@ $activeMoviesCount= (int)($kpis['active_movies_count'] ?? 30);
                 <h1 class="dash-title">Welcome back, <?= $e($userName); ?></h1>
                 <p class="dash-subtitle">Real-time overview of box office ticketing, snackbar concessions, and theater hall occupancy metrics.</p>
             </div>
-            
+
             <div class="dash-hero-actions">
                 <a href="<?= BASE_URL; ?>/pos" class="btn dash-btn-cta">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
@@ -73,9 +59,8 @@ $activeMoviesCount= (int)($kpis['active_movies_count'] ?? 30);
         </div>
     </div>
 
-    <!-- Primary Operational KPI Cards -->
     <div class="dash-kpi-grid">
-        <!-- Revenue Card -->
+
         <div class="dash-kpi-card kpi-card-revenue">
             <div class="dash-kpi-icon-wrap icon-revenue">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"></path><path d="M12 18V6"></path></svg>
@@ -90,7 +75,6 @@ $activeMoviesCount= (int)($kpis['active_movies_count'] ?? 30);
             </div>
         </div>
 
-        <!-- Tickets Card -->
         <div class="dash-kpi-card kpi-card-tickets">
             <div class="dash-kpi-icon-wrap icon-tickets">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line><circle cx="12" cy="15" r="2"></circle></svg>
@@ -105,7 +89,6 @@ $activeMoviesCount= (int)($kpis['active_movies_count'] ?? 30);
             </div>
         </div>
 
-        <!-- Concessions Card -->
         <div class="dash-kpi-card kpi-card-concessions">
             <div class="dash-kpi-icon-wrap icon-concessions">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
@@ -120,7 +103,6 @@ $activeMoviesCount= (int)($kpis['active_movies_count'] ?? 30);
             </div>
         </div>
 
-        <!-- Inventory Threshold Card -->
         <div class="dash-kpi-card kpi-card-stock <?= $lowStockCount > 0 ? 'is-warning' : 'is-healthy'; ?>">
             <div class="dash-kpi-icon-wrap <?= $lowStockCount > 0 ? 'icon-warning' : 'icon-healthy'; ?>">
                 <?php if ($lowStockCount > 0): ?>
@@ -142,7 +124,6 @@ $activeMoviesCount= (int)($kpis['active_movies_count'] ?? 30);
         </div>
     </div>
 
-    <!-- Quick Launchpad Actions -->
     <section class="dash-section" aria-label="Operations Quick Launch">
         <div class="dash-section-head">
             <div>
@@ -207,12 +188,10 @@ $activeMoviesCount= (int)($kpis['active_movies_count'] ?? 30);
         </div>
     </section>
 
-    <!-- 2-Column Operational Grid -->
     <div class="dash-main-grid">
-        <!-- LEFT COLUMN: Recent Activity & Screenings -->
+
         <div class="dash-col-left">
 
-            <!-- Recent Completed Transactions -->
             <section class="card dash-card" aria-label="Recent Transactions">
                 <div class="dash-card-header">
                     <div>
@@ -242,7 +221,7 @@ $activeMoviesCount= (int)($kpis['active_movies_count'] ?? 30);
                                     <td colspan="6" class="empty-note">No recent transactions recorded yet.</td>
                                 </tr>
                             <?php else: ?>
-                                <?php foreach ($recentOrders as $order): 
+                                <?php foreach ($recentOrders as $order):
                                     $ordNum = (string)$order['order_number'];
                                     $tTotal = (float)$order['total_amount'];
                                     $tCount = (int)($order['ticket_count'] ?? 0);
@@ -276,7 +255,7 @@ $activeMoviesCount= (int)($kpis['active_movies_count'] ?? 30);
                                                 <?php if (($order['order_status'] ?? '') === 'Refunded'): ?>
                                                     <span class="badge badge-refunded" title="Order refunded, tickets cancelled and seats released">Refunded</span>
                                                 <?php else: ?>
-                                                    <button type="button" 
+                                                    <button type="button"
                                                             class="btn btn-sm btn-dash-refund"
                                                             data-order="<?= $e($ordNum); ?>"
                                                             data-amount="<?= $peso . $fmt($tTotal); ?>"
@@ -299,7 +278,6 @@ $activeMoviesCount= (int)($kpis['active_movies_count'] ?? 30);
                 </div>
             </section>
 
-            <!-- Today's Screening Schedules -->
             <section class="card dash-card" aria-label="Today Screenings">
                 <div class="dash-card-header">
                     <div>
@@ -319,7 +297,7 @@ $activeMoviesCount= (int)($kpis['active_movies_count'] ?? 30);
                     </div>
                 <?php else: ?>
                     <div class="dash-screenings-grid">
-                        <?php foreach ($todayScreenings as $s): 
+                        <?php foreach ($todayScreenings as $s):
                             $sId = (int)$s['screening_id'];
                             $sold = (int)($s['sold_seats_count'] ?? 0);
                             $sTime = !empty($s['start_time']) ? date('g:i A', strtotime($s['start_time'])) : '';
@@ -352,10 +330,8 @@ $activeMoviesCount= (int)($kpis['active_movies_count'] ?? 30);
 
         </div>
 
-        <!-- RIGHT COLUMN: Inventory Watchlist & Analytics Hub -->
         <div class="dash-col-right">
 
-            <!-- Critical Inventory Watchlist Widget -->
             <section class="card dash-card" aria-label="Inventory Watchlist">
                 <div class="dash-card-header">
                     <div>
@@ -375,7 +351,7 @@ $activeMoviesCount= (int)($kpis['active_movies_count'] ?? 30);
                     </div>
                 <?php else: ?>
                     <div class="dash-stock-list">
-                        <?php foreach (array_slice($lowStockAlerts, 0, 4) as $item): 
+                        <?php foreach (array_slice($lowStockAlerts, 0, 4) as $item):
                             $cur = (int)$item['current_stock'];
                             $min = (int)$item['reorder_level'];
                             $isOut = ($cur <= 0);
@@ -392,7 +368,7 @@ $activeMoviesCount= (int)($kpis['active_movies_count'] ?? 30);
                                     <div class="dash-stock-meta-row">
                                         <span><?= $e($item['category']); ?> &bull; Threshold: <?= $min; ?></span>
                                     </div>
-                                    <!-- Visual Stock Progress Bar -->
+
                                     <div class="stock-meter-wrap">
                                         <div class="stock-meter-bar <?= $isOut ? 'bar-out' : 'bar-warn'; ?>" style="width: <?= max(8, $pct); ?>%;"></div>
                                     </div>
@@ -408,7 +384,6 @@ $activeMoviesCount= (int)($kpis['active_movies_count'] ?? 30);
                 <?php endif; ?>
             </section>
 
-            <!-- Reports & Analytics Portal Links -->
             <section class="card dash-card" aria-label="Financial and Operations Analytics">
                 <div class="dash-card-header">
                     <div>
@@ -480,7 +455,6 @@ $activeMoviesCount= (int)($kpis['active_movies_count'] ?? 30);
 
 </div>
 
-<!-- Modal: Confirm Ticket & Order Refund (FR10, FR16) -->
 <dialog class="sched-dialog" id="refundOrderModal" aria-labelledby="refundModalTitle">
     <form method="POST" action="<?= BASE_URL; ?>/checkout/refund" id="refundOrderForm">
         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(\Core\Auth::csrfToken(), ENT_QUOTES, 'UTF-8'); ?>">

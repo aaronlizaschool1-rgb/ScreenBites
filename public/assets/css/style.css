@@ -1,6 +1,3 @@
-/* =========================================================
-   Base app layout (layouts/header.php, sidebar.php, footer.php)
-   ========================================================= */
 :root {
   --c-indigo: #2b2d7a;
   --c-indigo-dark: #1d1f58;
@@ -32,7 +29,6 @@
   padding: .5rem .9rem; border-radius: 6px; font-weight: 600; text-decoration: none;
 }
 
-/* ---- Shell ---- */
 .app-shell {
   display: grid;
   grid-template-columns: 264px minmax(0, 1fr);
@@ -47,7 +43,6 @@
   font-size: .82rem;
 }
 
-/* ---- Sidebar ---- */
 .app-sidebar {
   position: sticky; top: 0;
   height: 100vh;
@@ -310,7 +305,6 @@
   color: #ff8591;
 }
 
-/* ---- Mobile top bar + drawer ---- */
 .app-topbar {
   display: none;
   position: sticky; top: 0; z-index: 30;
@@ -367,7 +361,6 @@
   .app-sidebar, .flash { transition: none !important; }
 }
 
-/* ---- Flash messages ---- */
 .flash {
   display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;
   margin-bottom: 1.1rem; padding: .75rem 1rem;
@@ -380,7 +373,6 @@
 .flash.is-leaving { opacity: 0; }
 .flash-close { padding: 0 .25rem; background: none; border: 0; color: inherit; font-size: 1.25rem; line-height: 1; cursor: pointer; }
 
-/* ---- Shared helpers for the other views ---- */
 .page-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: .75rem 1rem; margin-bottom: 1.25rem; }
 .page-head h1 { margin: 0; font-family: "Bricolage Grotesque", "Figtree", system-ui, sans-serif; font-size: 1.6rem; letter-spacing: -.01em; }
 .page-head p { margin: .2rem 0 0; color: var(--c-muted); }
@@ -396,14 +388,6 @@
 .btn-ghost:hover { background: rgba(43, 45, 122, .08); }
 .btn:focus-visible { outline: 3px solid var(--c-gold); outline-offset: 2px; }
 
-
-
-
-
-
-/* =========================================================
-   Audit Log Viewer (app/views/audit/index.php) - Security Center
-   ========================================================= */
 .sb-audit-container {
   display: flex;
   flex-direction: column;
@@ -515,7 +499,6 @@
   line-height: 1.45;
 }
 
-/* Filter Card */
 .audit-filter-card {
   padding: 1.25rem 1.4rem;
   background: #ffffff;
@@ -614,7 +597,6 @@
   border-color: var(--c-line);
 }
 
-/* Results Card & Table */
 .audit-results-card {
   padding: 1.25rem 1.4rem;
   background: #ffffff;
@@ -773,7 +755,6 @@
 .audit-empty-view svg { margin-bottom: 0.75rem; color: #94a3b8; }
 .audit-empty-view strong { display: block; color: var(--c-ink); font-size: 1rem; margin-bottom: 0.25rem; }
 
-/* Pager */
 .audit-pagination-bar {
   margin-top: 1.25rem;
   padding-top: 0.9rem;
@@ -817,9 +798,6 @@
 }
 .pager-ellipsis { padding: 0 0.3rem; color: var(--c-muted); }
 
-/* =========================================================
-   Login page (app/views/auth/login.php): Cinema Admission Ticket
-   ========================================================= */
 .login-page {
   --cinema-navy: #0e1124;
   --cinema-dark: #080a16;
@@ -846,7 +824,6 @@
   overflow-x: hidden;
 }
 
-/* Netflix-Style Low-Opacity Movie Poster Backdrop */
 .netflix-poster-backdrop {
   position: fixed;
   inset: 0;
@@ -894,7 +871,6 @@
   display: block;
 }
 
-/* Layered Netflix Cinema Overlays (Deep Vignette + Gradients) */
 .netflix-overlay-radial {
   position: absolute;
   inset: 0;
@@ -918,7 +894,6 @@
   filter: blur(55px);
 }
 
-/* Ticket Container & 3D Card */
 .ticket-container {
   position: relative;
   z-index: 1;
@@ -943,7 +918,7 @@
   position: relative;
   width: 100%;
   border-radius: 18px;
-  box-shadow: 
+  box-shadow:
     0 25px 60px -10px rgba(0, 0, 0, 0.65),
     0 0 0 1px rgba(255, 255, 255, 0.08),
     0 10px 30px rgba(217, 58, 74, 0.15);
@@ -951,13 +926,12 @@
 }
 .ticket:hover {
   transform: translateY(-2px);
-  box-shadow: 
+  box-shadow:
     0 30px 70px -10px rgba(0, 0, 0, 0.75),
     0 0 0 1px rgba(255, 255, 255, 0.12),
     0 12px 35px rgba(217, 58, 74, 0.22);
 }
 
-/* Top Section: Crimson Velvet Stub */
 .ticket-top {
   position: relative;
   background: linear-gradient(145deg, #d93a4a 0%, #b32535 55%, #821522 100%);
@@ -968,7 +942,6 @@
   overflow: hidden;
 }
 
-/* Marquee Lightbulbs */
 .ticket-marquee {
   position: relative;
   height: 14px;
@@ -995,7 +968,6 @@
   100% { opacity: 1; filter: drop-shadow(0 0 6px var(--cinema-gold)); }
 }
 
-/* Header Content */
 .ticket-header-content {
   margin-bottom: 1.1rem;
 }
@@ -1060,7 +1032,6 @@
   line-height: 1.35;
 }
 
-/* Metadata Strip (GATE, HALL, ROW, SEAT) */
 .ticket-metadata-strip {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -1096,7 +1067,6 @@
   letter-spacing: 0.05em;
 }
 
-/* Ticket Perforation & Notches */
 .ticket-perf {
   position: relative;
   height: 28px;
@@ -1128,7 +1098,6 @@
   right: -14px;
 }
 
-/* Ticket Body & Inputs */
 .ticket-body {
   background: #ffffff;
   padding: 1.25rem 1.75rem 1.75rem;
@@ -1140,7 +1109,6 @@
   flex-direction: column;
 }
 
-/* Error message */
 .login-error {
   display: flex;
   align-items: center;
@@ -1162,7 +1130,6 @@
   color: var(--cinema-crimson);
 }
 
-/* Form Fields with Inline Icons */
 .login-field {
   display: flex;
   flex-direction: column;
@@ -1221,7 +1188,6 @@
   color: var(--cinema-crimson);
 }
 
-/* Password Toggle */
 .login-pw input {
   padding-right: 2.85rem;
 }
@@ -1250,7 +1216,6 @@
   outline-offset: 1px;
 }
 
-/* Submit Button */
 .login-btn {
   width: 100%;
   margin-top: 0.35rem;
@@ -1297,7 +1262,6 @@
   100% { transform: rotate(360deg); }
 }
 
-/* Quick Fast Login Demo Chips */
 .fast-login-tray {
   margin-top: 1.35rem;
   padding-top: 1.1rem;
@@ -1352,7 +1316,6 @@
   font-size: 0.85rem;
 }
 
-/* Realistic Barcode Footer */
 .ticket-barcode-footer {
   margin-top: 1.4rem;
   padding-top: 1rem;
@@ -1419,33 +1382,30 @@
   .ticket { transition: none; }
 }
 
-.app-shell { 
-  display: grid !important; grid-template-columns: 264px minmax(0, 1fr) !important; 
+.app-shell {
+  display: grid !important; grid-template-columns: 264px minmax(0, 1fr) !important;
 }
 
 .app-sidebar {
    position: sticky !important; top: 0 !important; height: 100vh !important;
    }
 
-@media (max-width: 900px) { 
-  .app-shell { 
-    display: block !important; 
+@media (max-width: 900px) {
+  .app-shell {
+    display: block !important;
   }
  }
 
-/* =========================================================
-   Reports and charts (views/reports/*.php, js/chart-analytics.js)
-   ========================================================= */
-.report-filters { 
+.report-filters {
   display:flex;
-  flex-wrap:wrap; 
-  gap:.75rem; 
-  align-items:flex-end; 
-  margin-bottom:1.25rem; 
-  padding:1rem; 
-  background:var(--c-surface); 
-  border:1px solid var(--c-line); 
-  border-radius:10px; 
+  flex-wrap:wrap;
+  gap:.75rem;
+  align-items:flex-end;
+  margin-bottom:1.25rem;
+  padding:1rem;
+  background:var(--c-surface);
+  border:1px solid var(--c-line);
+  border-radius:10px;
 }
 .report-filters .field { display:flex; flex-direction:column; gap:.25rem; min-width:150px; }
 .report-filters label { font-size:.8rem; font-weight:600; color:var(--c-muted); }
@@ -1494,9 +1454,6 @@
 .link-card strong { display:block; }
 .link-card span { font-size:.88rem; color:var(--c-muted); }
 
-/* =========================================================
-   Screening schedule (views/ticketing/schedule.php)
-   ========================================================= */
 .sched-spacer { margin-left: auto; }
 .sched-hall { display: flex; align-items: baseline; gap: .6rem; margin: 1.5rem 0 .75rem; font-size: 1.05rem; }
 .sched-hall small { font-weight: 400; color: var(--c-muted); }
@@ -1529,10 +1486,6 @@
 
 @media (max-width: 420px) { .sched-list { grid-template-columns: 1fr; } .sched-row { grid-template-columns: 1fr; } }
 
-
-/* =========================================================
-   Concessions POS & Split Checkout (views/concessions/pos.php)
-   ========================================================= */
 .pos-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(360px, 430px);
@@ -1747,7 +1700,6 @@
   text-align: center;
 }
 
-/* ---- POS Cart Sidebar ---- */
 .pos-sched-link {
   display: inline-flex;
   align-items: center;
@@ -1858,7 +1810,6 @@
   50% { opacity: .5; }
 }
 
-/* Held Cinema Tickets In Cart */
 .cart-tickets-list {
   display: flex;
   flex-direction: column;
@@ -1920,7 +1871,6 @@
   color: var(--c-red);
 }
 
-/* Concessions Cart List */
 .cart-items-list {
   display: flex;
   flex-direction: column;
@@ -2028,7 +1978,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Modern Friendly Empty State */
 .empty-cart-state {
   display: flex;
   flex-direction: column;
@@ -2065,7 +2014,6 @@
   line-height: 1.4;
 }
 
-/* Cart Breakdown */
 .cart-breakdown {
   display: flex;
   flex-direction: column;
@@ -2101,7 +2049,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Payment Section */
 .cart-payment-section {
   display: flex;
   flex-direction: column;
@@ -2385,7 +2332,6 @@
   font-weight: 600;
 }
 
-/* Success Modal */
 .success-modal-content {
   text-align: center;
   padding: .5rem 0;
@@ -2425,9 +2371,6 @@
   padding: .25rem 0;
 }
 
-/* =========================================================
-   Concessions Inventory & Stock Audits (views/concessions/inventory.php)
-   ========================================================= */
 .inv-alert-card {
   border-left: 5px solid var(--c-red);
   background: #fff8f8;
@@ -2575,9 +2518,6 @@
   color: #9b1c1c;
 }
 
-/* =========================================================
-   Combos & Bundles Builder (views/concessions/bundles.php)
-   ========================================================= */
 .bundle-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -2745,9 +2685,6 @@
   padding: .15rem 0;
 }
 
-/* =========================================================
-   Utility Expense Ledger (views/expenses/utilities.php)
-   ========================================================= */
 .text-electricity { color: #d97706; }
 .text-water { color: #0284c7; }
 
@@ -2806,7 +2743,6 @@
   font-size: .88rem;
 }
 
-/* Modal Summary Box (Used by Refund & Utilities Dialogs) */
 .bill-summary-box {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
@@ -2848,7 +2784,6 @@
   color: #0f172a;
 }
 
-/* Order Refund Badges and Buttons */
 .badge-refunded {
   display: inline-block;
   padding: 0.2rem 0.55rem;
@@ -2879,19 +2814,12 @@
   color: #b91c1c;
 }
 
-
-/* =========================================================
-   Command Center Dashboard & Visual UI Enhancements
-   (views/dashboard/index.php)
-   ========================================================= */
-
 .sb-dash-wrapper {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 }
 
-/* ---- Hero Banner ---- */
 .dash-hero {
   background: linear-gradient(135deg, #0e1037 0%, #1a1c58 50%, #282b7c 100%);
   color: #ffffff;
@@ -3055,7 +2983,6 @@
   transform: translateY(-2px);
 }
 
-/* ---- KPI Cards Grid ---- */
 .dash-kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -3168,7 +3095,6 @@
   text-overflow: ellipsis;
 }
 
-/* ---- Quick Launchpad ---- */
 .dash-section {
   display: flex;
   flex-direction: column;
@@ -3296,7 +3222,6 @@
   transform: translateX(4px);
 }
 
-/* ---- 2-Column Main Dashboard Grid ---- */
 .dash-main-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.65fr) minmax(320px, 1fr);
@@ -3365,7 +3290,6 @@
   color: var(--c-indigo);
 }
 
-/* Recent Orders Table */
 .dash-order-row td {
   padding: 0.85rem 0.75rem;
   vertical-align: middle;
@@ -3456,7 +3380,6 @@
   box-shadow: 0 3px 10px rgba(43, 45, 122, 0.3);
 }
 
-/* Screening Schedule Cards */
 .dash-screenings-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -3552,7 +3475,6 @@
   gap: 0.75rem;
 }
 
-/* Inventory Watchlist */
 .dash-stock-healthy {
   display: flex;
   align-items: center;
@@ -3674,7 +3596,6 @@
   border-color: var(--c-indigo);
 }
 
-/* Analytics Portals */
 .dash-portal-links {
   display: flex;
   flex-direction: column;
@@ -3750,11 +3671,6 @@
   transform: translateX(3px);
 }
 
-
-/* =========================================================
-   SM Cinema-Inspired UI & Poster Showcase (views/movies/index.php)
-   ========================================================= */
-
 .sm-cinema-page {
   display: flex;
   flex-direction: column;
@@ -3801,7 +3717,6 @@
   transform: translateY(-1px);
 }
 
-/* ---- Tabs Bar (Now Showing only - No Coming Soon) ---- */
 .sm-tabs-bar {
   display: flex;
   justify-content: space-between;
@@ -3833,7 +3748,6 @@
   gap: .5rem;
 }
 
-/* The signature SM Cinema blue underline indicator */
 .sm-tab-item.active::after {
   content: "";
   position: absolute;
@@ -3855,7 +3769,6 @@
   font-weight: 700;
 }
 
-/* Filter controls */
 .sm-filter-bar {
   display: flex;
   align-items: center;
@@ -3910,7 +3823,6 @@
   color: #ffffff;
 }
 
-/* ---- Poster Grid (SM Cinema 2:3 Aspect Ratio) ---- */
 .sm-cinema-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -3930,7 +3842,6 @@
   transition: transform .25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* ---- Poster Frame ---- */
 .sm-poster-wrap {
   position: relative;
   width: 100%;
@@ -3961,7 +3872,6 @@
   transform: scale(1.05);
 }
 
-/* Format Ribbon (Top Left) */
 .sm-format-ribbon {
   position: absolute;
   top: 10px;
@@ -3980,7 +3890,6 @@
   letter-spacing: .04em;
 }
 
-/* MTRCB Rating Badge (Top Right) */
 .sm-rating-badge {
   position: absolute;
   top: 10px;
@@ -4003,7 +3912,6 @@
 .sm-rating-badge.rating-r16 { border-color: #ef4444; color: #ef4444; }
 .sm-rating-badge.rating-r18 { border-color: #dc2626; color: #ffffff; background: #dc2626; }
 
-/* Bookmark Icon */
 .sm-bookmark-btn {
   position: absolute;
   bottom: 12px;
@@ -4028,7 +3936,6 @@
   transform: scale(1.1);
 }
 
-/* ---- Stylized Fallback Poster Artwork ---- */
 .sm-poster-art {
   width: 100%;
   height: 100%;
@@ -4078,7 +3985,6 @@
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
 }
 
-/* Cinema Movie Art Themes */
 .theme-avatar {
   background: linear-gradient(180deg, #022b42 0%, #054c73 50%, #001f33 100%);
 }
@@ -4095,7 +4001,6 @@
   background: linear-gradient(180deg, #0d1b54 0%, #1a3db5 50%, #071033 100%);
 }
 
-/* Hover Overlay */
 .sm-poster-overlay {
   position: absolute;
   inset: 0;
@@ -4169,7 +4074,6 @@
   background: #004494;
 }
 
-/* ---- Details Below Poster (SM Cinema Signature) ---- */
 .sm-card-details {
   padding: .75rem 0 .25rem;
   display: flex;
@@ -4196,7 +4100,6 @@
   white-space: nowrap;
 }
 
-/* Blue rating badge pill next to title (as seen in SM Cinema reference: 2 Valid IDs [PG]) */
 .sm-inline-rating {
   flex-shrink: 0;
   display: inline-block;
@@ -4276,7 +4179,6 @@
   text-decoration: underline;
 }
 
-/* ---- Trailer Interactive Modal ---- */
 .sm-trailer-modal {
   width: min(840px, calc(100vw - 2rem));
   max-width: 840px;
@@ -4455,8 +4357,6 @@
   line-height: 1.6;
 }
 
-
-/* ---- Schedules UI Polish ---- */
 .sched-card {
   transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
 }

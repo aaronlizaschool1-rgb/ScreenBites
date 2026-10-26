@@ -1,19 +1,4 @@
 <?php
-/**
- * ScreenBites: Utility Overhead Expense Logging View (FR11, FR12, FR13)
- * 
- * Historical ledger and entry interface for cinema operational utilities:
- * Electric bills (projectors, HVAC, sound) and Water bills (restrooms, concessions).
- * Strictly restricted to Administrators (FR13).
- * 
- * @var array<int, array<string, mixed>> $expenses
- * @var int                              $selectedYear
- * @var string|null                      $selectedType
- * @var array<int, string>               $utilityTypes
- * @var string                           $csrfToken
- * @var string|null                      $flashSuccess
- * @var string|null                      $flashError
- */
 
 $e = fn($v): string => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
 $peso = "\u{20B1}";
@@ -24,7 +9,6 @@ $selectedYear = (int)($selectedYear ?? date('Y'));
 $selectedType = !empty($selectedType) ? (string)$selectedType : null;
 $utilityTypes = is_array($utilityTypes ?? null) ? $utilityTypes : ['Electricity', 'Water'];
 
-// Calculate ledger aggregates
 $totalElectricity = 0.00;
 $totalWater       = 0.00;
 $invoiceCount     = count($expenses);
@@ -58,7 +42,6 @@ $monthNames = [
     </div>
 </div>
 
-<!-- KPI Cards -->
 <div class="kpi-grid">
     <div class="kpi is-key">
         <p class="kpi-label">Total Utilities (<?= $selectedYear; ?>)</p>
@@ -82,15 +65,14 @@ $monthNames = [
     </div>
 </div>
 
-<!-- Filter Toolbar -->
 <section class="card" style="margin-bottom: 1.25rem;">
     <form method="GET" action="<?= BASE_URL; ?>/expenses/utilities" class="report-filters" style="margin-bottom: 0; padding: 0; border: none;">
         <div class="field">
             <label for="filterYear">Billing Year</label>
             <select id="filterYear" name="year" onchange="this.form.submit()">
-                <?php 
+                <?php
                 $currentYear = (int)date('Y');
-                for ($y = $currentYear + 1; $y >= 2022; $y--): 
+                for ($y = $currentYear + 1; $y >= 2022; $y--):
                 ?>
                     <option value="<?= $y; ?>" <?= $y === $selectedYear ? 'selected' : ''; ?>>
                         <?= $y; ?>
@@ -120,7 +102,6 @@ $monthNames = [
     </form>
 </section>
 
-<!-- Utility Expense Ledger Table (FR11) -->
 <section class="card" aria-label="Utility Expense Ledger">
     <div class="table-scroll">
         <table class="ledger utility-table" id="utilityLedgerTable">
@@ -144,7 +125,7 @@ $monthNames = [
                         </td>
                     </tr>
                 <?php else: ?>
-                    <?php foreach ($expenses as $row): 
+                    <?php foreach ($expenses as $row):
                         $eId    = (int)$row['expense_id'];
                         $type   = (string)$row['utility_type'];
                         $month  = (int)$row['billing_month'];
@@ -187,7 +168,7 @@ $monthNames = [
                                 <small><?= $e($row['recorded_by_name'] ?? 'Admin'); ?></small>
                             </td>
                             <td style="text-align: right;">
-                                <button type="button" 
+                                <button type="button"
                                         class="btn btn-sm btn-ghost btn-edit-expense"
                                         data-type="<?= $e($type); ?>"
                                         data-month="<?= $month; ?>"
@@ -207,7 +188,6 @@ $monthNames = [
     </div>
 </section>
 
-<!-- Modal: Log / Update Utility Expense Entry (FR11, FR16) -->
 <dialog class="sched-dialog" id="utilityExpenseModal" aria-labelledby="modalExpenseTitle">
     <form method="POST" action="<?= BASE_URL; ?>/expenses/utilities/store" id="expenseEntryForm">
         <input type="hidden" name="csrf_token" value="<?= $e($csrfToken); ?>">
@@ -225,12 +205,12 @@ $monthNames = [
             </div>
             <div class="sched-field">
                 <label for="modalBillingYear">Billing Year *</label>
-                <input type="number" 
-                       id="modalBillingYear" 
-                       name="billing_year" 
-                       min="2020" 
-                       max="2035" 
-                       value="<?= $selectedYear; ?>" 
+                <input type="number"
+                       id="modalBillingYear"
+                       name="billing_year"
+                       min="2020"
+                       max="2035"
+                       value="<?= $selectedYear; ?>"
                        required>
             </div>
         </div>
@@ -239,9 +219,9 @@ $monthNames = [
             <div class="sched-field">
                 <label for="modalBillingMonth">Billing Month *</label>
                 <select id="modalBillingMonth" name="billing_month" required>
-                    <?php 
+                    <?php
                     $curMonth = (int)date('n');
-                    foreach ($monthNames as $mNum => $mLabel): 
+                    foreach ($monthNames as $mNum => $mLabel):
                     ?>
                         <option value="<?= $mNum; ?>" <?= $mNum === $curMonth ? 'selected' : ''; ?>>
                             <?= $mLabel; ?>
@@ -251,30 +231,30 @@ $monthNames = [
             </div>
             <div class="sched-field">
                 <label for="modalBillAmount">Bill Amount (<?= $peso; ?>) *</label>
-                <input type="number" 
-                       id="modalBillAmount" 
-                       name="bill_amount" 
-                       step="0.01" 
-                       min="0.01" 
-                       required 
+                <input type="number"
+                       id="modalBillAmount"
+                       name="bill_amount"
+                       step="0.01"
+                       min="0.01"
+                       required
                        placeholder="e.g. 24500.00">
             </div>
         </div>
 
         <div class="sched-field">
             <label for="modalPaymentDate">Payment / Settlement Date *</label>
-            <input type="date" 
-                   id="modalPaymentDate" 
-                   name="payment_date" 
-                   value="<?= date('Y-m-d'); ?>" 
+            <input type="date"
+                   id="modalPaymentDate"
+                   name="payment_date"
+                   value="<?= date('Y-m-d'); ?>"
                    required>
         </div>
 
         <div class="sched-field">
             <label for="modalNotes">Operational Allocation Notes</label>
-            <textarea id="modalNotes" 
-                      name="notes" 
-                      rows="3" 
+            <textarea id="modalNotes"
+                      name="notes"
+                      rows="3"
                       placeholder="e.g. Meralco Cinema 1 &amp; 2 Laser Projectors and Central HVAC draw"></textarea>
         </div>
 

@@ -1,12 +1,4 @@
 <?php
-/**
- * ScreenBites: Booking Controller
- * 
- * Handles interactive seat matrix display, real-time AJAX locks,
- * dynamic pricing computations, and seat release endpoints (FR2, FR3, FR4).
- * 
- * @author Aaron Louis F. Macapagal
- */
 
 declare(strict_types=1);
 
@@ -26,7 +18,7 @@ class BookingController extends Controller
 
     public function __construct()
     {
-        // Enforce RBAC: Booking interface is available to Admin and Ticketing Staff
+
         Auth::requireRole([ROLE_ADMIN, ROLE_TICKETING]);
 
         $this->screeningModel = new Screening();
@@ -34,12 +26,6 @@ class BookingController extends Controller
         $this->seatHoldModel  = new SeatHold();
     }
 
-    /**
-     * Render the interactive cinema seat matrix view (FR2, FR3)
-     * Handles both HTML view rendering and JSON data requests for AJAX polling
-     * 
-     * @param string $id Screening ID
-     */
     public function seatMatrix(string $id): void
     {
         $screeningId = (int)$id;
@@ -59,7 +45,6 @@ class BookingController extends Controller
             (float)$screening['base_price']
         );
 
-        // If AJAX request or JSON header is provided, return structured data for real-time grid polling
         if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
             $this->json([
                 'success'      => true,
@@ -70,7 +55,6 @@ class BookingController extends Controller
             return;
         }
 
-        // Standard page view render: maps to app/views/ticketing/seat_matrix.php
         $this->view('ticketing/seat_matrix', [
             'screening'    => $screening,
             'seats'        => $seats,
@@ -80,9 +64,6 @@ class BookingController extends Controller
         ]);
     }
 
-    /**
-     * AJAX Endpoint: Temporarily hold/lock a seat (FR4)
-     */
     public function holdSeat(): void
     {
         $body = $this->getJsonBody();
@@ -115,13 +96,10 @@ class BookingController extends Controller
             SEAT_HOLD_DURATION_SECONDS
         );
 
-        $status = $result['success'] ? 200 : 409; // 409 Conflict if already locked
+        $status = $result['success'] ? 200 : 409;
         $this->json($result, $status);
     }
 
-    /**
-     * AJAX Endpoint: Release a held seat (FR4)
-     */
     public function releaseSeat(): void
     {
         $body = $this->getJsonBody();

@@ -1,11 +1,3 @@
-/**
- * ScreenBites: Point-of-Sale & Cart Management (FR8, FR9)
- * 
- * Handles real-time catalog filtering, dynamic cart calculation,
- * cinema ticket hold integration, split-tender checkout, and receipt routing.
- * 
- * @author John Rey D. Luzada
- */
 (function () {
     'use strict';
 
@@ -18,11 +10,10 @@
 
     var TICKET_CART_KEY = 'screenbites.ticketCart';
 
-    // State
     var cart = {
-        tickets: [],     // [{screening_id, seat_id, price, seat_label, tier_name, movie_title, hall_name, start_time, held_until}]
-        concessions: [], // [{type: 'product'|'combo', id: int, name: string, price: float, quantity: int, maxStock: int}]
-        payments: []     // [{method: string, amount: float, reference: string|null}]
+        tickets: [],
+        concessions: [],
+        payments: []
     };
 
     var activeCategory = 'all';
@@ -30,7 +21,6 @@
     var isSplitMode = false;
     var ticketTimerInterval = null;
 
-    // DOM Elements
     var els = {
         search: document.getElementById('posSearch'),
         tabs: document.querySelectorAll('.pos-tab'),
@@ -92,7 +82,6 @@
         nextSaleBtn: document.getElementById('nextSaleBtn')
     };
 
-    // Number formatting helper
     function fmt(n) {
         return Number(n || 0).toLocaleString('en-PH', {
             minimumFractionDigits: 2,
@@ -104,7 +93,6 @@
         return (cfg.currencySymbol || '\u20B1') + fmt(n);
     }
 
-    // Notice message helper
     function showMsg(text, type) {
         if (!els.checkoutMsg) return;
         els.checkoutMsg.className = 'checkout-msg ' + (type ? 'is-' + type : '');
@@ -120,9 +108,6 @@
         els.checkoutMsg.textContent = '';
     }
 
-    /* -------------------------------------------------------------
-       1. INITIALIZE & LOAD HELD TICKETS
-       ------------------------------------------------------------- */
     function loadHeldTickets() {
         try {
             var raw = sessionStorage.getItem(TICKET_CART_KEY);
@@ -130,7 +115,7 @@
             var parsed = JSON.parse(raw);
             if (parsed && Array.isArray(parsed.tickets)) {
                 var now = Date.now();
-                // Filter out any tickets whose hold has already expired
+
                 cart.tickets = parsed.tickets.filter(function (t) {
                     return !t.held_until || t.held_until > now;
                 });
@@ -172,7 +157,7 @@
         var remainingSecs = Math.max(0, Math.floor((earliestExpiry - now) / 1000));
         if (remainingSecs <= 0) {
             if (els.ticketTimer) els.ticketTimer.textContent = 'Expired';
-            // Auto-remove expired tickets
+
             cart.tickets = [];
             saveHeldTickets();
             renderCart();
@@ -194,15 +179,11 @@
         }
     }
 
-    /* -------------------------------------------------------------
-       2. CATALOG SEARCH & CATEGORY FILTERING
-       ------------------------------------------------------------- */
     function filterCatalog() {
         var query = (els.search ? els.search.value : '').trim().toLowerCase();
         var visibleCombos = 0;
         var visibleProducts = 0;
 
-        // Combos filter
         els.comboCards.forEach(function (card) {
             var cat = card.getAttribute('data-category');
             var name = card.getAttribute('data-name') || '';
@@ -217,7 +198,6 @@
             }
         });
 
-        // Products filter
         els.productCards.forEach(function (card) {
             var cat = card.getAttribute('data-category');
             var name = card.getAttribute('data-name') || '';
@@ -240,7 +220,6 @@
         }
     }
 
-    // Attach search and tabs
     if (els.search) {
         els.search.addEventListener('input', filterCatalog);
     }
@@ -258,9 +237,6 @@
         });
     });
 
-    /* -------------------------------------------------------------
-       3. ADDING ITEMS TO CONCESSIONS CART
-       ------------------------------------------------------------- */
     document.addEventListener('click', function (e) {
         var btn = e.target.closest('[data-action="add-product"], [data-action="add-combo"]');
         if (!btn || btn.disabled) return;
@@ -309,9 +285,6 @@
         renderCart();
     }
 
-    /* -------------------------------------------------------------
-       4. CART RENDERING & TOTALS CALCULATION
-       ------------------------------------------------------------- */
     function calculateTotals() {
         var ticketsTotal = 0;
         cart.tickets.forEach(function (t) {
@@ -350,7 +323,6 @@
     function renderCart() {
         var totals = calculateTotals();
 
-        // 1. Order Type Badge
         if (els.orderTypeBadge) {
             if (cart.tickets.length && cart.concessions.length) {
                 els.orderTypeBadge.textContent = 'Cinema + Snackbar Bundle';
@@ -361,7 +333,6 @@
             }
         }
 
-        // 2. Render Tickets
         if (cart.tickets.length > 0) {
             if (els.ticketsSection) els.ticketsSection.style.display = '';
             if (els.rowTicketsSubtotal) els.rowTicketsSubtotal.style.display = 'flex';
@@ -387,7 +358,6 @@
             if (els.rowTicketsSubtotal) els.rowTicketsSubtotal.style.display = 'none';
         }
 
-        // 3. Render Concessions
         if (cart.concessions.length > 0) {
             if (els.cartEmptyMsg) els.cartEmptyMsg.style.display = 'none';
             if (els.cartConcessionsList) {
@@ -421,7 +391,6 @@
             }
         }
 
-        // 4. Update Financial Totals
         if (els.ticketsSubtotal) els.ticketsSubtotal.textContent = peso(totals.ticketsTotal);
         if (els.concessionsSubtotal) els.concessionsSubtotal.textContent = peso(totals.concessionsTotal);
         if (els.vatExclusiveSubtotal) els.vatExclusiveSubtotal.textContent = peso(totals.vatExclusive);
@@ -461,9 +430,8 @@
             return;
         }
 
-        // 5. Render Payment UI depending on mode
         if (!isSplitMode) {
-            // Standard 1-Click Payment Mode (No need to add tender first)
+
             if (els.splitToggleBtn) els.splitToggleBtn.classList.remove('active');
             if (els.splitToggleText) els.splitToggleText.textContent = '⇄ Split Payment';
             if (els.addTenderBtn) els.addTenderBtn.style.display = 'none';
@@ -512,7 +480,7 @@
                     }
                 }
             } else {
-                // E-Wallet or Card
+
                 if (els.cashTenderField) els.cashTenderField.style.display = 'none';
                 if (els.quickCashRow) els.quickCashRow.style.display = 'none';
                 if (els.referenceField) els.referenceField.style.display = 'block';
@@ -531,7 +499,7 @@
                 }
             }
         } else {
-            // Split Payment Mode (FR9)
+
             if (els.splitToggleBtn) els.splitToggleBtn.classList.add('active');
             if (els.splitToggleText) els.splitToggleText.textContent = '✓ Standard Payment';
             if (els.addTenderBtn) els.addTenderBtn.style.display = 'block';
@@ -564,9 +532,6 @@
         }
     }
 
-    /* -------------------------------------------------------------
-       5. SPLIT PAYMENT RENDERING & HANDLING
-       ------------------------------------------------------------- */
     function renderSplitTendersList(totals) {
         if (!els.tendersList) return;
 
@@ -607,7 +572,6 @@
         }
     }
 
-    // Toggle split mode
     if (els.splitToggleBtn) {
         els.splitToggleBtn.addEventListener('click', function () {
             isSplitMode = !isSplitMode;
@@ -619,7 +583,6 @@
         });
     }
 
-    // Tender amount real-time change calculation
     if (els.tenderAmount) {
         els.tenderAmount.addEventListener('input', function () {
             if (!isSplitMode) {
@@ -628,7 +591,6 @@
         });
     }
 
-    // Payment method selector
     els.methodBtns.forEach(function (btn) {
         btn.addEventListener('click', function () {
             els.methodBtns.forEach(function (b) { b.classList.remove('active'); });
@@ -639,7 +601,6 @@
         });
     });
 
-    // Quick cash shortcuts
     if (els.quickCashRow) {
         els.quickCashRow.addEventListener('click', function (e) {
             var btn = e.target.closest('.quick-cash-btn');
@@ -661,7 +622,6 @@
         });
     }
 
-    // Add Tender button (Split Mode)
     if (els.addTenderBtn) {
         els.addTenderBtn.addEventListener('click', function () {
             var amount = parseFloat(els.tenderAmount.value);
@@ -691,7 +651,6 @@
         });
     }
 
-    // Remove tender
     if (els.tendersList) {
         els.tendersList.addEventListener('click', function (e) {
             var btn = e.target.closest('.btn-remove-tender');
@@ -704,9 +663,6 @@
         });
     }
 
-    /* -------------------------------------------------------------
-       6. CART QUANTITY & ITEM REMOVAL
-       ------------------------------------------------------------- */
     if (els.cartConcessionsList) {
         els.cartConcessionsList.addEventListener('click', function (e) {
             var target = e.target;
@@ -762,7 +718,6 @@
         });
     }
 
-    // Remove cinema ticket from cart
     if (els.cartTicketsList) {
         els.cartTicketsList.addEventListener('click', function (e) {
             var btn = e.target.closest('.btn-remove-ticket');
@@ -771,7 +726,6 @@
             var ticket = cart.tickets[idx];
             if (!ticket) return;
 
-            // Release seat on backend
             fetch(cfg.baseUrl + '/ticketing/release-seat', {
                 method: 'POST',
                 headers: {
@@ -792,13 +746,11 @@
         });
     }
 
-    // Clear entire cart
     if (els.clearCartBtn) {
         els.clearCartBtn.addEventListener('click', function () {
             if (!cart.tickets.length && !cart.concessions.length && !cart.payments.length) return;
             if (!confirm('Clear all concessions and held tickets in this order?')) return;
 
-            // Release any tickets on server
             cart.tickets.forEach(function (ticket) {
                 fetch(cfg.baseUrl + '/ticketing/release-seat', {
                     method: 'POST',
@@ -822,9 +774,6 @@
         });
     }
 
-    /* -------------------------------------------------------------
-       7. CHECKOUT SUBMISSION (POST /checkout/process)
-       ------------------------------------------------------------- */
     if (els.submitOrderBtn) {
         els.submitOrderBtn.addEventListener('click', function () {
             var totals = calculateTotals();
@@ -836,7 +785,7 @@
             var paymentsPayload = [];
 
             if (!isSplitMode) {
-                // Standard 1-Click Payment mode
+
                 if (activeMethod === 'Cash') {
                     var cashVal = parseFloat(els.tenderAmount ? els.tenderAmount.value : '') || totals.grossTotal;
                     if (cashVal < totals.grossTotal) {
@@ -864,7 +813,7 @@
                     });
                 }
             } else {
-                // Split Payment mode
+
                 if (totals.remaining > 0.001) {
                     showMsg('Payment incomplete. Outstanding balance of ' + peso(totals.remaining) + ' must be tendered.', 'error');
                     return;
@@ -922,14 +871,12 @@
 
                 var data = result.data;
 
-                // Clear ticket hold in storage
                 cart.tickets = [];
                 cart.concessions = [];
                 cart.payments = [];
                 saveHeldTickets();
                 renderCart();
 
-                // Open success modal
                 if (els.successOrderNumber) els.successOrderNumber.textContent = data.order_number;
                 if (els.successTotalPaid) els.successTotalPaid.textContent = peso(totals.grossTotal);
 
@@ -962,7 +909,6 @@
         });
     }
 
-    // Modal action: start next sale
     if (els.nextSaleBtn && els.successModal) {
         els.nextSaleBtn.addEventListener('click', function () {
             els.successModal.close();
@@ -970,9 +916,6 @@
         });
     }
 
-    /* -------------------------------------------------------------
-       8. STARTUP & POLLING
-       ------------------------------------------------------------- */
     loadHeldTickets();
     renderCart();
     filterCatalog();

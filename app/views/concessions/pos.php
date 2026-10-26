@@ -1,16 +1,4 @@
 <?php
-/**
- * ScreenBites: Concessions Point-of-Sale (POS) View
- * 
- * Cashier register interface for concessions, promotional bundles,
- * held movie tickets checkout, and split payment tenders (FR8, FR9).
- * 
- * @var array<int, array<string, mixed>> $products
- * @var array<int, array<string, mixed>> $combos
- * @var float                            $taxRate
- * @var string                           $csrfToken
- * @var array<string, mixed>|null        $user
- */
 
 $e = fn($v): string => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
 $peso = "\u{20B1}";
@@ -40,7 +28,7 @@ $taxRate  = (float)($taxRate ?? 0.12);
 </div>
 
 <div class="pos-layout" id="posApp">
-    <!-- LEFT: Concessions Catalog & Quick-Touch Register -->
+
     <section class="pos-catalog card" aria-label="Concessions Catalog">
         <div class="pos-toolbar">
             <div class="pos-search-box">
@@ -56,21 +44,20 @@ $taxRate  = (float)($taxRate ?? 0.12);
             </div>
         </div>
 
-        <!-- Section: Combos & Bundles -->
         <div class="pos-section" id="combosSection">
             <h2 class="pos-section-title">Promotional Bundles &amp; Combos</h2>
             <div class="pos-grid" id="combosGrid">
                 <?php if (empty($combos)): ?>
                     <p class="empty-note">No active combo packages available.</p>
                 <?php else: ?>
-                    <?php foreach ($combos as $combo): 
+                    <?php foreach ($combos as $combo):
                         $cId = (int)$combo['combo_id'];
                         $cPrice = (float)$combo['combo_price'];
                         $indPrice = (float)($combo['individual_sum_price'] ?? 0);
                         $savings = max(0, $indPrice - $cPrice);
                     ?>
-                        <article class="pos-item-card combo-card" 
-                                 data-category="combos" 
+                        <article class="pos-item-card combo-card"
+                                 data-category="combos"
                                  data-name="<?= $e(strtolower($combo['combo_name'] . ' ' . ($combo['description'] ?? ''))); ?>">
                             <div class="pos-card-badge combo-badge">Combo Deal</div>
                             <div class="pos-card-body">
@@ -84,8 +71,8 @@ $taxRate  = (float)($taxRate ?? 0.12);
                                     <?php endif; ?>
                                 </div>
                             </div>
-                            <button type="button" 
-                                    class="pos-add-btn btn" 
+                            <button type="button"
+                                    class="pos-add-btn btn"
                                     data-action="add-combo"
                                     data-id="<?= $cId; ?>"
                                     data-name="<?= $e($combo['combo_name']); ?>"
@@ -98,14 +85,13 @@ $taxRate  = (float)($taxRate ?? 0.12);
             </div>
         </div>
 
-        <!-- Section: A La Carte Products -->
         <div class="pos-section" id="productsSection">
             <h2 class="pos-section-title">Concessions Menu</h2>
             <div class="pos-grid" id="productsGrid">
                 <?php if (empty($products)): ?>
                     <p class="empty-note">No products configured in inventory.</p>
                 <?php else: ?>
-                    <?php foreach ($products as $p): 
+                    <?php foreach ($products as $p):
                         $pId = (int)$p['product_id'];
                         $stock = (int)$p['current_stock'];
                         $reorder = (int)$p['reorder_level'];
@@ -133,7 +119,7 @@ $taxRate  = (float)($taxRate ?? 0.12);
                                     <span class="pos-price"><?= $peso . $fmt($price); ?></span>
                                 </div>
                             </div>
-                            <button type="button" 
+                            <button type="button"
                                     class="pos-add-btn btn <?= $isOut ? 'btn-ghost' : ''; ?>"
                                     data-action="add-product"
                                     data-id="<?= $pId; ?>"
@@ -150,7 +136,6 @@ $taxRate  = (float)($taxRate ?? 0.12);
         </div>
     </section>
 
-    <!-- RIGHT: Guest Cart & Modern Checkout Panel -->
     <aside class="pos-cart-panel card" id="posCartPanel" aria-label="Guest Order &amp; Checkout">
         <div class="pos-cart-header">
             <div>
@@ -166,27 +151,24 @@ $taxRate  = (float)($taxRate ?? 0.12);
             </button>
         </div>
 
-        <!-- Cinema Held Tickets Container -->
         <div class="cart-section" id="ticketsSection" style="display: none;">
             <div class="cart-section-head">
                 <span class="cart-section-title">Reserved Tickets (<span id="ticketCount">0</span>)</span>
                 <span class="cart-ticket-timer" id="ticketTimer" title="Held seats timeout">--:--</span>
             </div>
             <div class="cart-tickets-list" id="cartTicketsList">
-                <!-- Dynamically populated from sessionStorage.screenbites.ticketCart -->
+
             </div>
         </div>
 
-        <!-- Concessions Items List -->
         <div class="cart-section" id="concessionsSection">
             <div class="cart-section-head">
                 <span class="cart-section-title">Order Items</span>
             </div>
             <div class="cart-items-list" id="cartConcessionsList">
-                <!-- Populated dynamically -->
+
             </div>
-            
-            <!-- Modern Empty State -->
+
             <div class="empty-cart-state" id="cartEmptyMsg">
                 <div class="empty-cart-icon" aria-hidden="true">
                     <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
@@ -199,7 +181,6 @@ $taxRate  = (float)($taxRate ?? 0.12);
             </div>
         </div>
 
-        <!-- Financial Breakdown -->
         <div class="cart-breakdown" id="cartBreakdown">
             <div class="cart-breakdown-row" id="rowTicketsSubtotal" style="display: none;">
                 <span>Tickets Total</span>
@@ -223,7 +204,6 @@ $taxRate  = (float)($taxRate ?? 0.12);
             </div>
         </div>
 
-        <!-- Payment Section (Clean Single-Payment by default, Split on demand) -->
         <div class="cart-payment-section" id="cartPaymentSection">
             <div class="payment-section-header">
                 <h3 class="payment-title">Payment Method</h3>
@@ -232,7 +212,6 @@ $taxRate  = (float)($taxRate ?? 0.12);
                 </button>
             </div>
 
-            <!-- Single or Split Payment Entry Form -->
             <div class="tender-entry-form">
                 <div class="tender-method-group">
                     <button type="button" class="tender-method-btn active" data-method="Cash">
@@ -261,7 +240,6 @@ $taxRate  = (float)($taxRate ?? 0.12);
                     </div>
                 </div>
 
-                <!-- Quick Cash Presets (for fast 1-click cash handling) -->
                 <div class="quick-cash-row" id="quickCashRow">
                     <button type="button" class="quick-cash-btn" data-quick="exact">Exact</button>
                     <button type="button" class="quick-cash-btn" data-quick="100">+100</button>
@@ -270,18 +248,15 @@ $taxRate  = (float)($taxRate ?? 0.12);
                     <button type="button" class="quick-cash-btn" data-quick="1000">1,000</button>
                 </div>
 
-                <!-- Add Tender Button (Shown only when in Split Payment mode) -->
                 <button type="button" class="btn btn-ghost tender-add-btn" id="addTenderBtn" style="display: none;">
                     + Add This Payment Tender
                 </button>
             </div>
 
-            <!-- Added Split Tenders List (Shown only when split mode or tenders recorded) -->
             <div class="tenders-list" id="tendersList" style="display: none;">
-                <!-- Populated as cashier records split payments -->
+
             </div>
 
-            <!-- Payment Balance & Change Due Tracker -->
             <div class="payment-summary-box" id="paymentSummaryBox">
                 <div class="payment-summary-row" id="totalTenderedRow">
                     <span id="totalTenderedLabel">Amount Received:</span>
@@ -297,7 +272,6 @@ $taxRate  = (float)($taxRate ?? 0.12);
                 </div>
             </div>
 
-            <!-- Primary Action Button: 1-Click Pay & Order Completion -->
             <button type="button" class="btn btn-primary btn-block checkout-submit-btn" id="submitOrderBtn" disabled>
                 Select Items to Order
             </button>
@@ -306,13 +280,12 @@ $taxRate  = (float)($taxRate ?? 0.12);
     </aside>
 </div>
 
-<!-- Modal: Transaction Success & Receipt Action -->
 <dialog class="sched-dialog" id="orderSuccessModal" aria-labelledby="modalTitle">
     <div class="success-modal-content">
         <div class="success-icon" aria-hidden="true">&#10003;</div>
         <h2 id="modalTitle">Transaction Completed!</h2>
         <p class="order-ref-code">Order Number: <strong id="successOrderNumber">ORD-XXXXXX</strong></p>
-        
+
         <div class="success-summary">
             <div class="success-row">
                 <span>Grand Total Paid:</span>

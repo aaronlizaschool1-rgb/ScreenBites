@@ -1,18 +1,4 @@
 <?php
-/**
- * ScreenBites: Full Sales Report (FR14)
- * 
- * Comprehensive revenue analysis segregating box office admissions,
- * concession snack bars, film performance, daily timeline, and payment tenders.
- * 
- * @var array<string, mixed>             $sales
- * @var int                              $selectedYear
- * @var int                              $selectedMonth
- * @var array<int, array<string, mixed>> $salesTimeline
- * @var array<int, array<string, mixed>> $paymentBreakdown
- * @var array<int, array<string, mixed>> $topMovies
- * @var array<int, array<string, mixed>> $topConcessions
- */
 
 $data = is_array($sales ?? null) ? $sales : (is_array($financial ?? null) ? $financial : []);
 $val  = fn(string $key): float => (float)($data[$key] ?? 0);
@@ -97,7 +83,6 @@ $chartData = [
     </div>
 <?php else: ?>
 
-<!-- Top Performance KPIs -->
 <div class="kpi-grid">
     <div class="kpi is-key">
         <p class="kpi-label">Total Gross Sales</p>
@@ -121,7 +106,6 @@ $chartData = [
     </div>
 </div>
 
-<!-- Sales Channel Breakdown & Doughnut Chart -->
 <div class="report-grid">
     <div class="card">
         <h2 class="card-title">Revenue by Sales Channel</h2>
@@ -168,9 +152,8 @@ $chartData = [
     </div>
 </div>
 
-<!-- Film & Snack Breakdown Grid -->
 <div class="report-grid is-even">
-    <!-- Top Movies by Box Office -->
+
     <div class="card">
         <h2 class="card-title">Box Office by Movie Title</h2>
         <div class="table-scroll">
@@ -202,7 +185,6 @@ $chartData = [
         </div>
     </div>
 
-    <!-- Top Concessions & Bundles -->
     <div class="card">
         <h2 class="card-title">Concessions &amp; Snacks Sold</h2>
         <div class="table-scroll">
@@ -234,9 +216,8 @@ $chartData = [
     </div>
 </div>
 
-<!-- Daily Sales Timeline & Payment Breakdown -->
 <div class="report-grid is-even">
-    <!-- Daily Timeline Table -->
+
     <div class="card">
         <h2 class="card-title">Daily Sales Timeline</h2>
         <div class="table-scroll">
@@ -267,7 +248,6 @@ $chartData = [
         </div>
     </div>
 
-    <!-- Payment Tender Breakdown -->
     <div class="card">
         <h2 class="card-title">Revenue by Payment Method</h2>
         <div class="table-scroll">
@@ -284,9 +264,9 @@ $chartData = [
                     <?php if (empty($paymentBreakdown)): ?>
                         <tr><td colspan="4" class="empty-note">No payment logs found.</td></tr>
                     <?php else: ?>
-                        <?php 
+                        <?php
                         $totalCollected = array_sum(array_column($paymentBreakdown, 'net_collected'));
-                        foreach ($paymentBreakdown as $pay): 
+                        foreach ($paymentBreakdown as $pay):
                             $pPct = $share((float)$pay['net_collected'], (float)$totalCollected);
                         ?>
                             <tr>

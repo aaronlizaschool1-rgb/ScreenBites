@@ -1,13 +1,5 @@
 <?php
-/**
- * app/views/ticketing/seat_matrix.php  (FR2, FR3, FR4)
- *
- * @var array  $screening
- * @var array  $seats
- * @var int    $holdTimeout
- * @var string $sessionToken
- * @var string $csrfToken
- */
+
 $e    = fn($v): string => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
 $peso = "\u{20B1}";
 $fmt  = fn($n): string => number_format((float) $n, 2);
@@ -25,7 +17,6 @@ $phrase = [
     'sold'      => 'sold',
 ];
 
-// Group seats by row; collect tiers and the column count
 $rows   = [];
 $tiers  = [];
 $maxCol = (int) ($screening['total_columns'] ?? 0);
@@ -43,7 +34,7 @@ foreach ($rows as $rowKey => $rowList) {
     usort($rowList, fn($a, $b) => (int) $a['seat_number'] <=> (int) $b['seat_number']);
     $rows[$rowKey] = $rowList;
 }
-asort($tiers); // cheapest tier first, so tier-1 is always the standard seat
+asort($tiers);
 $tierIndex = [];
 $tierCount = 0;
 foreach ($tiers as $tierName => $tierPrice) {

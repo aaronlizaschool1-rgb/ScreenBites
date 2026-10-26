@@ -1,9 +1,4 @@
 <?php
-/**
- * ScreenBites - Database Credentials & PDO Driver Options
- * 
- * @author Aaron Louis F. Macapagal
- */
 
 declare(strict_types=1);
 
@@ -12,8 +7,8 @@ return [
     'host'      => '127.0.0.1',
     'port'      => 3306,
     'database'  => 'screenbites_db',
-    'username'  => 'root',          // Default XAMPP MySQL user
-    'password'  => '',              // Default XAMPP MySQL password is empty
+    'username'  => 'root',
+    'password'  => '',
     'charset'   => 'utf8mb4',
     'collation' => 'utf8mb4_unicode_ci',
     'options'   => [

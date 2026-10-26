@@ -1,4 +1,3 @@
-/* public/assets/js/main.js: global layout behaviour */
 (function () {
   'use strict';
 
@@ -7,7 +6,7 @@
   var scrim = document.getElementById('appScrim');
   var sidebar = document.getElementById('appSidebar');
 
-  // Mobile drawer
+  
   function setNav(open) {
     body.classList.toggle('nav-open', open);
     if (toggle) {
@@ -34,7 +33,7 @@
     });
   }
 
-  // Flash messages: dismiss button, success auto-hides after 6 seconds
+  
   document.querySelectorAll('.flash').forEach(function (el) {
     function dismiss() {
       el.classList.add('is-leaving');

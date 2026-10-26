@@ -1,16 +1,4 @@
 <?php
-/**
- * app/views/audit/index.php  (FR16)
- * Security Operations Audit Trail
- *
- * @var array<int, array<string, mixed>> $logs
- * @var array<int, array<string, mixed>> $users
- * @var array<int, string>               $actionTypes
- * @var array<string, mixed>             $filters
- * @var int                              $page
- * @var int                              $totalPages
- * @var int                              $totalLogs
- */
 
 $filters     = $filters ?? [];
 $f           = fn(string $key) => $filters[$key] ?? '';
@@ -18,7 +6,6 @@ $page        = max(1, (int) ($page ?? 1));
 $totalPages  = max(1, (int) ($totalPages ?? 1));
 $totalLogs   = (int) ($totalLogs ?? 0);
 
-// Build a pagination URL that keeps the active filters
 $pageUrl = function (int $p) use ($filters): string {
     $params = array_filter(
         array_merge($filters, ['page' => $p]),
@@ -27,7 +14,6 @@ $pageUrl = function (int $p) use ($filters): string {
     return BASE_URL . '/audit?' . http_build_query($params);
 };
 
-// Human-readable labels and badge styles per action type
 $actionMeta = [
     'CANCEL_TICKET'      => ['label' => 'Ticket Cancelled',    'class' => 'badge-warn',   'dot' => '#f59e0b'],
     'REFUND_ORDER'       => ['label' => 'Order Refunded',      'class' => 'badge-danger', 'dot' => '#ef4444'],
@@ -43,7 +29,6 @@ $pageEnd    = min($totalPages, $page + 2);
 
 <div class="sb-audit-container">
 
-    <!-- Security Header -->
     <div class="audit-head-banner card">
         <div class="audit-head-content">
             <div class="audit-head-icon">
@@ -65,7 +50,6 @@ $pageEnd    = min($totalPages, $page + 2);
         </div>
     </div>
 
-    <!-- Filter Form Controls -->
     <div class="audit-filter-card card">
         <div class="filter-card-header">
             <span class="filter-card-title">
@@ -126,7 +110,6 @@ $pageEnd    = min($totalPages, $page + 2);
         </form>
     </div>
 
-    <!-- Audit Log Table Results -->
     <div class="audit-results-card card">
         <div class="audit-table-meta-bar">
             <span class="meta-count">Showing page <strong><?= $page; ?></strong> of <strong><?= $totalPages; ?></strong> (<?= number_format($totalLogs); ?> total logs)</span>
@@ -159,8 +142,8 @@ $pageEnd    = min($totalPages, $page + 2);
                 <?php else: ?>
                     <?php foreach ($logs as $log):
                         $meta = $actionMeta[$log['action_type']] ?? [
-                            'label' => $log['action_type'], 
-                            'class' => 'badge-default', 
+                            'label' => $log['action_type'],
+                            'class' => 'badge-default',
                             'dot'   => '#94a3b8'
                         ];
                         $ts = strtotime($log['created_at']);
@@ -231,7 +214,6 @@ $pageEnd    = min($totalPages, $page + 2);
             </table>
         </div>
 
-        <!-- Pagination Controls -->
         <?php if ($totalPages > 1): ?>
             <div class="audit-pagination-bar">
                 <nav class="sb-pager" aria-label="Audit log pages">

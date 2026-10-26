@@ -1,11 +1,4 @@
 <?php
-/**
- * ScreenBites: Order Model
- * 
- * Manages parent sales orders and itemized concession lines (FR8, FR9).
- * 
- * @author Aaron Louis F. Macapagal
- */
 
 declare(strict_types=1);
 
@@ -26,9 +19,6 @@ class Order
         $this->db = Database::getInstance();
     }
 
-    /**
-     * Generate unique daily order receipt number (e.g., ORD-20261017-XXXX)
-     */
     public function generateOrderNumber(): string
     {
         $prefix = 'ORD-' . date('Ymd') . '-';
@@ -36,15 +26,6 @@ class Order
         return $prefix . $random;
     }
 
-    /**
-     * Insert a parent order record
-     * 
-     * @param string $orderNumber
-     * @param int $userId Cashier / Staff processing the order
-     * @param float $subtotal Total before tax
-     * @param float $taxAmount 12% VAT portion
-     * @return int Inserted order_id
-     */
     public function createOrder(string $orderNumber, int $userId, float $subtotal, float $taxAmount): int
     {
         $sql = "INSERT INTO orders (order_number, user_id, subtotal_amount, tax_amount, order_status, created_at)
@@ -60,15 +41,6 @@ class Order
         return (int)$this->db->lastInsertId();
     }
 
-    /**
-     * Insert an itemized concession line item into order_items
-     * 
-     * @param int $orderId
-     * @param int|null $productId
-     * @param int|null $comboId
-     * @param int $quantity
-     * @param float $unitPrice
-     */
     public function addOrderItem(
         int $orderId,
         ?int $productId,
@@ -88,9 +60,6 @@ class Order
         ]);
     }
 
-    /**
-     * Find an order by order number including user details
-     */
     public function findByOrderNumber(string $orderNumber): ?array
     {
         $sql = "SELECT o.order_id, o.order_number, o.user_id, o.subtotal_amount, o.tax_amount,
@@ -104,9 +73,6 @@ class Order
         return $this->db->fetchOne($sql, [':order_number' => $orderNumber]);
     }
 
-    /**
-     * Retrieve all line items for an order (both standalone products and combos)
-     */
     public function getOrderItems(int $orderId): array
     {
         $sql = "SELECT oi.order_item_id, oi.product_id, oi.combo_id, oi.quantity, oi.unit_price_charged,
@@ -121,12 +87,6 @@ class Order
         return $this->db->fetchAll($sql, [':order_id' => $orderId]);
     }
 
-    /**
-     * Find an order by internal primary key
-     * 
-     * @param int $orderId
-     * @return array<string, mixed>|null
-     */
     public function findById(int $orderId): ?array
     {
         $sql = "SELECT o.order_id, o.order_number, o.user_id, o.subtotal_amount, o.tax_amount,
@@ -140,18 +100,6 @@ class Order
         return $this->db->fetchOne($sql, [':order_id' => $orderId]);
     }
 
-    /**
-     * Process an atomic order refund (FR10, FR16)
-     * Cancels all issued tickets (releasing seats back to available),
-     * restocks physical inventory for concessions and bundles,
-     * updates order status to 'Refunded', and logs audit trail.
-     * 
-     * @param int $orderId
-     * @param int $refundedBy
-     * @param string $reason
-     * @return bool
-     * @throws Throwable
-     */
     public function refundOrder(int $orderId, int $refundedBy, string $reason = 'Customer Request'): bool
     {
         $order = $this->findById($orderId);
@@ -166,21 +114,19 @@ class Order
         $this->db->beginTransaction();
 
         try {
-            // 1. Mark order status as Refunded
+
             $sqlOrder = "UPDATE orders SET order_status = :status WHERE order_id = :order_id";
             $this->db->execute($sqlOrder, [
                 ':status'   => STATUS_REFUNDED,
                 ':order_id' => $orderId
             ]);
 
-            // 2. Mark tickets as Cancelled (this automatically frees the seats in seat matrix)
             $sqlTickets = "UPDATE tickets SET ticket_status = :status WHERE order_id = :order_id";
             $this->db->execute($sqlTickets, [
                 ':status'   => TICKET_CANCELLED,
                 ':order_id' => $orderId
             ]);
 
-            // 3. Restock physical inventory for concessions / combos
             $items = $this->getOrderItems($orderId);
             if (!empty($items)) {
                 $productModel = new Product();
@@ -203,7 +149,6 @@ class Order
                 }
             }
 
-            // 4. Audit Logging (FR16)
             Logger::log(
                 AUDIT_REFUND_ORDER,
                 'orders',

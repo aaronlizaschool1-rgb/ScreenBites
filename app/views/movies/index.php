@@ -1,15 +1,4 @@
 <?php
-/**
- * ScreenBites: Movies Catalog (Inspired by SM Cinema UI)
- * 
- * Cinematic "Now Showing" showcase with portrait posters, MTRCB rating pills,
- * interactive trailers, format badges, and hall scheduling triggers (FR1).
- * 
- * @var array<int, array<string, mixed>> $movies
- * @var string|null                      $flashSuccess
- * @var string|null                      $flashError
- * @var string                           $csrfToken
- */
 
 use Core\Auth;
 
@@ -25,15 +14,13 @@ $durationText = function ($mins): string {
 
 $totalMovies = count($movies);
 
-// Format, genre, theme, and trailer lookup for all cinema showcase titles
 $movieThemes = [
-    // Original Seeded Movies
+
     1  => ['theme' => 'theme-avatar',      'format' => 'IMAX 3D',            'genre' => 'Sci-Fi / Adventure',              'trailer_id' => 'd9MyW72ELq0', 'synopsis' => 'Jake Sully lives with his newfound family formed on the extrasolar moon Pandora. Once a familiar threat returns to finish what was previously started, Jake must work with Neytiri and the army of the Na\'vi race to protect their home.'],
     2  => ['theme' => 'theme-spiderman',   'format' => 'CINEMA 1 &bull; 2D', 'genre' => 'Animation / Action',              'trailer_id' => 'cqGjhVJWtEg', 'synopsis' => 'Miles Morales catapults across the Multiverse, where he encounters a team of Spider-People charged with protecting its very existence. When the heroes clash on how to handle a new threat, Miles must redefine what it means to be a hero.'],
     3  => ['theme' => 'theme-oppenheimer', 'format' => 'DIRECTOR\'S CLUB',   'genre' => 'Biography / Drama',               'trailer_id' => 'uYPbbksJxIg', 'synopsis' => 'The story of American scientist J. Robert Oppenheimer and his role in the development of the atomic bomb during World War II, exploring the moral and scientific dilemmas of the Manhattan Project.'],
     4  => ['theme' => 'theme-mario',       'format' => 'CINEMA 2 &bull; 2D', 'genre' => 'Family / Comedy',                'trailer_id' => 'TnGl01FkMMo', 'synopsis' => 'A Brooklyn plumber named Mario travels through the Mushroom Kingdom with a princess named Peach and an anthropomorphic mushroom named Toad to find Mario\'s brother, Luigi, and to save the world from Bowser.'],
 
-    // 26 Blockbusters Requested
     5  => ['theme' => 'theme-spiderman',   'format' => 'IMAX 3D',            'genre' => 'Action / Superhero',              'trailer_id' => 'U4MFvAL02Vg', 'synopsis' => 'Peter Parker navigates a fresh start in New York City with no one remembering his identity, facing emerging street-level threats and new allies in a brand new era.'],
     6  => ['theme' => 'theme-default',     'format' => 'IMAX 3D &bull; ATMOS', 'genre' => 'Action / Sci-Fi / Adventure',     'trailer_id' => 'TcMBFSGVi1c', 'synopsis' => 'After the devastating events of Infinity War, the universe is in ruins. With the help of remaining allies, the Avengers assemble once more to reverse Thanos\' actions and restore balance.'],
     7  => ['theme' => 'theme-spiderman',   'format' => 'IMAX 3D',            'genre' => 'Action / Sci-Fi / Adventure',     'trailer_id' => 'JfVOs4VSpmA', 'synopsis' => 'With Spider-Man\'s identity revealed, Peter asks Doctor Strange for help. When a spell goes wrong, dangerous foes from other worlds appear, forcing Peter to discover what being Spider-Man truly means.'],
@@ -65,7 +52,6 @@ $movieThemes = [
 
 <div class="sm-cinema-page">
 
-    <!-- Top Movies Bar -->
     <div class="sm-page-header">
         <div>
             <h1 class="sm-main-title">Movies</h1>
@@ -81,7 +67,6 @@ $movieThemes = [
         </div>
     </div>
 
-    <!-- SM Cinema Tabs Bar (Now Showing only - No Coming Soon) -->
     <div class="sm-tabs-bar">
         <div class="sm-tab-group" role="tablist">
             <button type="button" class="sm-tab-item active" role="tab" aria-selected="true">
@@ -90,7 +75,6 @@ $movieThemes = [
             </button>
         </div>
 
-        <!-- Filter & Search Controls -->
         <div class="sm-filter-bar">
             <div class="sm-search-box">
                 <input type="search" id="movieSearch" placeholder="Search movies, genre..." aria-label="Search movies">
@@ -107,14 +91,13 @@ $movieThemes = [
         </div>
     </div>
 
-    <!-- Movie Posters Grid (SM Cinema Inspired) -->
     <div class="sm-cinema-grid" id="smMoviesGrid">
         <?php if (empty($movies)): ?>
             <div class="card sm-empty-card" style="grid-column: 1 / -1;">
                 <p class="empty-note">No movies currently in the Now Showing catalog. Click "+ Add New Movie" to register cinema titles.</p>
             </div>
         <?php else: ?>
-            <?php foreach ($movies as $movie): 
+            <?php foreach ($movies as $movie):
                 $mId      = (int)$movie['movie_id'];
                 $title    = (string)$movie['title'];
                 $poster   = !empty($movie['poster_path']) ? BASE_URL . '/' . ltrim((string)$movie['poster_path'], '/') : null;
@@ -135,38 +118,32 @@ $movieThemes = [
                 $synopsis   = $meta['synopsis'];
                 $trailerId  = $meta['trailer_id'];
             ?>
-                <article class="sm-movie-card" 
-                         data-title="<?= $e(strtolower($title . ' ' . $genreText)); ?>" 
+                <article class="sm-movie-card"
+                         data-title="<?= $e(strtolower($title . ' ' . $genreText)); ?>"
                          data-rating="<?= $e($rating); ?>">
-                    
-                    <!-- Poster Artwork Frame -->
+
                     <div class="sm-poster-wrap">
-                        
-                        <!-- Format Ribbon (Top Left) -->
+
                         <span class="sm-format-ribbon"><?= $formatTag; ?></span>
 
-                        <!-- MTRCB Rating Badge (Top Right) -->
                         <span class="sm-rating-badge rating-<?= strtolower(str_replace('-', '', $rating)); ?>">
                             <?= $e($rating); ?>
                         </span>
 
-                        <!-- Bookmark Icon -->
                         <button type="button" class="sm-bookmark-btn" title="Add to watchlist" aria-label="Bookmark">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
                             </svg>
                         </button>
 
-                        <!-- Poster Image or Stylized Cinematic Backdrop Fallback -->
                         <?php if ($poster): ?>
-                            <img src="<?= $e($poster); ?>" 
-                                 alt="<?= $e($title); ?> poster" 
+                            <img src="<?= $e($poster); ?>"
+                                 alt="<?= $e($title); ?> poster"
                                  class="sm-poster-img"
                                  loading="lazy"
                                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                         <?php endif; ?>
 
-                        <!-- Cool Stylized Cinematic Backdrop (renders if image fails or missing) -->
                         <div class="sm-poster-art <?= $themeClass; ?>" style="<?= $poster ? 'display: none;' : ''; ?>">
                             <div class="art-glow"></div>
                             <div class="art-film-tag"><?= $e($genreText); ?></div>
@@ -174,7 +151,6 @@ $movieThemes = [
                             <div class="art-watermark"><?= $e($title); ?></div>
                         </div>
 
-                        <!-- Hover Overlay with Cool Glassmorphic CTAs -->
                         <div class="sm-poster-overlay">
                             <div class="overlay-meta">
                                 <span>&#9201; <?= $e($timeText); ?></span>
@@ -182,8 +158,8 @@ $movieThemes = [
                             </div>
 
                             <div class="overlay-buttons">
-                                <button type="button" 
-                                        class="sm-btn-trailer" 
+                                <button type="button"
+                                        class="sm-btn-trailer"
                                         data-open-trailer
                                         data-title="<?= $e($title); ?>"
                                         data-rating="<?= $e($rating); ?>"
@@ -200,7 +176,6 @@ $movieThemes = [
                         </div>
                     </div>
 
-                    <!-- Movie Info Details Below Poster (SM Cinema Signature Style) -->
                     <div class="sm-card-details">
                         <div class="sm-card-title-row">
                             <h2 class="sm-movie-title" title="<?= $e($title); ?>">
@@ -218,8 +193,8 @@ $movieThemes = [
                         </div>
 
                         <div class="sm-card-actions">
-                            <button type="button" 
-                                    class="sm-play-link" 
+                            <button type="button"
+                                    class="sm-play-link"
                                     data-open-trailer
                                     data-title="<?= $e($title); ?>"
                                     data-rating="<?= $e($rating); ?>"
@@ -242,15 +217,14 @@ $movieThemes = [
 
 </div>
 
-<!-- Interactive Cool Trailer & Movie Info Modal -->
 <dialog class="sm-trailer-modal" id="trailerModal" aria-labelledby="trailerModalTitle">
     <div class="sm-modal-backdrop" id="closeTrailerBackdrop"></div>
     <div class="sm-modal-container">
         <button type="button" class="sm-modal-close" id="closeTrailerBtn" aria-label="Close dialog">&times;</button>
-        
+
         <div class="sm-modal-media">
             <div class="sm-video-placeholder" id="videoContainer">
-                <!-- Video player embed or simulated player -->
+
                 <div class="sm-player-screen">
                     <span class="sm-player-glow"></span>
                     <div class="sm-player-content">
@@ -286,7 +260,6 @@ $movieThemes = [
     </div>
 </dialog>
 
-<!-- Modal: Add New Movie Title (Admin FR1) -->
 <?php if ($isAdmin): ?>
 <dialog class="sched-dialog" id="addMovieModal" aria-labelledby="addMovieModalTitle">
     <form method="POST" action="<?= BASE_URL; ?>/movies/create" enctype="multipart/form-data" id="addMovieForm">
@@ -297,22 +270,22 @@ $movieThemes = [
 
         <div class="sched-field">
             <label for="movieTitleInput">Movie Title *</label>
-            <input type="text" 
-                   id="movieTitleInput" 
-                   name="title" 
-                   required 
+            <input type="text"
+                   id="movieTitleInput"
+                   name="title"
+                   required
                    placeholder="e.g. Gladiator II">
         </div>
 
         <div class="sched-row">
             <div class="sched-field">
                 <label for="durationInput">Runtime (Minutes) *</label>
-                <input type="number" 
-                       id="durationInput" 
-                       name="duration_minutes" 
-                       min="1" 
-                       max="600" 
-                       required 
+                <input type="number"
+                       id="durationInput"
+                       name="duration_minutes"
+                       min="1"
+                       max="600"
+                       required
                        placeholder="e.g. 148">
             </div>
 
@@ -331,9 +304,9 @@ $movieThemes = [
 
         <div class="sched-field">
             <label for="posterInput">Movie Poster Image Artwork (Optional)</label>
-            <input type="file" 
-                   id="posterInput" 
-                   name="poster" 
+            <input type="file"
+                   id="posterInput"
+                   name="poster"
                    accept="image/jpeg,image/png,image/webp">
             <small style="color: var(--c-muted); font-size: .8rem; margin-top: .2rem;">
                 Supported file formats: JPG, PNG, WebP (Max 5MB). 2:3 vertical portrait recommended.

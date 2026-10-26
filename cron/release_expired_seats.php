@@ -1,18 +1,7 @@
 <?php
-/**
- * ScreenBites: Seat Hold Cleanup Worker
- * 
- * Cleans expired rows from `seat_holds` to free up locked seats (FR4).
- * Can be executed via CLI, scheduled via Windows Task Scheduler, or requested via Cron.
- * 
- * Usage: php cron/release_expired_seats.php
- * 
- * @author Aaron Louis F. Macapagal
- */
 
 declare(strict_types=1);
 
-// Restrict execution to CLI or explicit admin secret key if accessed via HTTP
 if (php_sapi_name() !== 'cli') {
     $secretKey =$_GET['key'] ?? '';
     if ($secretKey !== 'screenbites_cron_secret_2026') {
@@ -37,7 +26,6 @@ try {
 
     echo $logMessage;
 
-    // Append to storage/logs/cron.log
     $logDir = ROOT_PATH . '/storage/logs';
     if (!is_dir($logDir)) {
         mkdir($logDir, 0755, true);

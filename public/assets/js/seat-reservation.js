@@ -1,6 +1,3 @@
-/* public/assets/js/seat-reservation.js  (FR2, FR4)
- * Hold / release seats, live polling, and countdown timers.
- * Reads window.SeatMatrixConfig (set by seat_matrix.php). */
 (function () {
   'use strict';
 
@@ -9,7 +6,7 @@
   if (!cfg || !root) { return; }
 
   var CART_KEY = 'screenbites.ticketCart';
-  var WARN_AT = 60; // seconds left when the hold turns urgent
+  var WARN_AT = 60;
 
   var els = {
     msg: document.getElementById('seatMsg'),
@@ -23,8 +20,8 @@
     avail: document.getElementById('availCount')
   };
 
-  var seats = {};      // seat_id -> state
-  var timeEls = {};    // seat_id -> countdown element in the side panel
+  var seats = {};
+  var timeEls = {};
   var lastSig = '';
   var msgTimer = null;
   var pollInFlight = false;
@@ -32,7 +29,6 @@
 
   var PHRASE = { available: 'available', held: 'held by another cashier', heldbyme: 'held by you', sold: 'sold' };
 
-  /* ---------- helpers ---------- */
   function norm(v) { return String(v == null ? '' : v).toLowerCase(); }
   function peso(n) {
     return '\u20B1' + Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -73,7 +69,6 @@
     els.live.classList.toggle('is-down', !ok);
   }
 
-  /* ---------- build state from the server-rendered grid ---------- */
   Array.prototype.forEach.call(root.querySelectorAll('.seat[data-seat-id]'), function (el) {
     var id = Number(el.getAttribute('data-seat-id'));
     var status = norm(el.getAttribute('data-status'));
@@ -113,7 +108,6 @@
     s.el.setAttribute('aria-busy', on ? 'true' : 'false');
   }
 
-  /* ---------- side panel ---------- */
   function renderList(items) {
     els.list.textContent = '';
     timeEls = {};
@@ -209,7 +203,6 @@
     paintTimes();
   }
 
-  /* ---------- server calls ---------- */
   function post(path, body) {
     return fetch(cfg.baseUrl + path, {
       method: 'POST',
@@ -273,7 +266,6 @@
     });
   }
 
-  /* ---------- live polling ---------- */
   function extractSeats(json) {
     if (Array.isArray(json)) { return json; }
     if (json && Array.isArray(json.seats)) { return json.seats; }
@@ -329,7 +321,6 @@
     poll().then(function () { setTimeout(loop, cfg.pollMs || 5000); });
   }
 
-  /* ---------- events ---------- */
   root.addEventListener('click', function (e) {
     var btn = e.target.closest('.seat[data-seat-id]');
     if (!btn) { return; }
@@ -386,7 +377,7 @@
       };
     });
     try {
-      // Keep tickets from other screenings that are still held; replace this screening's
+
       var existing = JSON.parse(sessionStorage.getItem(CART_KEY) || '{"tickets":[]}');
       var others = (existing.tickets || []).filter(function (t) {
         return t.screening_id !== cfg.screeningId && t.held_until > now;
@@ -403,7 +394,6 @@
     if (!document.hidden) { poll(); }
   });
 
-  /* ---------- start ---------- */
   refresh();
   setInterval(tick, 1000);
   setTimeout(loop, cfg.pollMs || 5000);

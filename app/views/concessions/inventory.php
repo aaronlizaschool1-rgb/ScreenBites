@@ -1,17 +1,4 @@
 <?php
-/**
- * ScreenBites: Inventory & Stock Audit View (FR5, FR7)
- * 
- * Snack bar inventory monitoring, threshold-based low-stock callouts,
- * stock valuation, and administrative stock level overrides.
- * 
- * @var array<int, array<string, mixed>> $products
- * @var array<int, array<string, mixed>> $lowStockAlerts
- * @var string|null                      $flashSuccess
- * @var string|null                      $flashError
- * @var string                           $csrfToken
- * @var string                           $userRole
- */
 
 use Core\Auth;
 
@@ -23,7 +10,6 @@ $products       = is_array($products ?? null) ? $products : [];
 $lowStockAlerts = is_array($lowStockAlerts ?? null) ? $lowStockAlerts : [];
 $isAdmin        = ($userRole ?? '') === ROLE_ADMIN;
 
-// Compute inventory valuation summary
 $totalSkus       = count($products);
 $lowStockCount   = count($lowStockAlerts);
 $outOfStockCount = 0;
@@ -53,7 +39,6 @@ foreach ($products as $p) {
     </div>
 </div>
 
-<!-- KPI Metric Cards -->
 <div class="kpi-grid">
     <div class="kpi">
         <p class="kpi-label">Active Concession SKUs</p>
@@ -77,7 +62,6 @@ foreach ($products as $p) {
     </div>
 </div>
 
-<!-- FR7: Real-Time Low-Stock Alerts Banner -->
 <?php if (!empty($lowStockAlerts)): ?>
 <section class="card inv-alert-card" aria-label="Low Stock Alerts">
     <div class="inv-alert-header">
@@ -92,7 +76,7 @@ foreach ($products as $p) {
     </div>
 
     <div class="inv-alert-grid">
-        <?php foreach ($lowStockAlerts as $alert): 
+        <?php foreach ($lowStockAlerts as $alert):
             $aId = (int)$alert['product_id'];
             $aStock = (int)$alert['current_stock'];
             $aReorder = (int)$alert['reorder_level'];
@@ -107,7 +91,7 @@ foreach ($products as $p) {
                     <span class="inv-alert-deficit">Deficit: <?= $aDeficit; ?> <?= $aDeficit === 1 ? 'unit' : 'units'; ?> needed</span>
                 </div>
                 <?php if ($isAdmin): ?>
-                    <button type="button" 
+                    <button type="button"
                             class="btn btn-sm btn-ghost btn-open-adjust"
                             data-id="<?= $aId; ?>"
                             data-name="<?= $e($alert['product_name']); ?>"
@@ -121,7 +105,6 @@ foreach ($products as $p) {
 </section>
 <?php endif; ?>
 
-<!-- Inventory Table Section -->
 <section class="card" aria-label="Product Stock Ledger">
     <div class="inv-toolbar">
         <div class="inv-search-wrap">
@@ -160,7 +143,7 @@ foreach ($products as $p) {
                         <td colspan="<?= $isAdmin ? 9 : 8; ?>" class="empty-note">No concession products found in inventory.</td>
                     </tr>
                 <?php else: ?>
-                    <?php foreach ($products as $p): 
+                    <?php foreach ($products as $p):
                         $pId = (int)$p['product_id'];
                         $stock = (int)$p['current_stock'];
                         $reorder = (int)$p['reorder_level'];
@@ -206,7 +189,7 @@ foreach ($products as $p) {
                             </td>
                             <?php if ($isAdmin): ?>
                                 <td style="text-align: right;">
-                                    <button type="button" 
+                                    <button type="button"
                                             class="btn btn-sm btn-ghost btn-open-adjust"
                                             data-id="<?= $pId; ?>"
                                             data-name="<?= $e($p['product_name']); ?>"
@@ -224,7 +207,6 @@ foreach ($products as $p) {
     </div>
 </section>
 
-<!-- Admin Adjustment Modal (FR5, FR16) -->
 <?php if ($isAdmin): ?>
 <dialog class="sched-dialog" id="adjustStockModal" aria-labelledby="adjustModalTitle">
     <form method="POST" action="<?= BASE_URL; ?>/inventory/adjust" id="adjustStockForm">
@@ -246,12 +228,12 @@ foreach ($products as $p) {
             </div>
             <div class="sched-field">
                 <label for="newStockInput">New Unit Count *</label>
-                <input type="number" 
-                       id="newStockInput" 
-                       name="new_stock" 
-                       min="0" 
-                       step="1" 
-                       required 
+                <input type="number"
+                       id="newStockInput"
+                       name="new_stock"
+                       min="0"
+                       step="1"
+                       required
                        placeholder="e.g. 100">
             </div>
         </div>

@@ -1,12 +1,4 @@
 <?php
-/**
- * ScreenBites: Inventory Controller
- * 
- * Manages concession stock audits, replenishment overrides,
- * and low-stock threshold notifications (FR5, FR7).
- * 
- * @author Aaron Louis F. Macapagal
- */
 
 declare(strict_types=1);
 
@@ -23,21 +15,17 @@ class InventoryController extends Controller
 
     public function __construct()
     {
-        // Enforce RBAC: Cashiers can view items; Admins can adjust and add stock
+
         Auth::requireRole([ROLE_ADMIN, ROLE_CASHIER]);
 
         $this->productModel = new Product();
     }
 
-    /**
-     * Display inventory dashboard with low-stock callouts (FR5, FR7)
-     */
     public function index(): void
     {
         $products       = $this->productModel->getAllProducts();
         $lowStockAlerts = $this->productModel->getLowStockAlerts();
 
-        // AJAX polling endpoint for live cashier alert badge updates
         if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
             $this->json([
                 'success'      => true,
@@ -51,7 +39,6 @@ class InventoryController extends Controller
         $flashError   = $_SESSION['flash_error'] ?? null;
         unset($_SESSION['flash_success'], $_SESSION['flash_error']);
 
-        // Renders app/views/concessions/inventory.php
         $this->view('concessions/inventory', [
             'products'       => $products,
             'lowStockAlerts' => $lowStockAlerts,
@@ -62,13 +49,9 @@ class InventoryController extends Controller
         ]);
     }
 
-    /**
-     * Process manual inventory adjustments / restocks (FR5)
-     * Automatically logs the modification in audit_logs (FR16)
-     */
     public function adjustStock(): void
     {
-        // Only Administrators can manually modify stock levels
+
         Auth::requireRole(ROLE_ADMIN);
 
         if (!Auth::verifyCsrfToken((string)$this->post('csrf_token'))) {
@@ -96,11 +79,10 @@ class InventoryController extends Controller
 
         $previousStock = (int)$product['current_stock'];
 
-        // Execute update
         $updated = $this->productModel->updateStock($productId, $newStock);
 
         if ($updated) {
-            // FR16: Log manual stock override in audit_logs
+
             Logger::log(
                 AUDIT_INVENTORY_OVERRIDE,
                 'products',

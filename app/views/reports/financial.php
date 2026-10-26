@@ -1,11 +1,5 @@
 <?php
-/**
- * app/views/reports/financial.php  (FR12)
- *
- * @var array $financial
- * @var int   $selectedYear
- * @var int   $selectedMonth
- */
+
 $fin = is_array($financial ?? null) ? $financial : [];
 $val = fn(string $key): float => (float) ($fin[$key] ?? 0);
 

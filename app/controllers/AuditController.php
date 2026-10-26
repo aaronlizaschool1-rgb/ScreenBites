@@ -1,12 +1,4 @@
 <?php
-/**
- * ScreenBites: Audit Controller
- * 
- * Handles rendering and filtering of operational audit trail logs.
- * Restricted strictly to the Administrator role (FR13, FR16).
- * 
- * @author Aaron Louis F. Macapagal
- */
 
 declare(strict_types=1);
 
@@ -24,16 +16,13 @@ class AuditController extends Controller
 
     public function __construct()
     {
-        // FR13 Enforcement: Audit logs are strictly restricted to Administrators
+
         Auth::requireRole(ROLE_ADMIN);
 
         $this->auditModel = new AuditLog();
         $this->userModel  = new User();
     }
 
-    /**
-     * Display the audit log table with filter options
-     */
     public function index(): void
     {
         $filters = [
@@ -51,7 +40,6 @@ class AuditController extends Controller
         $totalLogs = $this->auditModel->countLogs($filters);
         $totalPages = (int)ceil($totalLogs / $limit);
 
-        // Fetch users to populate the filter dropdown
         $users = $this->userModel->getAllUsers();
 
         $actionTypes = [
@@ -62,7 +50,6 @@ class AuditController extends Controller
             AUDIT_LOGIN_FAILURE
         ];
 
-        // Deliver data to app/views/audit/index.php (assigned to John for frontend presentation)
         $this->view('audit/index', [
             'logs'        => $logs,
             'users'       => $users,

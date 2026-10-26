@@ -1,17 +1,4 @@
 <?php
-/**
- * ScreenBites: Combos & Bundles Management View (FR6)
- * 
- * Promotional package builder, multi-product ingredient assignment,
- * and discounted bundle pricing management.
- * 
- * @var array<int, array<string, mixed>> $combos
- * @var array<int, array<string, mixed>> $products
- * @var string|null                      $flashSuccess
- * @var string|null                      $flashError
- * @var string                           $csrfToken
- * @var string                           $userRole
- */
 
 use Core\Auth;
 
@@ -23,7 +10,6 @@ $combos   = is_array($combos ?? null) ? $combos : [];
 $products = is_array($products ?? null) ? $products : [];
 $isAdmin  = ($userRole ?? '') === ROLE_ADMIN;
 
-// Compute bundle statistics
 $totalCombos = count($combos);
 $totalSavingsSum = 0;
 $maxSavings = 0;
@@ -54,7 +40,6 @@ $avgSavings = $totalCombos > 0 ? ($totalSavingsSum / $totalCombos) : 0;
     </div>
 </div>
 
-<!-- KPI Cards -->
 <div class="kpi-grid">
     <div class="kpi">
         <p class="kpi-label">Active Combos</p>
@@ -73,14 +58,13 @@ $avgSavings = $totalCombos > 0 ? ($totalSavingsSum / $totalCombos) : 0;
     </div>
 </div>
 
-<!-- Combos Catalog Grid -->
 <div class="bundle-grid" id="bundleGrid">
     <?php if (empty($combos)): ?>
         <div class="card" style="grid-column: 1 / -1;">
             <p class="empty-note">No promotional bundles created yet. Click "+ Create New Bundle" above to construct one.</p>
         </div>
     <?php else: ?>
-        <?php foreach ($combos as $combo): 
+        <?php foreach ($combos as $combo):
             $cId = (int)$combo['combo_id'];
             $cPrice = (float)$combo['combo_price'];
             $indPrice = (float)($combo['individual_sum_price'] ?? 0);
@@ -125,7 +109,6 @@ $avgSavings = $totalCombos > 0 ? ($totalSavingsSum / $totalCombos) : 0;
     <?php endif; ?>
 </div>
 
-<!-- Modal: Create New Combo Bundle (FR6) -->
 <?php if ($isAdmin): ?>
 <dialog class="sched-dialog bundle-dialog" id="createBundleModal" aria-labelledby="bundleModalTitle">
     <form method="POST" action="<?= BASE_URL; ?>/bundles/create" id="createBundleForm">
@@ -136,33 +119,32 @@ $avgSavings = $totalCombos > 0 ? ($totalSavingsSum / $totalCombos) : 0;
 
         <div class="sched-field">
             <label for="comboNameInput">Bundle Package Name *</label>
-            <input type="text" 
-                   id="comboNameInput" 
-                   name="combo_name" 
-                   required 
+            <input type="text"
+                   id="comboNameInput"
+                   name="combo_name"
+                   required
                    placeholder="e.g. Cinema Date Night Feast">
         </div>
 
         <div class="sched-field">
             <label for="comboDescInput">Marketing Description</label>
-            <input type="text" 
-                   id="comboDescInput" 
-                   name="description" 
+            <input type="text"
+                   id="comboDescInput"
+                   name="description"
                    placeholder="e.g. 2 Large Butter Popcorn + 2 Sodas + Nachos">
         </div>
 
         <div class="sched-field">
             <label for="comboPriceInput">Promotional Bundle Price (<?= $peso; ?>) *</label>
-            <input type="number" 
-                   id="comboPriceInput" 
-                   name="combo_price" 
-                   step="0.01" 
-                   min="0.01" 
-                   required 
+            <input type="number"
+                   id="comboPriceInput"
+                   name="combo_price"
+                   step="0.01"
+                   min="0.01"
+                   required
                    placeholder="e.g. 350.00">
         </div>
 
-        <!-- Dynamic Product Items Inclusions -->
         <div class="bundle-inclusions-wrap">
             <div class="bundle-inclusions-head">
                 <label>Included Concession Items *</label>
@@ -172,7 +154,7 @@ $avgSavings = $totalCombos > 0 ? ($totalSavingsSum / $totalCombos) : 0;
             </div>
 
             <div class="bundle-rows-container" id="bundleRowsContainer">
-                <!-- Initial Row -->
+
                 <div class="bundle-item-row">
                     <div class="sched-field flex-2">
                         <select name="product_ids[]" class="bundle-prod-select" required>
@@ -191,7 +173,6 @@ $avgSavings = $totalCombos > 0 ? ($totalSavingsSum / $totalCombos) : 0;
                 </div>
             </div>
 
-            <!-- Savings Preview Summary -->
             <div class="bundle-preview-card">
                 <div class="preview-row">
                     <span>Individual Sum Value:</span>

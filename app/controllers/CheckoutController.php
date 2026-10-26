@@ -1,12 +1,4 @@
 <?php
-/**
- * ScreenBites: Checkout Controller
- * 
- * Handles multi-item transactions, ticket finalization, inventory deduction,
- * split-tender payments, and consolidated receipt display (FR8, FR9, FR10).
- * 
- * @author Aaron Louis F. Macapagal
- */
 
 declare(strict_types=1);
 
@@ -52,9 +44,6 @@ class CheckoutController extends Controller
         $this->screeningModel = new Screening();
     }
 
-    /**
-     * Process an incoming checkout order (JSON POST from POS or Seat Matrix)
-     */
     public function processOrder(): void
     {
         $payload = $this->getJsonBody();
@@ -62,9 +51,9 @@ class CheckoutController extends Controller
             $payload = $this->post();
         }
 
-        $ticketsData     = (array)($payload['tickets'] ?? []);       // [{screening_id, seat_id, price}]
-        $concessionsData = (array)($payload['concessions'] ?? []);   // [{type: 'product'|'combo', id: int, quantity: int, price: float}]
-        $paymentsData    = (array)($payload['payments'] ?? []);      // [{method: 'Cash'|'E-Wallet'|'Card', amount: float, reference: string|null}]
+        $ticketsData     = (array)($payload['tickets'] ?? []);
+        $concessionsData = (array)($payload['concessions'] ?? []);
+        $paymentsData    = (array)($payload['payments'] ?? []);
 
         if (empty($ticketsData) && empty($concessionsData)) {
             $this->json(['success' => false, 'message' => 'Cart is empty. Select tickets or concessions.'], 400);
@@ -76,7 +65,6 @@ class CheckoutController extends Controller
             return;
         }
 
-        // 1. Calculate Grand Total
         $grossTotal = 0.00;
         foreach ($ticketsData as $t) {
             $grossTotal += (float)$t['price'];
@@ -85,11 +73,9 @@ class CheckoutController extends Controller
             $grossTotal += ((float)$c['price'] * (int)$c['quantity']);
         }
 
-        // Tax calculation: Gross total includes 12% VAT in the Philippines
         $subtotal = round($grossTotal / (1 + TAX_RATE), 2);
         $taxAmount = round($grossTotal - $subtotal, 2);
 
-        // 2. Validate Payment Tender
         $totalPaid = 0.00;
         foreach ($paymentsData as $p) {
             $totalPaid += (float)$p['amount'];
@@ -106,7 +92,6 @@ class CheckoutController extends Controller
 
         $changeDue = round($totalPaid - $grossTotal, 2);
 
-        // 3. Execute Transaction
         $this->db->beginTransaction();
 
         try {
@@ -114,7 +99,6 @@ class CheckoutController extends Controller
             $orderNumber = $this->orderModel->generateOrderNumber();
             $orderId = $this->orderModel->createOrder($orderNumber, $userId, $subtotal, $taxAmount);
 
-            // A. Process Tickets
             foreach ($ticketsData as $item) {
                 $screeningId = (int)$item['screening_id'];
                 $seatId      = (int)$item['seat_id'];
@@ -127,14 +111,11 @@ class CheckoutController extends Controller
 
                 $hallId = (int)$seat['hall_id'];
 
-                // Insert into tickets table
                 $this->ticketModel->createTicket($orderId, $screeningId, $seatId, $hallId, $price);
 
-                // Release seat hold from seat_holds table
                 $this->seatHoldModel->releaseHold($screeningId, $seatId, session_id());
             }
 
-            // B. Process Concessions & Decrement Inventory
             foreach ($concessionsData as $c) {
                 $type = $c['type'] ?? 'product';
                 $id   = (int)$c['id'];
@@ -155,7 +136,6 @@ class CheckoutController extends Controller
                         throw new \RuntimeException("Invalid bundle package #{$id}");
                     }
 
-                    // Decrement child products in the bundle
                     foreach ($combo['items'] as $child) {
                         $childId = (int)$child['product_id'];
                         $childNeeded = (int)$child['quantity'] * $qty;
@@ -168,7 +148,6 @@ class CheckoutController extends Controller
                 }
             }
 
-            // C. Record Payments & Tender Distribution
             $remainingChange = $changeDue;
             foreach ($paymentsData as $p) {
                 $method = (string)$p['method'];
@@ -202,9 +181,6 @@ class CheckoutController extends Controller
         }
     }
 
-    /**
-     * Render the consolidated printable thermal receipt (FR10)
-     */
     public function viewReceipt(string $order_number): void
     {
         $orderNumber = $order_number;
@@ -220,7 +196,6 @@ class CheckoutController extends Controller
         $items      = $this->orderModel->getOrderItems($orderId);
         $payments   = $this->paymentModel->getPaymentsByOrderId($orderId);
 
-        // Render standalone receipt template without header/sidebar
         $this->view('receipts/printable_pos', [
             'order'    => $order,
             'tickets'  => $tickets,
@@ -230,13 +205,9 @@ class CheckoutController extends Controller
         ], null);
     }
 
-    /**
-     * Process an order refund and cancel tickets (FR10, FR16)
-     * Re-opens booked seats on matrix and restocks concessions.
-     */
     public function refund(): void
     {
-        // Enforce RBAC: Only Admin and Ticketing Staff can authorize refunds
+
         Auth::requireRole([ROLE_ADMIN, ROLE_TICKETING]);
 
         $payload = $this->getJsonBody();

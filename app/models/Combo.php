@@ -1,12 +1,4 @@
 <?php
-/**
- * ScreenBites: Combo & Bundles Model
- * 
- * Manages promotional concession packages and composite junction
- * associations across `combos`, `combo_items`, and `products` (FR6).
- * 
- * @author Aaron Louis F. Macapagal
- */
 
 declare(strict_types=1);
 
@@ -24,14 +16,9 @@ class Combo
         $this->db = Database::getInstance();
     }
 
-    /**
-     * Retrieve all active combos with their itemized product ingredients and savings calculation
-     * 
-     * @return array<int, array<string, mixed>>
-     */
     public function getAllCombosWithItems(): array
     {
-        $sql = "SELECT 
+        $sql = "SELECT
                     c.combo_id,
                     c.combo_name,
                     c.description,
@@ -51,17 +38,11 @@ class Combo
         return $this->db->fetchAll($sql);
     }
 
-    /**
-     * Find a combo by ID including its individual product components
-     * 
-     * @param int $comboId
-     * @return array<string, mixed>|null
-     */
     public function findWithItems(int $comboId): ?array
     {
-        $comboSql = "SELECT combo_id, combo_name, description, combo_price, is_active 
-                     FROM combos 
-                     WHERE combo_id = :id 
+        $comboSql = "SELECT combo_id, combo_name, description, combo_price, is_active
+                     FROM combos
+                     WHERE combo_id = :id
                      LIMIT 1";
 
         $combo =$this->db->fetchOne($comboSql, [':id' =>$comboId]);
@@ -69,7 +50,7 @@ class Combo
             return null;
         }
 
-        $itemsSql = "SELECT 
+        $itemsSql = "SELECT
                         ci.product_id,
                         ci.quantity,
                         p.product_name,
@@ -85,13 +66,6 @@ class Combo
         return $combo;
     }
 
-    /**
-     * Verify if enough physical inventory units exist to satisfy a combo sale
-     * 
-     * @param int $comboId
-     * @param int $comboQuantityRequested
-     * @return array{can_fulfill: bool, missing_items: array<int, string>}
-     */
     public function checkComboStockAvailability(int $comboId, int$comboQuantityRequested = 1): array
     {
         $combo = $this->findWithItems($comboId);
@@ -117,23 +91,13 @@ class Combo
         ];
     }
 
-    /**
-     * Create a new combo and insert its child items within an atomic transaction
-     * 
-     * @param string $comboName
-     * @param string|null $description
-     * @param float $comboPrice
-     * @param array<int, array{product_id: int, quantity: int}> $items
-     * @return int Inserted combo_id
-     * @throws Throwable
-     */
     public function createCombo(string $comboName, ?string $description, float $comboPrice, array$items): int
     {
         $this->db->beginTransaction();
 
         try {
-            // 1. Insert header combo
-            $sql = "INSERT INTO combos (combo_name, description, combo_price, is_active) 
+
+            $sql = "INSERT INTO combos (combo_name, description, combo_price, is_active)
                     VALUES (:combo_name, :description, :combo_price, 1)";
 
             $this->db->query($sql, [
@@ -144,8 +108,7 @@ class Combo
 
             $comboId = (int)$this->db->lastInsertId();
 
-            // 2. Insert line items into combo_items (3NF junction table with composite PK)
-            $itemSql = "INSERT INTO combo_items (combo_id, product_id, quantity) 
+            $itemSql = "INSERT INTO combo_items (combo_id, product_id, quantity)
                         VALUES (:combo_id, :product_id, :quantity)";
 
             foreach ($items as$item) {

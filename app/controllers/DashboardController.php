@@ -1,12 +1,4 @@
 <?php
-/**
- * ScreenBites: Dashboard Controller
- * 
- * Aggregates live operational KPIs, real-time ticket & concessions metrics,
- * today's hall schedules, recent transactions, and critical inventory alerts (FR12, FR14, FR15).
- * 
- * @author Aaron Louis F. Macapagal
- */
 
 declare(strict_types=1);
 
@@ -34,9 +26,6 @@ class DashboardController extends Controller
         $this->movieModel     = new Movie();
     }
 
-    /**
-     * Role-based dashboard landing
-     */
     public function index(): void
     {
         if (!Auth::check()) {
@@ -44,23 +33,19 @@ class DashboardController extends Controller
             return;
         }
 
-        // Ticketing staff shortcut: go to schedules
         if (Auth::hasRole(ROLE_TICKETING)) {
             $this->redirect('schedules');
             return;
         }
 
-        // Snackbar cashier shortcut: go to POS
         if (Auth::hasRole(ROLE_CASHIER)) {
             $this->redirect('pos');
             return;
         }
 
-        // Administrator: Full Command Center Dashboard
         if (Auth::hasRole(ROLE_ADMIN)) {
             $today = date('Y-m-d');
 
-            // 1. Financial & Volume Aggregate KPIs
             $totalRevenue = (float)$this->db->fetchColumn(
                 "SELECT COALESCE(SUM(subtotal_amount + tax_amount), 0.00) FROM orders WHERE order_status = 'Completed'"
             );
@@ -78,9 +63,8 @@ class DashboardController extends Controller
                 "SELECT COALESCE(SUM(quantity), 0) FROM order_items"
             );
 
-            // 2. Today's Screenings
             $todayScreenings = $this->screeningModel->getScheduleByDate($today);
-            // If none scheduled for today, fetch upcoming screenings as preview
+
             if (empty($todayScreenings)) {
                 $todayScreenings = $this->db->fetchAll(
                     "SELECT s.screening_id, s.movie_id, s.hall_id, s.screening_date, s.start_time, s.end_time, s.base_price,
@@ -97,10 +81,8 @@ class DashboardController extends Controller
                 );
             }
 
-            // 3. Low Stock Alerts
             $lowStockAlerts = $this->productModel->getLowStockAlerts();
 
-            // 4. Recent Completed Orders
             $recentOrders = $this->db->fetchAll(
                 "SELECT o.order_id, o.order_number, (o.subtotal_amount + o.tax_amount) AS total_amount,
                         o.order_status, o.created_at, u.full_name AS cashier_name,
@@ -112,7 +94,6 @@ class DashboardController extends Controller
                  LIMIT 6"
             );
 
-            // 5. Active Movies Count
             $activeMovies = $this->movieModel->getActiveMovies();
 
             $kpis = [

@@ -1,12 +1,4 @@
 <?php
-/**
- * ScreenBites - Core Database Engine (PDO Singleton Wrapper with Auto-Migration)
- * 
- * Provides safe parameter-bound query execution, transaction management,
- * and automated schema/seed execution on first launch.
- * 
- * @author Aaron Louis F. Macapagal
- */
 
 declare(strict_types=1);
 
@@ -22,9 +14,6 @@ class Database
     private static ?Database $instance = null;
     private PDO $connection;
 
-    /**
-     * Private constructor to enforce Singleton pattern
-     */
     private function __construct()
     {
         $configFile = dirname(__DIR__) . '/config/database.php';
@@ -33,11 +22,10 @@ class Database
             throw new RuntimeException("Database configuration file not found at: {$configFile}");
         }
 
-        /** @var array $config */
         $config = require$configFile;
 
         try {
-            // 1. Initial connection without dbname to ensure the database can be created if missing
+
             $initialDsn = sprintf(
                 '%s:host=%s;port=%d;charset=%s',
                 $config['driver'],$config['host'],
@@ -49,11 +37,9 @@ class Database
                 $config['password'],$config['options']
             );
 
-            // 2. Ensure database exists and select it
             $dbName = $config['database'];$this->connection->exec("CREATE DATABASE IF NOT EXISTS `{$dbName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
             $this->connection->exec("USE `{$dbName}`;");
 
-            // 3. Automatically embed schema and seeds if tables are missing
             $this->autoMigrateIfMissing();
 
         } catch (PDOException $e) {
@@ -62,19 +48,15 @@ class Database
         }
     }
 
-    /**
-     * Automatically imports database/schema.sql and database/seeds.sql if tables are absent
-     */
     private function autoMigrateIfMissing(): void
     {
-        // Check if the foundational 'users' table exists
+
         $stmt =$this->connection->query("SHOW TABLES LIKE 'users'");
         $tableExists = $stmt &&$stmt->rowCount() > 0;
 
         if (!$tableExists) {
             $schemaFile = dirname(__DIR__) . '/database/schema.sql';$seedsFile  = dirname(__DIR__) . '/database/seeds.sql';
 
-            // Execute DDL Schema
             if (file_exists($schemaFile)) {
                 $schemaSql = file_get_contents($schemaFile);
                 if (!empty($schemaSql)) {
@@ -82,7 +64,6 @@ class Database
                 }
             }
 
-            // Execute Baseline Seeds
             if (file_exists($seedsFile)) {
                 $seedsSql = file_get_contents($seedsFile);
                 if (!empty($seedsSql)) {
@@ -92,24 +73,13 @@ class Database
         }
     }
 
-    /**
-     * Prevent object cloning
-     */
     private function __clone() {}
 
-    /**
-     * Prevent unserialization
-     */
     public function __wakeup()
     {
         throw new RuntimeException("Cannot unserialize singleton Database instance.");
     }
 
-    /**
-     * Get the global Database singleton instance
-     * 
-     * @return Database
-     */
     public static function getInstance(): Database
     {
         if (self::$instance === null) {
@@ -118,24 +88,11 @@ class Database
         return self::$instance;
     }
 
-    /**
-     * Get the raw underlying PDO connection instance
-     * 
-     * @return PDO
-     */
     public function getConnection(): PDO
     {
         return $this->connection;
     }
 
-    /**
-     * Prepare and execute a SQL statement with parameters
-     * 
-     * @param string $sql The prepared SQL query
-     * @param array $params Positional or named parameter bindings
-     * @return PDOStatement
-     * @throws PDOException
-     */
     public function query(string $sql, array$params = []): PDOStatement
     {
         try {
@@ -148,13 +105,6 @@ class Database
         }
     }
 
-    /**
-     * Fetch a single row as an associative array
-     * 
-     * @param string $sql
-     * @param array $params
-     * @return array|null
-     */
     public function fetchOne(string $sql, array$params = []): ?array
     {
         $stmt =$this->query($sql,$params);
@@ -162,25 +112,11 @@ class Database
         return $result !== false ? $result : null;
     }
 
-    /**
-     * Fetch all matching rows as an array of associative arrays
-     * 
-     * @param string $sql
-     * @param array $params
-     * @return array
-     */
     public function fetchAll(string $sql, array$params = []): array
     {
         return $this->query($sql,$params)->fetchAll();
     }
 
-    /**
-     * Fetch a single column value from the first row
-     * 
-     * @param string $sql
-     * @param array $params
-     * @return mixed
-     */
     public function fetchColumn(string $sql, array$params = []): mixed
     {
         $stmt =$this->query($sql,$params);
@@ -188,33 +124,16 @@ class Database
         return $result !== false ? $result : null;
     }
 
-    /**
-     * Execute an INSERT, UPDATE, or DELETE query and return the affected rows
-     * 
-     * @param string $sql
-     * @param array $params
-     * @return int Number of affected rows
-     */
     public function execute(string $sql, array$params = []): int
     {
         return $this->query($sql,$params)->rowCount();
     }
 
-    /**
-     * Retrieve the ID of the last inserted row
-     * 
-     * @return string
-     */
     public function lastInsertId(): string
     {
         return $this->connection->lastInsertId();
     }
 
-    /**
-     * Start a database transaction
-     * 
-     * @return bool
-     */
     public function beginTransaction(): bool
     {
         if (!$this->connection->inTransaction()) {
@@ -223,11 +142,6 @@ class Database
         return false;
     }
 
-    /**
-     * Commit the current active transaction
-     * 
-     * @return bool
-     */
     public function commit(): bool
     {
         if ($this->connection->inTransaction()) {
@@ -236,11 +150,6 @@ class Database
         return false;
     }
 
-    /**
-     * Roll back the current active transaction
-     * 
-     * @return bool
-     */
     public function rollBack(): bool
     {
         if ($this->connection->inTransaction()) {
@@ -249,13 +158,6 @@ class Database
         return false;
     }
 
-    /**
-     * Execute a closure inside a database transaction automatically rolling back on failure
-     * 
-     * @param callable $callback function(Database$db): mixed
-     * @return mixed
-     * @throws \Throwable
-     */
     public function transaction(callable $callback): mixed
     {
         $this->beginTransaction();

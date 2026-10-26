@@ -1,12 +1,4 @@
 <?php
-/**
- * ScreenBites: Utility Expense Model
- * 
- * Manages fixed and variable overhead expenses (Electricity & Water)
- * for the `utility_expenses` table (FR11, FR12).
- * 
- * @author Aaron Louis F. Macapagal
- */
 
 declare(strict_types=1);
 
@@ -23,13 +15,6 @@ class UtilityExpense
         $this->db = Database::getInstance();
     }
 
-    /**
-     * Retrieve logged utility expenses filtered by optional year and utility type
-     * 
-     * @param int|null $year
-     * @param string|null $utilityType ENUM('Electricity', 'Water')
-     * @return array<int, array<string, mixed>>
-     */
     public function getExpenses(?int $year = null, ?string $utilityType = null): array
     {
         $params = [];$whereClauses = [];
@@ -44,7 +29,7 @@ class UtilityExpense
 
         $whereSql = !empty($whereClauses) ? 'WHERE ' . implode(' AND ', $whereClauses) : '';
 
-        $sql = "SELECT 
+        $sql = "SELECT
                     ue.expense_id,
                     ue.utility_type,
                     ue.billing_month,
@@ -65,15 +50,9 @@ class UtilityExpense
         return $this->db->fetchAll($sql,$params);
     }
 
-    /**
-     * Find a specific utility expense record by its ID
-     * 
-     * @param int $expenseId
-     * @return array<string, mixed>|null
-     */
     public function findById(int $expenseId): ?array
     {
-        $sql = "SELECT expense_id, utility_type, billing_month, billing_year, bill_amount, 
+        $sql = "SELECT expense_id, utility_type, billing_month, billing_year, bill_amount,
                        payment_status, due_date, payment_date, notes, recorded_by, created_at
                 FROM utility_expenses
                 WHERE expense_id = :id
@@ -82,21 +61,13 @@ class UtilityExpense
         return $this->db->fetchOne($sql, [':id' => $expenseId]);
     }
 
-    /**
-     * Find an expense by its unique period key (FR11 3NF constraint)
-     * 
-     * @param string $utilityType
-     * @param int $year
-     * @param int $month
-     * @return array<string, mixed>|null
-     */
     public function findByPeriod(string $utilityType, int $year, int $month): ?array
     {
-        $sql = "SELECT expense_id, utility_type, billing_month, billing_year, bill_amount, 
+        $sql = "SELECT expense_id, utility_type, billing_month, billing_year, bill_amount,
                        payment_status, due_date, payment_date, notes, recorded_by
                 FROM utility_expenses
-                WHERE utility_type = :utility_type 
-                  AND billing_year = :year 
+                WHERE utility_type = :utility_type
+                  AND billing_year = :year
                   AND billing_month = :month
                 LIMIT 1";
 
@@ -107,20 +78,6 @@ class UtilityExpense
         ]);
     }
 
-    /**
-     * Insert or update an expense entry atomically (Upsert)
-     * 
-     * @param string $utilityType
-     * @param int $month
-     * @param int $year
-     * @param float $billAmount
-     * @param string|null $paymentDate
-     * @param string|null $notes
-     * @param int $recordedBy
-     * @param string $paymentStatus 'Unpaid' or 'Paid'
-     * @param string|null $dueDate
-     * @return array{action: string, expense_id: int}
-     */
     public function saveExpense(
         string $utilityType,
         int $month,
@@ -135,9 +92,9 @@ class UtilityExpense
         $existing = $this->findByPeriod($utilityType, $year, $month);
 
         if ($existing) {
-            // Update existing entry
+
             $expenseId = (int)$existing['expense_id'];
-            $sql = "UPDATE utility_expenses 
+            $sql = "UPDATE utility_expenses
                     SET bill_amount = :bill_amount,
                         payment_status = :payment_status,
                         due_date = :due_date,
@@ -159,12 +116,11 @@ class UtilityExpense
             return ['action' => 'updated', 'expense_id' => $expenseId];
         }
 
-        // Insert fresh entry
         $sql = "INSERT INTO utility_expenses (
-                    utility_type, billing_month, billing_year, bill_amount, 
+                    utility_type, billing_month, billing_year, bill_amount,
                     payment_status, due_date, payment_date, notes, recorded_by, created_at
                 ) VALUES (
-                    :utility_type, :billing_month, :billing_year, :bill_amount, 
+                    :utility_type, :billing_month, :billing_year, :bill_amount,
                     :payment_status, :due_date, :payment_date, :notes, :recorded_by, NOW()
                 )";
 
@@ -183,15 +139,6 @@ class UtilityExpense
         return ['action' => 'created', 'expense_id' => (int)$this->db->lastInsertId()];
     }
 
-    /**
-     * Mark an unpaid utility expense as Paid
-     * 
-     * @param int $expenseId
-     * @param string $paymentDate
-     * @param string|null $notes
-     * @param int $recordedBy
-     * @return bool
-     */
     public function payExpense(int $expenseId, string $paymentDate, ?string $notes, int $recordedBy): bool
     {
         $existing = $this->findById($expenseId);
@@ -201,7 +148,7 @@ class UtilityExpense
 
         $combinedNotes = trim(($existing['notes'] ? $existing['notes'] . ' | ' : '') . ($notes ?? ''));
 
-        $sql = "UPDATE utility_expenses 
+        $sql = "UPDATE utility_expenses
                 SET payment_status = 'Paid',
                     payment_date = :payment_date,
                     notes = :notes,
@@ -218,22 +165,13 @@ class UtilityExpense
         return true;
     }
 
-    /**
-     * Automatically generate monthly operational utility billing statements
-     * Ensures all months up to current month have their electricity and water bills recorded.
-     * 
-     * @param int $year
-     * @param int|null $upToMonth Defaults to current month
-     * @param int $recordedBy Admin User ID
-     * @return int Count of new statements generated
-     */
     public function autoGenerateMonthlyBills(int $year, ?int $upToMonth = null, int $recordedBy = 1): int
     {
         $currentYear  = (int)date('Y');
         $currentMonth = (int)date('n');
 
         if ($year > $currentYear) {
-            return 0; // Don't generate for future years
+            return 0;
         }
 
         $maxMonth = ($year === $currentYear) ? ($upToMonth ?? $currentMonth) : ($upToMonth ?? 12);
@@ -243,18 +181,15 @@ class UtilityExpense
 
         for ($m = 1; $m <= $maxMonth; $m++) {
             $isCurrentPeriod = ($year === $currentYear && $m === $currentMonth);
-            
-            // Standard due date: 15th of the following month
+
             $dueMonth = $m === 12 ? 1 : $m + 1;
             $dueYear  = $m === 12 ? $year + 1 : $year;
             $dueDate  = sprintf('%04d-%02d-15', $dueYear, $dueMonth);
-            
-            // Standard historical payment date: 5th-10th of following month
+
             $paidDate = sprintf('%04d-%02d-08', $dueYear, $dueMonth);
 
-            // 1. Electricity Statement
             if (!$this->findByPeriod('Electricity', $year, $m)) {
-                // Realistic variation in monthly electricity: ~₱38,000 - ₱42,500
+
                 $baseElec = 39000.00 + (($m * 420) % 3500);
                 $status   = $isCurrentPeriod ? 'Unpaid' : 'Paid';
                 $payDate  = $isCurrentPeriod ? null : $paidDate;
@@ -274,9 +209,8 @@ class UtilityExpense
                 $generatedCount++;
             }
 
-            // 2. Water Statement
             if (!$this->findByPeriod('Water', $year, $m)) {
-                // Realistic variation in monthly water: ~₱4,100 - ₱4,700
+
                 $baseWater = 4200.00 + (($m * 110) % 550);
                 $status    = $isCurrentPeriod ? 'Unpaid' : 'Paid';
                 $payDate   = $isCurrentPeriod ? null : $paidDate;
@@ -300,16 +234,9 @@ class UtilityExpense
         return $generatedCount;
     }
 
-    /**
-     * Calculate total utility overhead for a given billing month and year (FR12 helper)
-     * 
-     * @param int $month
-     * @param int $year
-     * @return float
-     */
     public function getTotalUtilitiesForMonth(int $month, int $year): float
     {
-        $sql = "SELECT COALESCE(SUM(bill_amount), 0.00) 
+        $sql = "SELECT COALESCE(SUM(bill_amount), 0.00)
                 FROM utility_expenses
                 WHERE billing_month = :month AND billing_year = :year";
 

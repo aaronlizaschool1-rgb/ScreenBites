@@ -1,6 +1,5 @@
 <?php
 
-
 declare(strict_types=1);
 
 namespace App\Models;
@@ -17,19 +16,6 @@ class AuditLog
         $this->db = Database::getInstance();
     }
 
-    /**
-     * Insert a new record into audit_logs
-     *
-     * @param array{
-     *   user_id: int,
-     *   action_type: string,
-     *   target_table: string,
-     *   record_id: int,
-     *   details: string,
-     *   ip_address: string
-     * } $data
-     * @return bool
-     */
     public function create(array $data): bool
     {
         $sql = "INSERT INTO audit_logs (
@@ -62,14 +48,6 @@ class AuditLog
         return $stmt->rowCount() > 0;
     }
 
-    /**
-     * Retrieve paginated and filtered audit logs joined with the actor's user profile
-     *
-     * @param array<string, mixed> $filters
-     * @param int $limit
-     * @param int $offset
-     * @return array<int, array<string, mixed>>
-     */
     public function getLogs(array $filters = [], int $limit = 50, int$offset = 0): array
     {
         $params = [];$whereClauses = [];
@@ -92,7 +70,7 @@ class AuditLog
 
         $whereSql = !empty($whereClauses) ? 'WHERE ' . implode(' AND ', $whereClauses) : '';
 
-        $sql = "SELECT 
+        $sql = "SELECT
                     a.log_id,
                     a.action_type,
                     a.target_table,
@@ -113,12 +91,6 @@ class AuditLog
         return $this->db->fetchAll($sql,$params);
     }
 
-    /**
-     * Get total count of logs matching active filters
-     *
-     * @param array<string, mixed> $filters
-     * @return int
-     */
     public function countLogs(array $filters = []): int
     {
         $params = [];$whereClauses = [];

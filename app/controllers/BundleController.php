@@ -1,11 +1,4 @@
 <?php
-/**
- * ScreenBites: Bundle & Combo Controller
- * 
- * Handles combo management, multi-product bundle creation, and pricing logic (FR6).
- * 
- * @author Aaron Louis F. Macapagal
- */
 
 declare(strict_types=1);
 
@@ -24,22 +17,18 @@ class BundleController extends Controller
 
     public function __construct()
     {
-        // Enforce RBAC: Cashiers can view combos for POS; Admins can manage/create
+
         Auth::requireRole([ROLE_ADMIN, ROLE_CASHIER]);
 
         $this->comboModel   = new Combo();
         $this->productModel = new Product();
     }
 
-    /**
-     * Display promotional combo list and bundle builder modal (FR6)
-     */
     public function index(): void
     {
         $combos   = $this->comboModel->getAllCombosWithItems();
         $products = $this->productModel->getAllProducts();
 
-        // AJAX check for POS register dynamic lookups
         if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
             $this->json([
                 'success' => true,
@@ -52,7 +41,6 @@ class BundleController extends Controller
         $flashError   = $_SESSION['flash_error'] ?? null;
         unset($_SESSION['flash_success'], $_SESSION['flash_error']);
 
-        // Renders app/views/concessions/bundles.php
         $this->view('concessions/bundles', [
             'combos'       => $combos,
             'products'     => $products,
@@ -63,9 +51,6 @@ class BundleController extends Controller
         ]);
     }
 
-    /**
-     * Process creation of a new promotional bundle
-     */
     public function create(): void
     {
         Auth::requireRole(ROLE_ADMIN);
@@ -88,14 +73,13 @@ class BundleController extends Controller
             return;
         }
 
-        // Structure items array while eliminating duplicate product selections
         $formattedItems = [];
         foreach ($productIds as $idx => $rawProdId) {
             $prodId = (int)$rawProdId;
             $qty    = max(1, (int)($quantities[$idx] ?? 1));
 
             if ($prodId > 0) {
-                // If the product was added multiple times in the form, sum quantities
+
                 if (isset($formattedItems[$prodId])) {
                     $formattedItems[$prodId]['quantity'] += $qty;
                 } else {

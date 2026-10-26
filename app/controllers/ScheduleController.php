@@ -1,12 +1,4 @@
 <?php
-/**
- * ScreenBites: Schedule Controller
- * 
- * Handles hall showtime scheduling, timeframe overlap prevention,
- * and schedule grid delivery (FR1).
- * 
- * @author Aaron Louis F. Macapagal
- */
 
 declare(strict_types=1);
 
@@ -27,7 +19,7 @@ class ScheduleController extends Controller
 
     public function __construct()
     {
-        // Enforce RBAC: Scheduling access is open to Admin & Ticketing Staff
+
         Auth::requireRole([ROLE_ADMIN, ROLE_TICKETING]);
 
         $this->screeningModel = new Screening();
@@ -35,13 +27,10 @@ class ScheduleController extends Controller
         $this->hallModel      = new Hall();
     }
 
-    /**
-     * Render the showtime calendar and scheduling interface
-     */
     public function index(): void
     {
         $selectedDate = (string)$this->get('date', date('Y-m-d'));
-        
+
         $screenings = $this->screeningModel->getScheduleByDate($selectedDate);
         $movies     = $this->movieModel->getActiveMovies();
         $halls      = $this->hallModel->getActiveHalls();
@@ -50,7 +39,6 @@ class ScheduleController extends Controller
         $flashError   = $_SESSION['flash_error'] ?? null;
         unset($_SESSION['flash_success'], $_SESSION['flash_error']);
 
-        // Renders app/views/ticketing/schedule.php
         $this->view('ticketing/schedule', [
             'screenings'   => $screenings,
             'movies'       => $movies,
@@ -63,12 +51,9 @@ class ScheduleController extends Controller
         ]);
     }
 
-    /**
-     * Process creation of a new screening slot with collision detection
-     */
     public function create(): void
     {
-        // Only Administrators can assign or create screening slots
+
         Auth::requireRole(ROLE_ADMIN);
 
         if (!Auth::verifyCsrfToken((string)$this->post('csrf_token'))) {
@@ -98,7 +83,6 @@ class ScheduleController extends Controller
             return;
         }
 
-        // Calculate end_time based on movie duration + 20-minute turnaround/cleaning buffer
         $startDateTime = DateTime::createFromFormat('H:i', $startTime);
         if (!$startDateTime) {
             $startDateTime = DateTime::createFromFormat('H:i:s', $startTime);
@@ -110,13 +94,12 @@ class ScheduleController extends Controller
             return;
         }
 
-        $totalRuntime = (int)$movie['duration_minutes'] + 20; // 20 min hall turnaround buffer
+        $totalRuntime = (int)$movie['duration_minutes'] + 20;
         $endDateTime = (clone $startDateTime)->modify("+{$totalRuntime} minutes");
 
         $formattedStartTime = $startDateTime->format('H:i:00');
         $formattedEndTime   = $endDateTime->format('H:i:00');
 
-        // Check for room conflicts: FR1 collision check
         $hasCollision = $this->screeningModel->hasScheduleCollision(
             $hallId,
             $date,

@@ -1,16 +1,5 @@
 <?php
-/**
- * app/views/ticketing/schedule.php  (FR1)
- *
- * @var array  $screenings
- * @var array  $movies
- * @var array  $halls
- * @var string $selectedDate
- * @var string $csrfToken
- * @var string $userRole
- *
- * Flash messages ($flashSuccess / $flashError) are already shown by layouts/sidebar.php.
- */
+
 use Core\Auth;
 
 $e    = fn($v): string => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
@@ -34,13 +23,11 @@ $duration = function ($mins): string {
     return $mins >= 60 ? intdiv($mins, 60) . 'h ' . ($mins % 60) . 'm' : $mins . 'm';
 };
 
-// Hall capacity (rows x columns), matched by hall name
 $capacity = [];
 foreach ($halls as $h) {
     $capacity[(string) $h['hall_name']] = (int) $h['total_rows'] * (int) $h['total_columns'];
 }
 
-// Group screenings by hall, earliest first
 $byHall = [];
 foreach ($screenings as $s) {
     $byHall[(string) $s['hall_name']][] = $s;

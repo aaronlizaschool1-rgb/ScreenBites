@@ -1,12 +1,4 @@
 <?php
-/**
- * ScreenBites: Financial Analytics & Reporting Engine Controller
- * 
- * Computes Net Operating Income, sales segregations, and hall occupancy analytics.
- * Strictly restricted to Administrator role (FR12, FR14, FR15, FR13).
- * 
- * @author Aaron Louis F. Macapagal
- */
 
 declare(strict_types=1);
 
@@ -22,22 +14,17 @@ class ReportController extends Controller
 
     public function __construct()
     {
-        // Enforce RBAC: Financial reports and analytics require Administrator access
+
         Auth::requireRole(ROLE_ADMIN);
 
         $this->db = Database::getInstance();
     }
 
-    /**
-     * FR12: Net Operating Income Computation
-     * Gross Revenue (Box Office + Concessions) - COGS - Overhead Utilities = Net Operating Income
-     */
     public function financialReport(): void
     {
         $selectedYear  = (int)$this->get('year', (int)date('Y'));
         $selectedMonth = (int)$this->get('month', (int)date('m'));
 
-        // 1. Box Office Gross Revenue
         $ticketSql = "SELECT COALESCE(SUM(t.price_charged), 0.00) AS total_ticket_sales,
                              COUNT(t.ticket_id) AS total_tickets_sold
                       FROM tickets t
@@ -45,7 +32,7 @@ class ReportController extends Controller
                       WHERE o.order_status = 'Completed'
                         AND YEAR(o.created_at) = :year1
                         AND MONTH(o.created_at) = :month1";
-        
+
         $ticketData = $this->db->fetchOne($ticketSql, [
             ':year1'  => $selectedYear,
             ':month1' => $selectedMonth
@@ -53,7 +40,6 @@ class ReportController extends Controller
         $ticketRevenue = (float)($ticketData['total_ticket_sales'] ?? 0.00);
         $ticketsSold   = (int)($ticketData['total_tickets_sold'] ?? 0);
 
-        // 2. Concessions Gross Revenue
         $concessionSql = "SELECT COALESCE(SUM(oi.quantity * oi.unit_price_charged), 0.00) AS total_concessions_sales,
                                  COALESCE(SUM(oi.quantity), 0) AS total_items_sold
                           FROM order_items oi
@@ -71,8 +57,6 @@ class ReportController extends Controller
 
         $grossRevenue = $ticketRevenue + $concessionRevenue;
 
-        // 3. Concessions Cost of Goods Sold (COGS)
-        // A. Standalone Products COGS
         $standaloneCogsSql = "SELECT COALESCE(SUM(oi.quantity * p.unit_cost), 0.00)
                               FROM order_items oi
                               INNER JOIN orders o ON oi.order_id = o.order_id
@@ -87,7 +71,6 @@ class ReportController extends Controller
             ':month3' => $selectedMonth
         ]);
 
-        // B. Combo / Bundle Concessions COGS
         $comboCogsSql = "SELECT COALESCE(SUM(oi.quantity * ci.quantity * p.unit_cost), 0.00)
                          FROM order_items oi
                          INNER JOIN orders o ON oi.order_id = o.order_id
@@ -106,10 +89,9 @@ class ReportController extends Controller
 
         $totalCogs = $standaloneCogs + $comboCogs;
 
-        // 4. Overhead Utilities (Electricity and Water)
-        $utilitySql = "SELECT utility_type, bill_amount 
-                       FROM utility_expenses 
-                       WHERE billing_year = :year5 
+        $utilitySql = "SELECT utility_type, bill_amount
+                       FROM utility_expenses
+                       WHERE billing_year = :year5
                          AND billing_month = :month5";
 
         $utilityRows = $this->db->fetchAll($utilitySql, [
@@ -128,7 +110,6 @@ class ReportController extends Controller
         }
         $totalUtilities = $electricityCost + $waterCost;
 
-        // 5. Net Operating Income
         $totalOverheadExpenses = $totalCogs + $totalUtilities;
         $netOperatingIncome    = $grossRevenue - $totalOverheadExpenses;
 
@@ -153,7 +134,6 @@ class ReportController extends Controller
             return;
         }
 
-        // Renders app/views/reports/financial.php
         $this->view('reports/financial', [
             'financial'     => $financialSummary,
             'selectedYear'  => $selectedYear,
@@ -161,10 +141,6 @@ class ReportController extends Controller
         ]);
     }
 
-    /**
-     * FR14: Box Office & Concession Sales Reports
-     * Itemized monthly and daily performance segregating tickets, concessions, movies, and tender methods.
-     */
     public function salesReport(): void
     {
         $selectedYear  = (int)$this->get('year', (int)date('Y'));
@@ -180,7 +156,6 @@ class ReportController extends Controller
         $startDate = sprintf('%04d-%02d-01', $selectedYear, $selectedMonth);
         $endDate   = date('Y-m-t', strtotime($startDate));
 
-        // 1. Box Office Sales Aggregation (Tickets)
         $ticketSql = "SELECT COALESCE(SUM(t.price_charged), 0.00) AS ticket_revenue,
                              COUNT(t.ticket_id) AS tickets_sold
                       FROM tickets t
@@ -197,7 +172,6 @@ class ReportController extends Controller
         $ticketRevenue = (float)($ticketData['ticket_revenue'] ?? 0.00);
         $ticketsSold   = (int)($ticketData['tickets_sold'] ?? 0);
 
-        // 2. Concessions Sales Aggregation (Snacks & Combos)
         $concessionSql = "SELECT COALESCE(SUM(oi.quantity * oi.unit_price_charged), 0.00) AS concession_revenue,
                                  COALESCE(SUM(oi.quantity), 0) AS items_sold
                           FROM order_items oi
@@ -213,13 +187,12 @@ class ReportController extends Controller
         $concessionRevenue = (float)($concessionData['concession_revenue'] ?? 0.00);
         $itemsSold         = (int)($concessionData['items_sold'] ?? 0);
 
-        // 3. Total Sales & Order Count
         $totalSales = $ticketRevenue + $concessionRevenue;
 
         $ordersCount = (int)$this->db->fetchColumn(
-            "SELECT COUNT(*) FROM orders 
-             WHERE order_status = 'Completed' 
-               AND YEAR(created_at) = :year 
+            "SELECT COUNT(*) FROM orders
+             WHERE order_status = 'Completed'
+               AND YEAR(created_at) = :year
                AND MONTH(created_at) = :month",
             [':year' => $selectedYear, ':month' => $selectedMonth]
         );
@@ -237,8 +210,7 @@ class ReportController extends Controller
             'avg_order_value'    => $avgOrderValue
         ];
 
-        // 4. Daily Sales Timeline (Isolated subqueries to prevent Cartesian product)
-        $timelineSql = "SELECT 
+        $timelineSql = "SELECT
                             d.sale_date,
                             COALESCE(t.daily_ticket_sales, 0.00) AS box_office_sales,
                             COALESCE(c.daily_concession_sales, 0.00) AS concession_sales,
@@ -279,8 +251,7 @@ class ReportController extends Controller
             ':month3' => $selectedMonth
         ]);
 
-        // 5. Revenue by Payment Tender Method
-        $paymentSql = "SELECT 
+        $paymentSql = "SELECT
                            p.payment_method,
                            COUNT(DISTINCT p.order_id) AS transaction_count,
                            SUM(p.amount_paid - p.change_returned) AS net_collected
@@ -297,8 +268,7 @@ class ReportController extends Controller
             ':month' => $selectedMonth
         ]);
 
-        // 6. Box Office by Movie
-        $movieSql = "SELECT 
+        $movieSql = "SELECT
                          m.title AS movie_title,
                          m.rating AS movie_rating,
                          COUNT(t.ticket_id) AS tickets_sold,
@@ -319,8 +289,7 @@ class ReportController extends Controller
             ':month' => $selectedMonth
         ]);
 
-        // 7. Top Concession Items & Combos
-        $itemSql = "SELECT 
+        $itemSql = "SELECT
                         COALESCE(p.product_name, c.combo_name) AS item_name,
                         CASE WHEN oi.combo_id IS NOT NULL THEN 'Bundle' ELSE p.category END AS category,
                         SUM(oi.quantity) AS units_sold,
@@ -353,7 +322,6 @@ class ReportController extends Controller
             return;
         }
 
-        // Renders app/views/reports/sales.php
         $this->view('reports/sales', [
             'sales'            => $salesSummary,
             'financial'        => $salesSummary,
@@ -368,16 +336,11 @@ class ReportController extends Controller
         ]);
     }
 
-    /**
-     * FR15: Hall Occupancy & Peak-Hour Analytics
-     * Computes screening capacity utilization and hourly attendance curves.
-     */
     public function occupancyAnalytics(): void
     {
         $selectedDate = (string)$this->get('date', date('Y-m-d'));
 
-        // Hall Occupancy Rates per screening
-        $occupancySql = "SELECT 
+        $occupancySql = "SELECT
                              s.screening_id,
                              m.title AS movie_title,
                              h.hall_name,
@@ -399,8 +362,7 @@ class ReportController extends Controller
             ':target_date' => $selectedDate
         ]);
 
-        // Peak-Hour Distribution (Aggregated attendance by screening start hour over last 30 days)
-        $peakHourSql = "SELECT 
+        $peakHourSql = "SELECT
                             HOUR(s.start_time) AS hour_of_day,
                             COUNT(t.ticket_id) AS total_tickets_sold
                         FROM screenings s
@@ -420,7 +382,6 @@ class ReportController extends Controller
             return;
         }
 
-        // Renders app/views/reports/occupancy.php
         $this->view('reports/occupancy', [
             'screeningOccupancies' => $screeningOccupancies,
             'peakHourStats'        => $peakHourStats,
@@ -428,9 +389,6 @@ class ReportController extends Controller
         ]);
     }
 
-    /**
-     * Check if request expects JSON format or is AJAX
-     */
     private function isAjaxOrJson(): bool
     {
         return (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')

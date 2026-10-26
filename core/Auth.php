@@ -1,12 +1,4 @@
 <?php
-/**
- * ScreenBites: Authentication & Role-Based Access Control (RBAC) Guard
- * 
- * Implements FR13 by enforcing role hierarchy, route protection,
- * and session state hardening.
- * 
- * @author Aaron Louis F. Macapagal
- */
 
 declare(strict_types=1);
 
@@ -17,9 +9,6 @@ class Auth
     private const SESSION_USER_KEY = 'sb_user';
     private const CSRF_TOKEN_KEY   = 'sb_csrf_token';
 
-    /**
-     * Start session safely if not already active
-     */
     private static function initSession(): void
     {
         if (session_status() === PHP_SESSION_NONE) {
@@ -27,16 +16,10 @@ class Auth
         }
     }
 
-    /**
-     * Establish an authenticated session for a user
-     *
-     * @param array{user_id: int, full_name: string, username: string, role: string} $user
-     */
     public static function login(array $user): void
     {
         self::initSession();
 
-        // Prevent session fixation by generating a fresh session ID
         session_regenerate_id(true);
 
         $_SESSION[self::SESSION_USER_KEY] = [
@@ -48,9 +31,6 @@ class Auth
         ];
     }
 
-    /**
-     * Terminate the authenticated session and clear cookies
-     */
     public static function logout(): void
     {
         self::initSession();
@@ -73,49 +53,30 @@ class Auth
         session_destroy();
     }
 
-    /**
-     * Check if a user is currently logged in
-     */
     public static function check(): bool
     {
         self::initSession();
         return isset($_SESSION[self::SESSION_USER_KEY]['id']);
     }
 
-    /**
-     * Get the authenticated user's session payload
-     *
-     * @return array{id: int, full_name: string, username: string, role: string, logged_at: int}|null
-     */
     public static function user(): ?array
     {
         self::initSession();
         return $_SESSION[self::SESSION_USER_KEY] ?? null;
     }
 
-    /**
-     * Get the authenticated user's ID
-     */
     public static function id(): ?int
     {
         $user = self::user();
         return $user ? (int)$user['id'] : null;
     }
 
-    /**
-     * Get the authenticated user's role
-     */
     public static function role(): ?string
     {
         $user = self::user();
         return $user['role'] ?? null;
     }
 
-    /**
-     * Check if the logged-in user possesses a specific role or one of multiple roles
-     *
-     * @param string|array<int, string> $roles
-     */
     public static function hasRole(string|array $roles): bool
     {
         $currentRole = self::role();
@@ -130,12 +91,6 @@ class Auth
         return in_array($currentRole, $roles, true);
     }
 
-    /**
-     * RBAC Route Guard: Require authentication and optional role authorization
-     * Redirects to login if unauthenticated or aborts with 403 Forbidden.
-     *
-     * @param array<int, string>|string $allowedRoles Allowed roles or empty for any logged-in user
-     */
     public static function requireRole(string|array $allowedRoles = []): void
     {
         if (!self::check()) {
@@ -148,8 +103,7 @@ class Auth
             $roles = (array)$allowedRoles;
             if (!self::hasRole($roles)) {
                 http_response_code(403);
-                
-                // Return JSON if requested asynchronously
+
                 if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
                     header('Content-Type: application/json');
                     echo json_encode([
@@ -169,17 +123,11 @@ class Auth
         }
     }
 
-    /**
-     * Require the user to be authenticated (any active role)
-     */
     public static function requireLogin(): void
     {
         self::requireRole();
     }
 
-    /**
-     * Generate or fetch the current CSRF token
-     */
     public static function csrfToken(): string
     {
         self::initSession();
@@ -189,9 +137,6 @@ class Auth
         return $_SESSION[self::CSRF_TOKEN_KEY];
     }
 
-    /**
-     * Verify the validity of a submitted CSRF token
-     */
     public static function verifyCsrfToken(?string $token): bool
     {
         self::initSession();

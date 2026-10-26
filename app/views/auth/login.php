@@ -1,13 +1,5 @@
 <?php
-/**
- * app/views/auth/login.php  (FR13)
- * Modern Cinematic Ticket Login Interface with Netflix-style poster backdrop
- *
- * @var string|null $error
- * @var string      $csrfToken
- */
 
-// Gather movie posters for Netflix-style low-opacity cinematic background
 $posterDir = ROOT_PATH . '/public/uploads/posters';
 $posterFiles = glob($posterDir . '/*.{jpg,jpeg,png,webp}', GLOB_BRACE) ?: [];
 $posters = [];
@@ -18,7 +10,7 @@ foreach ($posterFiles as $file) {
     }
 }
 if (!empty($posters)) {
-    // Repeat list to fill a dense grid across large screens
+
     while (count($posters) < 48) {
         $posters = array_merge($posters, $posters);
     }
@@ -40,7 +32,6 @@ if (!empty($posters)) {
 </head>
 <body class="login-page">
 
-    <!-- Netflix-Style Cinematic Movie Poster Mosaic Backdrop -->
     <div class="netflix-poster-backdrop" aria-hidden="true">
         <div class="netflix-poster-grid">
             <?php foreach ($posters as $idx => $p): ?>
@@ -49,19 +40,18 @@ if (!empty($posters)) {
                 </div>
             <?php endforeach; ?>
         </div>
-        <!-- Deep Cinema Vignette & Gradients -->
+
         <div class="netflix-overlay-radial"></div>
         <div class="netflix-overlay-linear"></div>
         <div class="netflix-spotlight-beam"></div>
     </div>
 
     <main class="ticket-container">
-        <!-- Floating Cinema Ticket Card -->
+
         <article class="ticket" aria-label="Cinema Admission Login Ticket">
 
-            <!-- Top Header (Crimson Ticket Stub) -->
             <header class="ticket-top">
-                <!-- Golden Marquee Lightbulbs -->
+
                 <div class="ticket-marquee" aria-hidden="true">
                     <span class="marquee-track"></span>
                 </div>
@@ -86,14 +76,12 @@ if (!empty($posters)) {
                 </div>
             </header>
 
-            <!-- Perforation with Circular Notches -->
             <div class="ticket-perf" aria-hidden="true">
                 <div class="notch-left"></div>
                 <div class="perf-line"></div>
                 <div class="notch-right"></div>
             </div>
 
-            <!-- Bottom Body (Form & Inputs) -->
             <div class="ticket-body">
                 <form method="POST" action="<?= BASE_URL; ?>/login" autocomplete="on" id="loginForm" class="ticket-form">
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken); ?>">
@@ -105,7 +93,6 @@ if (!empty($posters)) {
                         </div>
                     <?php endif; ?>
 
-                    <!-- Username Field -->
                     <div class="login-field">
                         <label for="username">Username or ID</label>
                         <div class="input-icon-wrap">
@@ -118,14 +105,13 @@ if (!empty($posters)) {
                         </div>
                     </div>
 
-                    <!-- Password Field -->
                     <div class="login-field">
                         <label for="password">Password</label>
                         <div class="input-icon-wrap login-pw">
                             <span class="field-icon">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                             </span>
-                            <input type="password" id="password" name="password" required 
+                            <input type="password" id="password" name="password" required
                                    autocomplete="current-password" placeholder="••••••••••••">
                             <button type="button" class="login-pw-toggle" id="pwToggle" aria-pressed="false" aria-controls="password" title="Toggle password visibility">
                                 <svg id="eyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
@@ -133,14 +119,12 @@ if (!empty($posters)) {
                         </div>
                     </div>
 
-                    <!-- Sign in Button -->
                     <button type="submit" class="login-btn" id="loginBtn">
                         <span>Sign In to Console</span>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                     </button>
                 </form>
 
-                <!-- Quick Fast Login Demo Chips -->
                 <div class="fast-login-tray">
                     <span class="tray-label">Quick Sign-in:</span>
                     <div class="chip-group">
@@ -156,7 +140,6 @@ if (!empty($posters)) {
                     </div>
                 </div>
 
-                <!-- Realistic Ticket Barcode Footer -->
                 <div class="ticket-barcode-footer" aria-hidden="true">
                     <div class="barcode-bars">
                         <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
@@ -201,7 +184,7 @@ if (!empty($posters)) {
                 userField.value = u;
                 pw.value = p;
                 userField.focus();
-                
+
                 // Visual ripple feedback
                 chip.classList.add('chip-active');
                 setTimeout(function () { chip.classList.remove('chip-active'); }, 300);
