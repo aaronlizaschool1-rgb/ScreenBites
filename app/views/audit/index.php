@@ -40,7 +40,7 @@ $pageEnd    = min($totalPages, $page + 2);
             <div class="audit-head-text">
                 <div class="audit-pill-row">
                     <span class="audit-security-pill">
-                        <span class="sec-dot"></span> System Security &amp; Compliance (FR16)
+                        <span class="sec-dot"></span> System Security &amp; Compliance
                     </span>
                     <span class="audit-records-pill"><?= number_format($totalLogs); ?> <?= $totalLogs === 1 ? 'Event Logged' : 'Events Logged'; ?></span>
                 </div>

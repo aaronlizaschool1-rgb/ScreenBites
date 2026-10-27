@@ -266,7 +266,7 @@ $movieThemes = [
         <input type="hidden" name="csrf_token" value="<?= $e($csrfToken); ?>">
 
         <h2 id="addMovieModalTitle">Register New Movie Title</h2>
-        <p class="sched-note">Add a movie to the Now Showing catalog to schedule showtimes in cinema halls (FR1).</p>
+        <p class="sched-note">Add a movie to the Now Showing catalog to schedule showtimes in cinema halls.</p>
 
         <div class="sched-field">
             <label for="movieTitleInput">Movie Title *</label>

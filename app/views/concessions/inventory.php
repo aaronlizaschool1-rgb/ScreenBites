@@ -28,7 +28,7 @@ foreach ($products as $p) {
 <div class="page-head">
     <div>
         <h1>Concessions Inventory &amp; Stock</h1>
-        <p>Monitor snack bar stocks, receive real-time low-stock alerts, and record replenishment audits (FR5, FR7).</p>
+        <p>Monitor snack bar stocks, receive real-time low-stock alerts, and record replenishment audits.</p>
     </div>
     <div class="inv-head-actions">
         <?php if ($isAdmin): ?>
@@ -68,7 +68,7 @@ foreach ($products as $p) {
         <div class="inv-alert-title-wrap">
             <span class="inv-alert-icon" aria-hidden="true">&#9888;</span>
             <div>
-                <h2 class="inv-alert-title">Critical Inventory Reorder Alert (FR7)</h2>
+                <h2 class="inv-alert-title">Critical Inventory Reorder Alert</h2>
                 <p class="inv-alert-subtitle"><?= $lowStockCount; ?> concession <?= $lowStockCount === 1 ? 'item is' : 'items are'; ?> below the designated minimum safety threshold.</p>
             </div>
         </div>
@@ -214,7 +214,7 @@ foreach ($products as $p) {
         <input type="hidden" name="product_id" id="modalProductId" value="">
 
         <h2 id="adjustModalTitle">Adjust Stock Count</h2>
-        <p class="sched-note">Manual adjustments are permanently recorded in the system audit trail (FR16).</p>
+        <p class="sched-note">Manual adjustments are permanently recorded in the system audit trail.</p>
 
         <div class="sched-field">
             <label>Product Name</label>

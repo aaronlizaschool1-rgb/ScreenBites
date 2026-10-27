@@ -50,7 +50,7 @@ $chartData = [
 <div class="page-head">
     <div>
         <h1>Comprehensive Sales Report</h1>
-        <p>Box office admissions compared with concessions and tender settlement for <?= htmlspecialchars((string)$period); ?> (FR14).</p>
+        <p>Box office admissions compared with concessions and tender settlement for <?= htmlspecialchars((string)$period); ?>.</p>
     </div>
 </div>
 

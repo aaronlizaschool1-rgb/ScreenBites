@@ -29,7 +29,7 @@ $avgSavings = $totalCombos > 0 ? ($totalSavingsSum / $totalCombos) : 0;
 <div class="page-head">
     <div>
         <h1>Promotional Combos &amp; Bundles</h1>
-        <p>Package concession items into discounted promotional bundles to drive snack bar sales (FR6).</p>
+        <p>Package concession items into discounted promotional bundles to drive snack bar sales.</p>
     </div>
     <div class="bundle-head-actions">
         <?php if ($isAdmin): ?>
@@ -115,7 +115,7 @@ $avgSavings = $totalCombos > 0 ? ($totalSavingsSum / $totalCombos) : 0;
         <input type="hidden" name="csrf_token" value="<?= $e($csrfToken); ?>">
 
         <h2 id="bundleModalTitle">Create Promotional Bundle</h2>
-        <p class="sched-note">Bundle multiple snack and beverage items at a custom package price (FR6).</p>
+        <p class="sched-note">Bundle multiple snack and beverage items at a custom package price.</p>
 
         <div class="sched-field">
             <label for="comboNameInput">Bundle Package Name *</label>

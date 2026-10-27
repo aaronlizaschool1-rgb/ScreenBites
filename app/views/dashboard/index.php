@@ -335,7 +335,7 @@ $activeMoviesCount= (int)($kpis['active_movies_count'] ?? 30);
             <section class="card dash-card" aria-label="Inventory Watchlist">
                 <div class="dash-card-header">
                     <div>
-                        <h2 class="dash-card-title">Inventory Watchlist (FR7)</h2>
+                        <h2 class="dash-card-title">Inventory Watchlist</h2>
                         <p class="dash-card-sub">Items at or below safety reorder threshold</p>
                     </div>
                     <a href="<?= BASE_URL; ?>/inventory" class="btn btn-sm btn-ghost dash-link-pill">Audit &rarr;</a>
@@ -399,7 +399,7 @@ $activeMoviesCount= (int)($kpis['active_movies_count'] ?? 30);
                         </div>
                         <div class="dash-portal-content">
                             <strong>Net Operating Income</strong>
-                            <span>Box office, concessions revenue, utility overhead &amp; margins (FR12)</span>
+                            <span>Box office, concessions revenue, utility overhead &amp; margins</span>
                         </div>
                         <span class="portal-arrow">&rarr;</span>
                     </a>
@@ -410,7 +410,7 @@ $activeMoviesCount= (int)($kpis['active_movies_count'] ?? 30);
                         </div>
                         <div class="dash-portal-content">
                             <strong>Sales Report &amp; Trends</strong>
-                            <span>Box office ticket earnings compared with snack bar revenue (FR14)</span>
+                            <span>Box office ticket earnings compared with snack bar revenue</span>
                         </div>
                         <span class="portal-arrow">&rarr;</span>
                     </a>
@@ -421,7 +421,7 @@ $activeMoviesCount= (int)($kpis['active_movies_count'] ?? 30);
                         </div>
                         <div class="dash-portal-content">
                             <strong>Hall Occupancy Analytics</strong>
-                            <span>Identify peak business hours &amp; schedule projector power efficiently (FR15)</span>
+                            <span>Identify peak business hours &amp; schedule projector power efficiently</span>
                         </div>
                         <span class="portal-arrow">&rarr;</span>
                     </a>
@@ -432,7 +432,7 @@ $activeMoviesCount= (int)($kpis['active_movies_count'] ?? 30);
                         </div>
                         <div class="dash-portal-content">
                             <strong>Utilities &amp; Operational Overhead</strong>
-                            <span>Electricity draw &amp; water sanitation expense logs (FR11)</span>
+                            <span>Electricity draw &amp; water sanitation expense logs</span>
                         </div>
                         <span class="portal-arrow">&rarr;</span>
                     </a>
@@ -443,7 +443,7 @@ $activeMoviesCount= (int)($kpis['active_movies_count'] ?? 30);
                         </div>
                         <div class="dash-portal-content">
                             <strong>Transaction Audit Trail</strong>
-                            <span>Cancellations, refunds, overrides &amp; failed sign-ins (FR16)</span>
+                            <span>Cancellations, refunds, overrides &amp; failed sign-ins</span>
                         </div>
                         <span class="portal-arrow">&rarr;</span>
                     </a>

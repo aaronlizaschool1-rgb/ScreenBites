@@ -33,7 +33,7 @@ $monthNames = [
 <div class="page-head">
     <div>
         <h1>Operational Utility Overhead</h1>
-        <p>Log and audit monthly electric and water expenses for Net Operating Profit computation (FR11, FR12).</p>
+        <p>Log and audit monthly electric and water expenses for Net Operating Profit computation.</p>
     </div>
     <div class="utility-head-actions">
         <button type="button" class="btn" id="openExpenseModalBtn">
@@ -176,7 +176,7 @@ $monthNames = [
                                         data-amount="<?= $amount; ?>"
                                         data-date="<?= $e($row['payment_date'] ?? date('Y-m-d')); ?>"
                                         data-notes="<?= $e($row['notes'] ?? ''); ?>"
-                                        title="Modify recorded bill amount or notes (FR16)">
+                                        title="Modify recorded bill amount or notes">
                                     Edit Bill
                                 </button>
                             </td>
@@ -193,7 +193,7 @@ $monthNames = [
         <input type="hidden" name="csrf_token" value="<?= $e($csrfToken); ?>">
 
         <h2 id="modalExpenseTitle">Log Utility Overhead Expense</h2>
-        <p class="sched-note">Record monthly overhead costs. Updating an existing period replaces previous amounts and logs an audit trail (FR11, FR16).</p>
+        <p class="sched-note">Record monthly overhead costs. Updating an existing period replaces previous amounts and logs an audit trail.</p>
 
         <div class="sched-row">
             <div class="sched-field">
