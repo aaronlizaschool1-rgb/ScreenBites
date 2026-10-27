@@ -106,17 +106,17 @@ INSERT INTO screenings (screening_id, movie_id, hall_id, screening_date, start_t
 (4, 3, 2, '2026-10-10', '14:00:00', '17:00:00', 450.00),
 (5, 4, 2, '2026-10-10', '18:00:00', '19:35:00', 400.00);
 
-INSERT INTO products (product_id, product_name, category, unit_cost, retail_price, current_stock, reorder_level, is_active) VALUES
-(1, 'Classic Butter Popcorn (Large)', 'Popcorn', 35.00, 120.00, 85, 20, 1),
-(2, 'Caramel Glazed Popcorn (Large)', 'Popcorn', 42.00, 140.00, 50, 15, 1),
-(3, 'Cheese Blast Popcorn (Large)', 'Popcorn', 40.00, 135.00, 65, 15, 1),
-(4, 'Fountain Soda - Cola (22oz)', 'Beverage', 15.00, 65.00, 120, 30, 1),
-(5, 'Fountain Soda - Lemon Lime (22oz)', 'Beverage', 15.00, 65.00, 110, 30, 1),
-(6, 'Bottled Mineral Water (500ml)', 'Beverage', 10.00, 40.00, 95, 25, 1),
-(7, 'Nacho Platter with Warm Cheese', 'Snacks', 45.00, 150.00, 35, 10, 1),
-(8, 'Hotdog on a Stick with Bun', 'Snacks', 30.00, 95.00, 28, 10, 1),
-(9, 'Milk Chocolate Bar (50g)', 'Candy', 25.00, 75.00, 12, 15, 1),
-(10, 'Gummy Bears Bag (100g)', 'Candy', 20.00, 60.00, 8, 15, 1);
+INSERT INTO products (product_id, product_name, category, unit_cost, retail_price, current_stock, reorder_level, image_path, is_active) VALUES
+(1, 'Classic Butter Popcorn (Large)', 'Popcorn', 35.00, 120.00, 85, 20, 'uploads/products/Butter_Popcorn.jpg', 1),
+(2, 'Caramel Glazed Popcorn (Large)', 'Popcorn', 42.00, 140.00, 50, 15, 'uploads/products/Caramel_Popcorn.jpg', 1),
+(3, 'Cheese Blast Popcorn (Large)', 'Popcorn', 40.00, 135.00, 65, 15, 'uploads/products/Cheese_Popcorn.jpg', 1),
+(4, 'Fountain Soda - Cola (22oz)', 'Beverage', 15.00, 65.00, 120, 30, 'uploads/products/Soda_Cola.jpg', 1),
+(5, 'Fountain Soda - Lemon Lime (22oz)', 'Beverage', 15.00, 65.00, 110, 30, 'uploads/products/Soda_Lemon.jpg', 1),
+(6, 'Bottled Mineral Water (500ml)', 'Beverage', 10.00, 40.00, 95, 25, 'uploads/products/Water.jpg', 1),
+(7, 'Nacho Platter with Warm Cheese', 'Snacks', 45.00, 150.00, 35, 10, 'uploads/products/Cheese_Nachos.jpg', 1),
+(8, 'Hotdog on a Stick with Bun', 'Snacks', 30.00, 95.00, 28, 10, 'uploads/products/Hotdog.jpg', 1),
+(9, 'Milk Chocolate Bar (50g)', 'Candy', 25.00, 75.00, 12, 15, 'uploads/products/White_Chocolate.jpg', 1),
+(10, 'Gummy Bears Bag (100g)', 'Candy', 20.00, 60.00, 8, 15, 'uploads/products/Gummybear.jpg', 1);
 
 INSERT INTO combos (combo_id, combo_name, description, combo_price, is_active) VALUES
 (1, 'Solo Movie Treat', '1 Large Butter Popcorn + 1 22oz Soda', 160.00, 1),
