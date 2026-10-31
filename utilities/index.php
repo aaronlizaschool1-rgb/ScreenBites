@@ -20,7 +20,7 @@ if (!empty($selectedType) && in_array($selectedType, ['Electricity', 'Water'], t
 
 $sqlExpenses = "SELECT u.*, us.full_name AS recorder_name 
                 FROM utility_expenses u
-                LEFT JOIN users us ON u.recorded_by = us.user_id
+                LEFT JOIN users us ON u.user_id = us.user_id
                 {$whereClause}
                 ORDER BY u.billing_year DESC, u.billing_month DESC, u.utility_type ASC";
 $resExpenses = mysqli_query($conn, $sqlExpenses);

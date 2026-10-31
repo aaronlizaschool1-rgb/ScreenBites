@@ -3,6 +3,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS audit_logs;
 DROP TABLE IF EXISTS utility_expenses;
 DROP TABLE IF EXISTS payments;
+DROP TABLE IF EXISTS order_combos;
 DROP TABLE IF EXISTS order_items;
 DROP TABLE IF EXISTS tickets;
 DROP TABLE IF EXISTS orders;
@@ -74,6 +75,9 @@ CREATE TABLE movies (
     duration_minutes SMALLINT UNSIGNED NOT NULL,
     rating ENUM('G', 'PG', 'PG-13', 'R-13', 'R-16', 'R-18') NOT NULL DEFAULT 'PG',
     poster_path VARCHAR(255) NULL,
+    trailer_url VARCHAR(255) NULL,
+    genre VARCHAR(100) NULL,
+    synopsis TEXT NULL,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_movie_duration CHECK (duration_minutes > 0)
@@ -94,7 +98,6 @@ CREATE TABLE screenings (
         REFERENCES movies (movie_id) ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT fk_screenings_halls FOREIGN KEY (hall_id)
         REFERENCES halls (hall_id) ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT chk_screenings_time CHECK (end_time > start_time),
     CONSTRAINT chk_screenings_price CHECK (base_price >= 0.00),
     INDEX idx_screenings_timeline (screening_date, start_time)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -197,24 +200,31 @@ CREATE TABLE tickets (
 CREATE TABLE order_items (
     order_item_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     order_id INT UNSIGNED NOT NULL,
-    product_id INT UNSIGNED NULL,
-    combo_id INT UNSIGNED NULL,
+    product_id INT UNSIGNED NOT NULL,
     quantity SMALLINT UNSIGNED NOT NULL,
     unit_price_charged DECIMAL(8, 2) NOT NULL,
     CONSTRAINT fk_oi_orders FOREIGN KEY (order_id)
         REFERENCES orders (order_id) ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT fk_oi_products FOREIGN KEY (product_id)
         REFERENCES products (product_id) ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT fk_oi_combos FOREIGN KEY (combo_id)
-        REFERENCES combos (combo_id) ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT chk_oi_quantity CHECK (quantity > 0),
     CONSTRAINT chk_oi_price CHECK (unit_price_charged >= 0.00),
-
-    CONSTRAINT chk_oi_target_item CHECK (
-        (product_id IS NOT NULL AND combo_id IS NULL) OR
-        (product_id IS NULL AND combo_id IS NOT NULL)
-    ),
     INDEX idx_oi_order (order_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE order_combos (
+    order_combo_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    order_id INT UNSIGNED NOT NULL,
+    combo_id INT UNSIGNED NOT NULL,
+    quantity SMALLINT UNSIGNED NOT NULL,
+    unit_price_charged DECIMAL(8, 2) NOT NULL,
+    CONSTRAINT fk_oc_orders FOREIGN KEY (order_id)
+        REFERENCES orders (order_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_oc_combos FOREIGN KEY (combo_id)
+        REFERENCES combos (combo_id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT chk_oc_quantity CHECK (quantity > 0),
+    CONSTRAINT chk_oc_price CHECK (unit_price_charged >= 0.00),
+    INDEX idx_oc_order (order_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE payments (
@@ -242,11 +252,11 @@ CREATE TABLE utility_expenses (
     due_date DATE NULL,
     payment_date DATE NULL,
     notes TEXT NULL,
-    recorded_by INT UNSIGNED NOT NULL,
+    user_id INT UNSIGNED NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT uq_utility_period UNIQUE (utility_type, billing_year, billing_month),
-    CONSTRAINT fk_utility_users FOREIGN KEY (recorded_by)
+    CONSTRAINT fk_utility_users FOREIGN KEY (user_id)
         REFERENCES users (user_id) ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT chk_utility_month CHECK (billing_month BETWEEN 1 AND 12),
     CONSTRAINT chk_utility_year CHECK (billing_year >= 2020),

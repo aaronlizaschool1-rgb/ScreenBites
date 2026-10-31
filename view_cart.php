@@ -58,6 +58,11 @@ $grandTotal = 0.00;
                             <tr>
                                 <td>
                                     <strong><?= sanitize($item['name']); ?></strong>
+                                    <?php if ($item['type'] === 'combo'): ?>
+                                        <span style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; font-size: 0.72rem; padding: 0.15rem 0.45rem; border-radius: 4px; font-weight: 600; margin-left: 0.35rem; border: 1px solid rgba(245, 158, 11, 0.35);">
+                                            🎁 Value Bundle
+                                        </span>
+                                    <?php endif; ?>
                                 </td>
                                 <td>
                                     <span style="color: var(--text-muted); font-size: 0.85rem;">
@@ -103,18 +108,18 @@ $grandTotal = 0.00;
                     <small style="color: var(--text-muted); margin-left: 0.5rem;">Check boxes above to remove items.</small>
                 </div>
 
-                <div style="min-width: 250px; background: #0e1017; padding: 1.25rem; border-radius: 8px; border: 1px solid var(--card-border);">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem;">
+                <div class="sb-dark-panel" style="min-width: 270px; padding: 1.25rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: #94a3b8; font-size: 0.9rem;">
                         <span>Vatable Subtotal:</span>
-                        <span><?= format_currency($subtotalVatEx); ?></span>
+                        <span style="color: #f1f5f9; font-weight: 600;"><?= format_currency($subtotalVatEx); ?></span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: #94a3b8; font-size: 0.9rem;">
                         <span>VAT (12% Included):</span>
-                        <span><?= format_currency($vatAmount); ?></span>
+                        <span style="color: #f1f5f9; font-weight: 600;"><?= format_currency($vatAmount); ?></span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; font-size: 1.25rem; font-weight: 700; color: #ffffff; border-top: 1px solid var(--card-border); padding-top: 0.75rem;">
+                    <div style="display: flex; justify-content: space-between; font-size: 1.25rem; font-weight: 700; color: #ffffff; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 0.75rem;">
                         <span>Grand Total:</span>
-                        <span style="color: var(--accent-gold);"><?= format_currency($grandTotal); ?></span>
+                        <span style="color: var(--accent-gold, #f59e0b);"><?= format_currency($grandTotal); ?></span>
                     </div>
 
                     <a href="<?= BASE_URL; ?>/checkout.php" class="btn btn-primary" style="width: 100%; margin-top: 1rem; text-align: center;">

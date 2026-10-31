@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $notesEsc = mysqli_real_escape_string($conn, $notes);
 
     // Use ON DUPLICATE KEY UPDATE to gracefully handle existing bills for same period
-    $sql = "INSERT INTO utility_expenses (utility_type, billing_month, billing_year, bill_amount, payment_status, due_date, payment_date, notes, recorded_by, created_at)
+    $sql = "INSERT INTO utility_expenses (utility_type, billing_month, billing_year, bill_amount, payment_status, due_date, payment_date, notes, user_id, created_at)
             VALUES ('{$typeEsc}', {$month}, {$year}, {$amount}, '{$status}', {$dueDate}, {$payDate}, '{$notesEsc}', {$userId}, NOW())
             ON DUPLICATE KEY UPDATE 
                 bill_amount = VALUES(bill_amount),
@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 due_date = VALUES(due_date),
                 payment_date = VALUES(payment_date),
                 notes = VALUES(notes),
-                recorded_by = VALUES(recorded_by)";
+                user_id = VALUES(user_id)";
 
     mysqli_query($conn, $sql);
     $insertedId = mysqli_insert_id($conn);

@@ -73,9 +73,9 @@ $res = mysqli_query($conn, $sql);
                                 </small>
                             </td>
                             <td><?= sanitize($sc['hall_name']); ?></td>
-                            <td><strong style="color: #ffffff;"><?= date('g:i A', strtotime($sc['start_time'])); ?></strong></td>
-                            <td><span style="color: var(--text-muted);"><?= date('g:i A', strtotime($sc['end_time'])); ?></span></td>
-                            <td><strong style="color: var(--accent-gold);"><?= format_currency($sc['base_price']); ?></strong></td>
+                            <td><strong style="color: var(--c-indigo, #2b2d7a); font-size: 0.95rem;"><?= date('g:i A', strtotime($sc['start_time'])); ?></strong></td>
+                            <td><span style="color: var(--c-muted, #5d6180);"><?= date('g:i A', strtotime($sc['end_time'])); ?></span></td>
+                            <td><strong style="color: var(--accent-gold, #d97706);"><?= format_currency($sc['base_price']); ?></strong></td>
                             <td style="text-align: right;">
                                 <a href="<?= BASE_URL; ?>/ticketing/seat_matrix.php?screening_id=<?= $scId; ?>" class="btn btn-sm btn-primary">
                                     Book Seats &rarr;

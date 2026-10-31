@@ -1,7 +1,7 @@
 <?php
 /**
  * ScreenBites - Store Movie Handler
- * Modeled after itim211-2b-shop/item/store.php
+ * Modeled after PedalWorks-Dynamics procedural architecture
  */
 
 require_once dirname(__DIR__) . '/includes/config.php';
@@ -11,8 +11,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $title    = trim($_POST['title'] ?? '');
     $duration = max(1, (int)($_POST['duration_minutes'] ?? 120));
     $rating   = trim($_POST['rating'] ?? 'PG');
+    $genre    = trim($_POST['genre'] ?? '');
+    $rawTrailer = trim($_POST['trailer_url'] ?? '');
+    $trailer  = get_youtube_id($rawTrailer);
+    $synopsis = trim($_POST['synopsis'] ?? '');
 
     if (empty($title)) {
+        set_flash('error', 'Movie title cannot be empty.');
         header("Location: " . BASE_URL . "/movies/create.php");
         exit;
     }
@@ -30,14 +35,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    $titleEsc = mysqli_real_escape_string($conn, $title);
-    $rateEsc  = mysqli_real_escape_string($conn, $rating);
-    $imgSql   = $posterRelPath ? "'" . mysqli_real_escape_string($conn, $posterRelPath) . "'" : "NULL";
+    $titleEsc    = mysqli_real_escape_string($conn, $title);
+    $rateEsc     = mysqli_real_escape_string($conn, $rating);
+    $genreEsc    = !empty($genre) ? "'" . mysqli_real_escape_string($conn, $genre) . "'" : "NULL";
+    $trailerEsc  = !empty($trailer) ? "'" . mysqli_real_escape_string($conn, $trailer) . "'" : "NULL";
+    $synopsisEsc = !empty($synopsis) ? "'" . mysqli_real_escape_string($conn, $synopsis) . "'" : "NULL";
+    $imgSql      = $posterRelPath ? "'" . mysqli_real_escape_string($conn, $posterRelPath) . "'" : "NULL";
 
-    $sql = "INSERT INTO movies (title, duration_minutes, rating, poster_path, is_active, created_at)
-            VALUES ('{$titleEsc}', {$duration}, '{$rateEsc}', {$imgSql}, 1, NOW())";
+    $sql = "INSERT INTO movies (title, duration_minutes, rating, poster_path, trailer_url, genre, synopsis, is_active, created_at)
+            VALUES ('{$titleEsc}', {$duration}, '{$rateEsc}', {$imgSql}, {$trailerEsc}, {$genreEsc}, {$synopsisEsc}, 1, NOW())";
 
-    mysqli_query($conn, $sql);
+    if (mysqli_query($conn, $sql)) {
+        $newId = mysqli_insert_id($conn);
+        audit_log('MOVIE_CREATED', 'movies', (int)$newId, "Added movie '{$title}' ({$duration}m, {$rating})");
+        set_flash('success', "Movie '{$title}' was successfully registered into the catalog.");
+    } else {
+        set_flash('error', 'Database error registering movie: ' . mysqli_error($conn));
+    }
+
     header("Location: " . BASE_URL . "/movies/index.php");
     exit;
 }

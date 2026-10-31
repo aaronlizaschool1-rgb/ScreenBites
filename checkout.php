@@ -17,7 +17,7 @@ foreach ($cart as $item) {
     $grandTotal += ((float)$item['price'] * (int)$item['qty']);
     if ($item['type'] === 'ticket') {
         $hasTickets = true;
-    } elseif ($item['type'] === 'concession') {
+    } elseif ($item['type'] === 'concession' || $item['type'] === 'combo') {
         $hasConcessions = true;
     }
 }
@@ -65,6 +65,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($cart)) {
                              VALUES (?, ?, ?, ?)";
             $stmtOrderItem = mysqli_prepare($conn, $sqlOrderItem);
 
+            // 3b. Insert combos
+            $sqlOrderCombo = "INSERT INTO order_combos (order_id, combo_id, quantity, unit_price_charged)
+                              VALUES (?, ?, ?, ?)";
+            $stmtOrderCombo = mysqli_prepare($conn, $sqlOrderCombo);
+
             $sqlDecStock = "UPDATE products SET current_stock = current_stock - ? WHERE product_id = ?";
             $stmtDecStock = mysqli_prepare($conn, $sqlDecStock);
 
@@ -86,15 +91,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($cart)) {
                     $qty = (int)$item['qty'];
                     $price = (float)$item['price'];
 
+                    // Check stock
+                    $pStockRes = mysqli_query($conn, "SELECT current_stock, product_name FROM products WHERE product_id = {$prodId} LIMIT 1");
+                    $pStock = mysqli_fetch_assoc($pStockRes);
+                    if (!$pStock || (int)$pStock['current_stock'] < $qty) {
+                        throw new Exception("Insufficient stock for " . ($pStock['product_name'] ?? 'product'));
+                    }
+
                     mysqli_stmt_bind_param($stmtOrderItem, "iiid", $orderId, $prodId, $qty, $price);
                     mysqli_stmt_execute($stmtOrderItem);
 
                     mysqli_stmt_bind_param($stmtDecStock, "ii", $qty, $prodId);
                     mysqli_stmt_execute($stmtDecStock);
+                } elseif ($item['type'] === 'combo') {
+                    $comboId = (int)$item['id'];
+                    $comboQty = (int)$item['qty'];
+                    $price = (float)$item['price'];
+
+                    // Insert into order_combos
+                    mysqli_stmt_bind_param($stmtOrderCombo, "iiid", $orderId, $comboId, $comboQty, $price);
+                    mysqli_stmt_execute($stmtOrderCombo);
+
+                    // Deduct each constituent item in combo_items
+                    $ciRes = mysqli_query($conn, "SELECT product_id, quantity FROM combo_items WHERE combo_id = {$comboId}");
+                    while ($child = mysqli_fetch_assoc($ciRes)) {
+                        $childId = (int)$child['product_id'];
+                        $childNeeded = (int)$child['quantity'] * $comboQty;
+
+                        $pStockRes = mysqli_query($conn, "SELECT current_stock, product_name FROM products WHERE product_id = {$childId} LIMIT 1");
+                        $pStock = mysqli_fetch_assoc($pStockRes);
+                        if (!$pStock || (int)$pStock['current_stock'] < $childNeeded) {
+                            throw new Exception("Insufficient stock for constituent item " . ($pStock['product_name'] ?? 'product') . " in bundle.");
+                        }
+
+                        mysqli_stmt_bind_param($stmtDecStock, "ii", $childNeeded, $childId);
+                        mysqli_stmt_execute($stmtDecStock);
+                    }
                 }
             }
             mysqli_stmt_close($stmtTicket);
             mysqli_stmt_close($stmtOrderItem);
+            mysqli_stmt_close($stmtOrderCombo);
             mysqli_stmt_close($stmtDecStock);
 
             // 4. Record payment
@@ -136,13 +173,15 @@ require_once __DIR__ . '/includes/header.php';
     $ord = $_SESSION['completed_order'];
 ?>
     <div class="sb-card" style="max-width: 600px; margin: 0 auto; padding: 2rem;">
-        <div style="text-align: center; border-bottom: 2px dashed var(--card-border); padding-bottom: 1.5rem; margin-bottom: 1.5rem;">
-            <h1 style="font-size: 1.6rem; color: var(--accent-gold); margin-bottom: 0.25rem;">ScreenBites Cinema</h1>
-            <p style="color: var(--text-muted); font-size: 0.9rem;">Official Digital Sales Receipt</p>
-            <p style="font-family: monospace; font-weight: 700; margin-top: 0.5rem; font-size: 1.1rem; color: #ffffff;">
-                Order #<?= sanitize($ord['order_number']); ?>
-            </p>
-            <p style="color: var(--text-muted); font-size: 0.85rem;"><?= sanitize($ord['date']); ?></p>
+        <div style="text-align: center; border-bottom: 2px dashed var(--c-line, #dcdff0); padding-bottom: 1.5rem; margin-bottom: 1.5rem;">
+            <h1 style="font-size: 1.6rem; color: var(--accent-gold, #d97706); margin-bottom: 0.25rem;">ScreenBites Cinema</h1>
+            <p style="color: var(--c-muted, #5d6180); font-size: 0.9rem;">Official Digital Sales Receipt</p>
+            <div style="margin-top: 0.5rem;">
+                <span style="font-family: monospace; font-weight: 700; font-size: 1.1rem; color: var(--c-indigo, #2b2d7a); background: #eef2ff; border: 1px solid #c7d2fe; padding: 0.35rem 0.85rem; border-radius: 6px; display: inline-block;">
+                    Order #<?= sanitize($ord['order_number']); ?>
+                </span>
+            </div>
+            <p style="color: var(--c-muted, #5d6180); font-size: 0.85rem; margin-top: 0.5rem;"><?= sanitize($ord['date']); ?></p>
         </div>
 
         <table class="sb-table" style="margin-bottom: 1.5rem;">
@@ -158,7 +197,7 @@ require_once __DIR__ . '/includes/header.php';
                     <tr>
                         <td>
                             <strong><?= sanitize($it['name']); ?></strong><br>
-                            <small style="color: var(--text-muted);"><?= sanitize($it['details'] ?? ''); ?></small>
+                            <small style="color: var(--c-muted, #5d6180);"><?= sanitize($it['details'] ?? ''); ?></small>
                         </td>
                         <td style="text-align: center;"><?= (int)$it['qty']; ?></td>
                         <td style="text-align: right;"><?= format_currency((float)$it['price'] * (int)$it['qty']); ?></td>
@@ -167,22 +206,22 @@ require_once __DIR__ . '/includes/header.php';
             </tbody>
         </table>
 
-        <div style="background: #0e1017; padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; color: var(--text-muted); font-size: 0.9rem;">
+        <div class="sb-dark-panel" style="padding: 1.15rem; margin-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; color: #94a3b8; font-size: 0.9rem;">
                 <span>Vatable Subtotal:</span>
-                <span><?= format_currency($ord['vat_subtotal']); ?></span>
+                <span style="color: #f1f5f9; font-weight: 600;"><?= format_currency($ord['vat_subtotal']); ?></span>
             </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; color: var(--text-muted); font-size: 0.9rem;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; color: #94a3b8; font-size: 0.9rem;">
                 <span>VAT (12%):</span>
-                <span><?= format_currency($ord['vat_amount']); ?></span>
+                <span style="color: #f1f5f9; font-weight: 600;"><?= format_currency($ord['vat_amount']); ?></span>
             </div>
-            <div style="display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: 700; color: #ffffff; border-top: 1px solid var(--card-border); padding-top: 0.5rem;">
+            <div style="display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: 700; color: #ffffff; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 0.5rem;">
                 <span>Total Paid:</span>
-                <span style="color: var(--accent-gold);"><?= format_currency($ord['grand_total']); ?></span>
+                <span style="color: var(--accent-gold, #f59e0b);"><?= format_currency($ord['grand_total']); ?></span>
             </div>
-            <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">
+            <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 0.9rem; color: #94a3b8;">
                 <span>Tender (<?= sanitize($ord['payment_method']); ?>):</span>
-                <span><?= format_currency($ord['amount_paid']); ?></span>
+                <span style="color: #f1f5f9;"><?= format_currency($ord['amount_paid']); ?></span>
             </div>
             <div style="display: flex; justify-content: space-between; font-size: 1rem; font-weight: 600; color: #10b981;">
                 <span>Change Returned:</span>
@@ -247,18 +286,18 @@ require_once __DIR__ . '/includes/header.php';
         <div class="sb-card">
             <h2 style="font-size: 1.2rem; margin-bottom: 1rem;">Payment Details</h2>
             <form method="POST" action="<?= BASE_URL; ?>/checkout.php">
-                <div style="background: #0e1017; padding: 1rem; border-radius: 6px; margin-bottom: 1.25rem;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; color: var(--text-muted); font-size: 0.85rem;">
+                <div class="sb-dark-panel" style="padding: 1rem; margin-bottom: 1.25rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; color: #94a3b8; font-size: 0.85rem;">
                         <span>Vatable Subtotal:</span>
-                        <span><?= format_currency($subtotalVatEx); ?></span>
+                        <span style="color: #f1f5f9; font-weight: 600;"><?= format_currency($subtotalVatEx); ?></span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; color: var(--text-muted); font-size: 0.85rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; color: #94a3b8; font-size: 0.85rem;">
                         <span>VAT (12%):</span>
-                        <span><?= format_currency($vatAmount); ?></span>
+                        <span style="color: #f1f5f9; font-weight: 600;"><?= format_currency($vatAmount); ?></span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; font-size: 1.25rem; font-weight: 700; color: #ffffff; border-top: 1px solid var(--card-border); padding-top: 0.5rem;">
+                    <div style="display: flex; justify-content: space-between; font-size: 1.25rem; font-weight: 700; color: #ffffff; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 0.5rem;">
                         <span>Grand Total:</span>
-                        <span style="color: var(--accent-gold);"><?= format_currency($grandTotal); ?></span>
+                        <span style="color: var(--accent-gold, #f59e0b);"><?= format_currency($grandTotal); ?></span>
                     </div>
                 </div>
 

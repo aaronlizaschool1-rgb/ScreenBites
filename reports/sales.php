@@ -52,7 +52,7 @@ $ticketData = mysqli_fetch_assoc($ticketRes);
 $ticketRevenue = (float)$ticketData['ticket_revenue'];
 $ticketsSold   = (int)$ticketData['tickets_sold'];
 
-// 3. Concession Sales Revenue
+// 3. Concession Sales Revenue (Snacks + Combos)
 $concRes = mysqli_query($conn, "
     SELECT 
         COALESCE(SUM(oi.quantity * oi.unit_price_charged), 0) AS concession_revenue,
@@ -64,8 +64,21 @@ $concRes = mysqli_query($conn, "
       AND o.order_status = 'Completed'
 ");
 $concData = mysqli_fetch_assoc($concRes);
-$concRevenue = (float)$concData['concession_revenue'];
-$itemsSold   = (int)$concData['items_sold'];
+
+$comboSalesRes = mysqli_query($conn, "
+    SELECT 
+        COALESCE(SUM(oc.quantity * oc.unit_price_charged), 0) AS combo_revenue,
+        COALESCE(SUM(oc.quantity), 0) AS combos_sold
+    FROM order_combos oc
+    INNER JOIN orders o ON oc.order_id = o.order_id
+    WHERE MONTH(o.created_at) = {$selectedMonth}
+      AND YEAR(o.created_at) = {$selectedYear}
+      AND o.order_status = 'Completed'
+");
+$comboSalesData = mysqli_fetch_assoc($comboSalesRes);
+
+$concRevenue = (float)$concData['concession_revenue'] + (float)$comboSalesData['combo_revenue'];
+$itemsSold   = (int)$concData['items_sold'] + (int)$comboSalesData['combos_sold'];
 
 // Revenue Shares
 $ticketShare = $grossSales > 0 ? round(($ticketRevenue / $grossSales) * 100, 1) : 0;

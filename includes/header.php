@@ -124,14 +124,25 @@ $isActive = function(string $path) use ($currentUri): bool {
             <p class="app-nav-title">Concessions</p>
             <ul>
                 <li>
-                    <a href="<?= BASE_URL; ?>/concessions/index.php"<?= $isActive('concessions') ? ' aria-current="page"' : ''; ?>>
+                    <a href="<?= BASE_URL; ?>/concessions/index.php"<?= ($isActive('concessions/index.php') || $isActive('concessions/?')) ? ' aria-current="page"' : ''; ?>>
                         <span class="app-nav-icon">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
                         </span>
-                        <span class="app-nav-label">Snacks &amp; Drinks</span>
-                        <?php if ($isActive('concessions')): ?><span class="app-nav-indicator"></span><?php endif; ?>
+                        <span class="app-nav-label">Snacks &amp; Concessions</span>
+                        <?php if ($isActive('concessions/index.php')): ?><span class="app-nav-indicator"></span><?php endif; ?>
                     </a>
                 </li>
+                <?php if (is_admin()): ?>
+                    <li>
+                        <a href="<?= BASE_URL; ?>/concessions/combos.php"<?= $isActive('combos') ? ' aria-current="page"' : ''; ?>>
+                            <span class="app-nav-icon">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"></polyline><rect x="2" y="7" width="20" height="5"></rect><line x1="12" y1="22" x2="12" y2="7"></line><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg>
+                            </span>
+                            <span class="app-nav-label">Combos &amp; Bundles</span>
+                            <?php if ($isActive('combos')): ?><span class="app-nav-indicator"></span><?php endif; ?>
+                        </a>
+                    </li>
+                <?php endif; ?>
                 <li>
                     <a href="<?= BASE_URL; ?>/view_cart.php"<?= $isActive('view_cart.php') ? ' aria-current="page"' : ''; ?>>
                         <span class="app-nav-icon">
@@ -249,3 +260,4 @@ $isActive = function(string $path) use ($currentUri): bool {
 <div class="app-col">
 <main class="app-main" id="main">
 <div class="sb-container">
+<?php include __DIR__ . '/alert.php'; ?>

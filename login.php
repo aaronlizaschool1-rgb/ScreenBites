@@ -41,8 +41,8 @@ require_once __DIR__ . '/includes/header.php';
 
 <div class="sb-card" style="max-width: 440px; margin: 3rem auto; padding: 2rem;">
     <div style="text-align: center; margin-bottom: 1.5rem;">
-        <h1 style="font-size: 1.5rem; margin-bottom: 0.25rem;">Staff Console Sign In</h1>
-        <p style="color: var(--text-muted); font-size: 0.9rem;">Sign in to access movies and schedules management.</p>
+        <h1 style="font-size: 1.5rem; margin-bottom: 0.25rem; color: var(--c-ink, #1d1f3a);">Staff Console Sign In</h1>
+        <p style="color: var(--c-muted, #5d6180); font-size: 0.9rem;">Sign in to access movies and schedules management.</p>
     </div>
 
     <?php if (!empty($error)): ?>
@@ -65,8 +65,8 @@ require_once __DIR__ . '/includes/header.php';
         </button>
     </form>
 
-    <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--card-border); text-align: center;">
-        <small style="color: var(--text-muted); display: block; margin-bottom: 0.6rem;">Quick Test Logins:</small>
+    <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--c-line, #dcdff0); text-align: center;">
+        <small style="color: var(--c-muted, #5d6180); display: block; margin-bottom: 0.6rem;">Quick Test Logins:</small>
         <div style="display: flex; gap: 0.4rem; justify-content: center; flex-wrap: wrap;">
             <button type="button" class="btn btn-sm btn-secondary quick-user" data-u="admin_john" data-p="Password123">
                 👑 Admin

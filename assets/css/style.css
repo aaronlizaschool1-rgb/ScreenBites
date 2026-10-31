@@ -8,6 +8,34 @@
   --c-line: #dcdff0;
   --c-surface: #ffffff;
   --c-page: #f3f4fa;
+
+  /* Aliases & Semantic Extensions */
+  --text-muted: #64748b;
+  --card-border: #dcdff0;
+  --accent-gold: #f59e0b;
+  --accent-red: #ef4444;
+  --accent-emerald: #10b981;
+}
+
+/* High-contrast Cinema Dark Accent Panel */
+.sb-dark-panel {
+  background: #0f121d;
+  color: #f1f5f9;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(10, 12, 22, 0.25);
+}
+.sb-dark-panel strong,
+.sb-dark-panel h1,
+.sb-dark-panel h2,
+.sb-dark-panel h3,
+.sb-dark-panel h4 {
+  color: #ffffff;
+}
+.sb-dark-panel small,
+.sb-dark-panel .text-muted,
+.sb-dark-panel p:not([style*="color"]) {
+  color: #94a3b8;
 }
 
 .app-body *, .app-body *::before, .app-body *::after { box-sizing: border-box; }

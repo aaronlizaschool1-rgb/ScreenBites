@@ -103,10 +103,10 @@ require_once dirname(__DIR__) . '/includes/header.php';
             <?php endforeach; ?>
         </div>
 
-        <div style="border-top: 1px solid var(--card-border); padding-top: 1.5rem; display: flex; justify-content: space-between; align-items: center; max-width: 500px; margin: 0 auto; flex-wrap: wrap; gap: 1rem;">
+        <div style="border-top: 1px solid var(--c-line, #dcdff0); padding-top: 1.5rem; display: flex; justify-content: space-between; align-items: center; max-width: 500px; margin: 0 auto; flex-wrap: wrap; gap: 1rem;">
             <div style="text-align: left;">
-                <span style="color: var(--text-muted); font-size: 0.9rem;">Price per ticket:</span><br>
-                <strong style="font-size: 1.25rem; color: var(--accent-gold);"><?= format_currency($screening['base_price']); ?></strong>
+                <span style="color: var(--c-muted, #5d6180); font-size: 0.9rem;">Price per ticket:</span><br>
+                <strong style="font-size: 1.25rem; color: var(--accent-gold, #d97706);"><?= format_currency($screening['base_price']); ?></strong>
             </div>
 
             <button type="submit" class="btn btn-primary">

@@ -1,7 +1,7 @@
 <?php
 /**
  * ScreenBites - Edit Movie
- * Modeled after itim211-2b-shop/item/edit.php
+ * Modeled after PedalWorks-Dynamics procedural architecture
  */
 
 require_once dirname(__DIR__) . '/includes/config.php';
@@ -12,6 +12,7 @@ $res = mysqli_query($conn, "SELECT * FROM movies WHERE movie_id = {$id} LIMIT 1"
 $movie = mysqli_fetch_assoc($res);
 
 if (!$movie) {
+    set_flash('error', 'Movie record not found.');
     header("Location: " . BASE_URL . "/movies/index.php");
     exit;
 }
@@ -22,13 +23,13 @@ require_once dirname(__DIR__) . '/includes/header.php';
 
 <div class="sb-page-header">
     <div>
-        <h1>Edit Movie</h1>
-        <p>Update title, rating, runtime, and poster image.</p>
+        <h1>Edit Movie Title</h1>
+        <p>Update title, rating, runtime, trailer embed, synopsis, and artwork.</p>
     </div>
-    <a href="<?= BASE_URL; ?>/movies/index.php" class="btn btn-secondary">&larr; Back to Movies</a>
+    <a href="<?= BASE_URL; ?>/movies/index.php" class="btn btn-secondary">&larr; Back to Catalog</a>
 </div>
 
-<div class="sb-card" style="max-width: 600px; margin: 0 auto;">
+<div class="sb-card" style="max-width: 680px; margin: 0 auto;">
     <form method="POST" action="<?= BASE_URL; ?>/movies/update.php" enctype="multipart/form-data">
         <input type="hidden" name="movie_id" value="<?= (int)$movie['movie_id']; ?>">
 
@@ -39,8 +40,8 @@ require_once dirname(__DIR__) . '/includes/header.php';
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <div class="form-group">
-                <label for="duration_minutes">Duration (Minutes) *</label>
-                <input type="number" id="duration_minutes" name="duration_minutes" value="<?= (int)$movie['duration_minutes']; ?>" class="form-control" min="1" required>
+                <label for="duration_minutes">Runtime (Minutes) *</label>
+                <input type="number" id="duration_minutes" name="duration_minutes" value="<?= (int)$movie['duration_minutes']; ?>" class="form-control" min="1" max="600" required>
             </div>
 
             <div class="form-group">
@@ -58,14 +59,31 @@ require_once dirname(__DIR__) . '/includes/header.php';
             </div>
         </div>
 
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+                <label for="genre">Genre(s)</label>
+                <input type="text" id="genre" name="genre" value="<?= sanitize($movie['genre'] ?? ''); ?>" class="form-control" placeholder="e.g. Action / Sci-Fi / Adventure">
+            </div>
+
+            <div class="form-group">
+                <label for="trailer_url">YouTube Trailer ID or URL</label>
+                <input type="text" id="trailer_url" name="trailer_url" value="<?= sanitize($movie['trailer_url'] ?? ''); ?>" class="form-control" placeholder="e.g. d9MyW72ELq0">
+            </div>
+        </div>
+
         <div class="form-group">
-            <label for="poster_file">Replace Poster Image (Optional)</label>
+            <label for="synopsis">Official Synopsis / Storyline</label>
+            <textarea id="synopsis" name="synopsis" class="form-control" rows="3"><?= sanitize($movie['synopsis'] ?? ''); ?></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="poster_file">Replace Poster Artwork (Optional)</label>
             <?php if (!empty($movie['poster_path'])): ?>
                 <div style="margin-bottom: 0.5rem;">
                     <img src="<?= BASE_URL . '/' . $movie['poster_path']; ?>" alt="Poster" style="width: 70px; height: 100px; object-fit: cover; border-radius: 4px;">
                 </div>
             <?php endif; ?>
-            <input type="file" id="poster_file" name="poster_file" class="form-control" accept="image/*">
+            <input type="file" id="poster_file" name="poster_file" class="form-control" accept="image/jpeg,image/png,image/webp">
         </div>
 
         <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;">

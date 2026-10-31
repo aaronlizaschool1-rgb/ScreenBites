@@ -46,7 +46,7 @@ $tRes = mysqli_query($conn, "
 $tRow = mysqli_fetch_assoc($tRes);
 $ticketRevenue = (float)$tRow['ticket_revenue'];
 
-// Concessions Revenue
+// Concessions Revenue (Individual snacks + Value Combos)
 $cRes = mysqli_query($conn, "
     SELECT COALESCE(SUM(oi.quantity * oi.unit_price_charged), 0) AS conc_revenue
     FROM order_items oi
@@ -56,9 +56,22 @@ $cRes = mysqli_query($conn, "
       AND o.order_status = 'Completed'
 ");
 $cRow = mysqli_fetch_assoc($cRes);
-$concRevenue = (float)$cRow['conc_revenue'];
+$snackRevenue = (float)$cRow['conc_revenue'];
 
-// 2. Cost of Goods Sold (COGS)
+$cbRes = mysqli_query($conn, "
+    SELECT COALESCE(SUM(oc.quantity * oc.unit_price_charged), 0) AS combo_revenue
+    FROM order_combos oc
+    INNER JOIN orders o ON oc.order_id = o.order_id
+    WHERE MONTH(o.created_at) = {$selectedMonth}
+      AND YEAR(o.created_at) = {$selectedYear}
+      AND o.order_status = 'Completed'
+");
+$cbRow = mysqli_fetch_assoc($cbRes);
+$comboRevenue = (float)$cbRow['combo_revenue'];
+
+$concRevenue = $snackRevenue + $comboRevenue;
+
+// 2. Cost of Goods Sold (COGS: Individual products + Combo constituent items)
 $cogsRes = mysqli_query($conn, "
     SELECT COALESCE(SUM(oi.quantity * p.unit_cost), 0) AS total_cogs
     FROM order_items oi
@@ -69,7 +82,22 @@ $cogsRes = mysqli_query($conn, "
       AND o.order_status = 'Completed'
 ");
 $cogsRow = mysqli_fetch_assoc($cogsRes);
-$cogs = (float)$cogsRow['total_cogs'];
+$snackCogs = (float)$cogsRow['total_cogs'];
+
+$comboCogsRes = mysqli_query($conn, "
+    SELECT COALESCE(SUM(oc.quantity * ci.quantity * p.unit_cost), 0) AS combo_cogs
+    FROM order_combos oc
+    INNER JOIN combo_items ci ON oc.combo_id = ci.combo_id
+    INNER JOIN products p ON ci.product_id = p.product_id
+    INNER JOIN orders o ON oc.order_id = o.order_id
+    WHERE MONTH(o.created_at) = {$selectedMonth}
+      AND YEAR(o.created_at) = {$selectedYear}
+      AND o.order_status = 'Completed'
+");
+$comboCogsRow = mysqli_fetch_assoc($comboCogsRes);
+$comboCogs = (float)$comboCogsRow['combo_cogs'];
+
+$cogs = $snackCogs + $comboCogs;
 
 // Gross Profit
 $grossProfit = $grossRevenue - $cogs;

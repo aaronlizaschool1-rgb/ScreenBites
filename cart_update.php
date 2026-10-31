@@ -37,6 +37,75 @@ if ($type === 'add_concession') {
                     'details'  => 'Snack / Concession'
                 ];
             }
+            set_flash('success', "Added {$item['product_name']} to cart.");
+        }
+    }
+    header("Location: " . $returnUrl);
+    exit;
+}
+
+// 1b. Add Concession Combo / Bundle
+if ($type === 'add_combo') {
+    $comboId = (int)($_POST['combo_id'] ?? 0);
+    $qty     = max(1, (int)($_POST['quantity'] ?? 1));
+
+    if ($comboId > 0) {
+        $cRes = mysqli_query($conn, "SELECT combo_id, combo_name, description, combo_price FROM combos WHERE combo_id = {$comboId} AND is_active = 1 LIMIT 1");
+        $combo = mysqli_fetch_assoc($cRes);
+
+        if ($combo) {
+            // Check stock of every constituent product in combo_items
+            $ciSql = "SELECT ci.product_id, ci.quantity AS required_qty, p.product_name, p.current_stock
+                      FROM combo_items ci
+                      INNER JOIN products p ON ci.product_id = p.product_id
+                      WHERE ci.combo_id = {$comboId}";
+            $ciRes = mysqli_query($conn, $ciSql);
+
+            $itemsList = [];
+            $hasStock = true;
+            $maxCombosPossible = 9999;
+
+            while ($child = mysqli_fetch_assoc($ciRes)) {
+                $neededPerCombo = (int)$child['required_qty'];
+                $stock = (int)$child['current_stock'];
+                $itemsList[] = "{$neededPerCombo}x " . $child['product_name'];
+
+                $possible = ($neededPerCombo > 0) ? intdiv($stock, $neededPerCombo) : 9999;
+                if ($possible < $maxCombosPossible) {
+                    $maxCombosPossible = $possible;
+                }
+                if ($stock < ($neededPerCombo * $qty)) {
+                    $hasStock = false;
+                }
+            }
+
+            if (!$hasStock || $maxCombosPossible <= 0) {
+                set_flash('error', "Insufficient stock for items in {$combo['combo_name']}. Only {$maxCombosPossible} available.");
+                header("Location: " . $returnUrl);
+                exit;
+            }
+
+            $key = 'combo_' . $comboId;
+            if (isset($_SESSION['cart'][$key])) {
+                $newQty = $_SESSION['cart'][$key]['qty'] + $qty;
+                if ($newQty > $maxCombosPossible) {
+                    set_flash('warning', "Cannot add more {$combo['combo_name']}: maximum available from inventory is {$maxCombosPossible}.");
+                    header("Location: " . $returnUrl);
+                    exit;
+                }
+                $_SESSION['cart'][$key]['qty'] = $newQty;
+            } else {
+                $_SESSION['cart'][$key] = [
+                    'type'     => 'combo',
+                    'id'       => (int)$combo['combo_id'],
+                    'name'     => $combo['combo_name'],
+                    'price'    => (float)$combo['combo_price'],
+                    'qty'      => $qty,
+                    'max_qty'  => $maxCombosPossible,
+                    'details'  => 'Includes: ' . implode(', ', $itemsList)
+                ];
+            }
+            set_flash('success', "Added {$combo['combo_name']} bundle to cart.");
         }
     }
     header("Location: " . $returnUrl);
@@ -97,8 +166,9 @@ if ($type === 'update') {
             if (isset($_SESSION['cart'][$key])) {
                 if ($newQty <= 0) {
                     unset($_SESSION['cart'][$key]);
-                } elseif ($_SESSION['cart'][$key]['type'] === 'concession') {
-                    $_SESSION['cart'][$key]['qty'] = $newQty;
+                } elseif ($_SESSION['cart'][$key]['type'] === 'concession' || $_SESSION['cart'][$key]['type'] === 'combo') {
+                    $max = (int)($_SESSION['cart'][$key]['max_qty'] ?? 999);
+                    $_SESSION['cart'][$key]['qty'] = min($newQty, $max);
                 }
             }
         }

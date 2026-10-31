@@ -1,10 +1,9 @@
-USE screenbites_db;
-
 SET FOREIGN_KEY_CHECKS = 0;
 
 DELETE FROM audit_logs;
 DELETE FROM utility_expenses;
 DELETE FROM payments;
+DELETE FROM order_combos;
 DELETE FROM order_items;
 DELETE FROM tickets;
 DELETE FROM orders;
@@ -22,6 +21,7 @@ DELETE FROM users;
 ALTER TABLE audit_logs       AUTO_INCREMENT = 1;
 ALTER TABLE utility_expenses AUTO_INCREMENT = 1;
 ALTER TABLE payments         AUTO_INCREMENT = 1;
+ALTER TABLE order_combos     AUTO_INCREMENT = 1;
 ALTER TABLE order_items      AUTO_INCREMENT = 1;
 ALTER TABLE tickets          AUTO_INCREMENT = 1;
 ALTER TABLE orders           AUTO_INCREMENT = 1;
@@ -65,46 +65,46 @@ SELECT 40 + (ASCII(r.r_label) - 65) * 6 + c.c_num, 2, 3, r.r_label, c.c_num
 FROM (SELECT 'A' AS r_label UNION SELECT 'B' UNION SELECT 'C' UNION SELECT 'D') r
 CROSS JOIN (SELECT 1 AS c_num UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6) c;
 
-INSERT INTO movies (movie_id, title, duration_minutes, rating, poster_path, is_active) VALUES
-(1, 'Avatar: The Way of Water', 192, 'PG-13', 'uploads/posters/avatar_twow.jpg', 1),
-(2, 'Spider-Man: Across the Spider-Verse', 140, 'PG', 'uploads/posters/spiderman_atsv.jpg', 1),
-(3, 'Oppenheimer', 180, 'R-16', 'uploads/posters/oppenheimer.jpg', 1),
-(4, 'The Super Mario Bros. Movie', 92, 'G', 'uploads/posters/mario_bros.jpg', 1),
-(5, 'Spider-Man: Brand New Day', 135, 'PG-13', 'uploads/posters/spiderman_bnd.jpg', 1),
-(6, 'Avengers: Endgame', 181, 'PG-13', 'uploads/posters/endgame.jpg', 1),
-(7, 'Spider-Man: No Way Home', 148, 'PG-13', 'uploads/posters/nowayhome.jpg', 1),
-(8, 'Spider-Man: Far From Home', 129, 'PG-13', 'uploads/posters/farfromhome.jpg', 1),
-(9, 'Inside Out', 95, 'PG', 'uploads/posters/insideout.jpg', 1),
-(10, 'A Quiet Place', 90, 'PG-13', 'uploads/posters/quietplace.jpg', 1),
-(11, 'The Odyssey', 155, 'PG-13', 'uploads/posters/odyssey.jpg', 1),
-(12, 'Hoppers', 100, 'PG', 'uploads/posters/hoppers.jpg', 1),
-(13, 'Obsession', 108, 'R-16', 'uploads/posters/obsession.jpg', 1),
-(14, 'Toy Story 5', 102, 'G', 'uploads/posters/toystory5.jpg', 1),
-(15, 'Peaky Blinders', 130, 'R-16', 'uploads/posters/peakyblinders.jpg', 1),
-(16, 'BUDDY', 98, 'R-16', 'uploads/posters/buddy.jpg', 1),
-(17, 'The Backrooms', 105, 'PG-13', 'uploads/posters/backrooms.jpg', 1),
-(18, 'GOAT', 180, 'PG-13', 'uploads/posters/goat.jpg', 1),
-(19, 'Colony', 112, 'R-13', 'uploads/posters/colony.jpg', 1),
-(20, 'Fast and Furious', 135, 'PG-13', 'uploads/posters/fastandfurious.jpg', 1),
-(21, 'Jujutsu Kaisen the Movie', 105, 'PG-13', 'uploads/posters/jjk0.png', 1),
-(22, 'Send Help', 104, 'R-16', 'uploads/posters/sendhelp.jpg', 1),
-(23, '500 Days of Summer', 95, 'PG-13', 'uploads/posters/500daysofsummer.jpg', 1),
-(24, 'Coco', 105, 'PG', 'uploads/posters/coco.jpg', 1),
-(25, 'Eternal Sunshine of the Spotless Mind', 108, 'R-13', 'uploads/posters/eternalsunshine.jpg', 1),
-(26, 'Atonement', 123, 'R-16', 'uploads/posters/atonement.jpg', 1),
-(27, 'The Green Mile', 189, 'R-16', 'uploads/posters/greenmile.jpg', 1),
-(28, 'Forrest Gump', 142, 'PG-13', 'uploads/posters/forrestgump.jpg', 1),
-(29, 'Room', 118, 'R-16', 'uploads/posters/room.jpg', 1),
-(30, 'Titanic', 195, 'PG-13', 'uploads/posters/titanic.jpg', 1);
+INSERT INTO movies (movie_id, title, duration_minutes, rating, poster_path, trailer_url, genre, synopsis, is_active) VALUES
+(1, 'Avatar: The Way of Water', 192, 'PG-13', 'uploads/posters/avatar_twow.jpg', 'd9MyW72ELq0', 'Sci-Fi / Adventure', 'Jake Sully lives with his newfound family formed on the extrasolar moon Pandora. Once a familiar threat returns to finish what was previously started, Jake must work with Neytiri and the army of the Na\'vi race to protect their home.', 1),
+(2, 'Spider-Man: Across the Spider-Verse', 140, 'PG', 'uploads/posters/spiderman_atsv.jpg', 'cqGjhVJWtEg', 'Animation / Action', 'Miles Morales catapults across the Multiverse, where he encounters a team of Spider-People charged with protecting its very existence. When the heroes clash on how to handle a new threat, Miles must redefine what it means to be a hero.', 1),
+(3, 'Oppenheimer', 180, 'R-16', 'uploads/posters/oppenheimer.jpg', 'uYPbbksJxIg', 'Biography / Drama', 'The story of American scientist J. Robert Oppenheimer and his role in the development of the atomic bomb during World War II, exploring the moral and scientific dilemmas of the Manhattan Project.', 1),
+(4, 'The Super Mario Bros. Movie', 92, 'G', 'uploads/posters/mario_bros.jpg', 'TnGl01FkMMo', 'Family / Comedy', 'A Brooklyn plumber named Mario travels through the Mushroom Kingdom with a princess named Peach and an anthropomorphic mushroom named Toad to find Mario\'s brother, Luigi, and to save the world from Bowser.', 1),
+(5, 'Spider-Man: Brand New Day', 135, 'PG-13', 'uploads/posters/spiderman_bnd.jpg', 'U4MFvAL02Vg', 'Action / Superhero', 'Peter Parker navigates a fresh start in New York City with no one remembering his identity, facing emerging street-level threats and new allies in a brand new era.', 1),
+(6, 'Avengers: Endgame', 181, 'PG-13', 'uploads/posters/endgame.jpg', 'TcMBFSGVi1c', 'Action / Sci-Fi / Adventure', 'After the devastating events of Infinity War, the universe is in ruins. With the help of remaining allies, the Avengers assemble once more to reverse Thanos\' actions and restore balance.', 1),
+(7, 'Spider-Man: No Way Home', 148, 'PG-13', 'uploads/posters/nowayhome.jpg', 'JfVOs4VSpmA', 'Action / Sci-Fi / Adventure', 'With Spider-Man\'s identity revealed, Peter asks Doctor Strange for help. When a spell goes wrong, dangerous foes from other worlds appear, forcing Peter to discover what being Spider-Man truly means.', 1),
+(8, 'Spider-Man: Far From Home', 129, 'PG-13', 'uploads/posters/farfromhome.jpg', 'Nt9L1jCKGnE', 'Action / Sci-Fi / Comedy', 'Following the events of Avengers: Endgame, Spider-Man must step up to take on new threats in a world that has changed forever during a European school trip.', 1),
+(9, 'Inside Out', 95, 'PG', 'uploads/posters/insideout.jpg', 'yRUAzGQ3nSY', 'Animation / Family / Comedy', 'After young Riley is uprooted from her Midwest life and moved to San Francisco, her emotions - Joy, Fear, Anger, Disgust and Sadness - conflict on how best to navigate a new city, house, and school.', 1),
+(10, 'A Quiet Place', 90, 'PG-13', 'uploads/posters/quietplace.jpg', 'WR7cc5t7tv8', 'Horror / Sci-Fi / Drama', 'In a desolate world overrun by blind monsters with ultra-sensitive hearing, a family must navigate their lives in absolute silence to survive.', 1),
+(11, 'The Odyssey', 155, 'PG-13', 'uploads/posters/odyssey.jpg', 'rdu1q0TxFG4', 'Epic / Adventure / Myth', 'Homer\'s legendary epic brought to the big screen: Odysseus embarks on a perilous ten-year journey home from the Trojan War, facing mythical beasts, wrathful gods, and treacherous seas.', 1),
+(12, 'Hoppers', 100, 'PG', 'uploads/posters/hoppers.jpg', 'PJmX4vFEEQc', 'Animation / Adventure / Comedy', 'A young animal lover uses a scientific breakthrough to \'hop\' her consciousness into an adorable robotic beaver, uncovering high-stakes secrets in the animal kingdom.', 1),
+(13, 'Obsession', 108, 'R-16', 'uploads/posters/obsession.jpg', 'TaaDkbG3I7g', 'Horror / Psychological Thriller', 'Bear, a hopeless romantic shop clerk, breaks a supernatural \'One Wish Willow\' artifact to win his crush Nikki\'s heart, only to unleash an obsessive, violent nightmare.', 1),
+(14, 'Toy Story 5', 102, 'G', 'uploads/posters/toystory5.jpg', 'wmiIUN-7qhE', 'Animation / Family / Adventure', 'Woody, Buzz Lightyear, and their beloved toy family reunite to confront their biggest modern challenge yet: winning kids\' attention back from electronic screens and smart gadgets.', 1),
+(15, 'Peaky Blinders', 130, 'R-16', 'uploads/posters/peakyblinders.jpg', 'oVzVdvGIC7U', 'Crime / Drama / Period', 'Tommy Shelby and the notorious Birmingham razor gang face their definitive confrontation on the eve of World War II, battling rival syndicates and shifting political powers.', 1),
+(16, 'BUDDY', 98, 'R-16', 'uploads/posters/buddy.jpg', 'ZFy8ZgLd574', 'Horror / Comedy / Analog Horror', 'A bright orange 1990s television unicorn mascot named Buddy returns from the analog airwaves in this unsettling horror-comedy about vintage children\'s programming harboring a malevolent secret.', 1),
+(17, 'The Backrooms', 105, 'PG-13', 'uploads/posters/backrooms.jpg', 'H4dGpz6cnHo', 'Horror / Mystery / Sci-Fi', 'A young videographer accidentally noclipped out of reality into an endless labyrinth of yellow-wallpapered, fluorescent-lit empty rooms where terrifying entities lurk.', 1),
+(18, 'GOAT', 180, 'PG-13', 'uploads/posters/goat.jpg', 'iO2Br5WWCII', 'Action / Sci-Fi / Thriller', 'An elite field operative and special forces agent returns from retirement to confront an international syndicate in this high-octane spectacle.', 1),
+(19, 'Colony', 112, 'R-13', 'uploads/posters/colony.jpg', 'kRfXdS2q08k', 'Sci-Fi / Survival / Action', 'In an ice-age subterranean biosphere, survivors of a global cataclysm must venture into the frozen wasteland when an enigmatic transmission signals a thriving sanctuary.', 1),
+(20, 'Fast and Furious', 135, 'PG-13', 'uploads/posters/fastandfurious.jpg', '2TAOizOnNPo', 'Action / Crime / High-Octane', 'Dominic Toretto and Brian O\'Conner reunite behind the wheel to infiltrate a ruthless heroin cartel across the Los Angeles streets and Mexican desert.', 1),
+(21, 'Jujutsu Kaisen the Movie', 105, 'PG-13', 'uploads/posters/jjk0.png', 'eGJWEVnvqO4', 'Anime / Supernatural / Action', 'Yuta Okkotsu is haunted by the cursed spirit of his childhood friend Rika. Mentored by Satoru Gojo at Tokyo Jujutsu High, he learns to wield his curse to protect humanity.', 1),
+(22, 'Send Help', 104, 'R-16', 'uploads/posters/sendhelp.jpg', 'R4wiXj9NmEE', 'Horror / Survival / Dark Comedy', 'Sam Raimi directs this razor-sharp survival black comedy where corporate coworkers stranded on a remote tropical island after a plane crash engage in a twisted battle of wits and survival.', 1),
+(23, '500 Days of Summer', 95, 'PG-13', 'uploads/posters/500daysofsummer.jpg', 'PsD0NpFSADM', 'Romance / Comedy / Indie Drama', 'An offbeat romantic comedy about a woman who doesn\'t believe in true love, and the hopeless romantic greeting card writer who falls head over heels for her over 500 days.', 1),
+(24, 'Coco', 105, 'PG', 'uploads/posters/coco.jpg', 'Rvr68u6k5sI', 'Animation / Music / Fantasy', 'Aspiring young musician Miguel confronts his family\'s ancestral ban on music and enters the vibrant, colorful Land of the Dead to uncover his great-great-grandfather\'s legacy.', 1),
+(25, 'Eternal Sunshine of the Spotless Mind', 108, 'R-13', 'uploads/posters/eternalsunshine.jpg', '07-QBnEkgXU', 'Romance / Sci-Fi / Drama', 'When their relationship turns sour, a heartbroken couple undergoes a radical medical procedure to have each other permanently erased from their memories.', 1),
+(26, 'Atonement', 123, 'R-16', 'uploads/posters/atonement.jpg', '-J1VUwagte4', 'Romance / War / Drama', 'Thirteen-year-old fledgling writer Briony Tallis irrevocably changes the course of several lives when she accuses her older sister\'s lover of a crime he did not commit.', 1),
+(27, 'The Green Mile', 189, 'R-16', 'uploads/posters/greenmile.jpg', 'Ki4haFrqSrw', 'Crime / Drama / Fantasy', 'A death row corrections officer during the Great Depression discovers that an imposing, gentle inmate convicted of a horrific crime possesses a miraculous healing power.', 1),
+(28, 'Forrest Gump', 142, 'PG-13', 'uploads/posters/forrestgump.jpg', 'bLvqoHBptjg', 'Drama / Romance / Comedy', 'The presidencies of Kennedy and Johnson, the Vietnam War, and other historical events unfold through the perspective of an Alabama man with an IQ of 75.', 1),
+(29, 'Room', 118, 'R-16', 'uploads/posters/room.jpg', 'E_Ci-pAL4eE', 'Drama / Thriller', 'Held captive for years in an enclosed shed, a young woman and her 5-year-old son gain their freedom, allowing the boy to experience the outside world for the first time.', 1),
+(30, 'Titanic', 195, 'PG-13', 'uploads/posters/titanic.jpg', '2e-eXJ6HgkQ', 'Romance / Drama / Historical', 'A seventeen-year-old aristocrat falls in love with a kind but poor artist aboard the luxurious, ill-fated R.M.S. Titanic on its maiden voyage across the Atlantic in 1912.', 1);
 
 INSERT INTO screenings (screening_id, movie_id, hall_id, screening_date, start_time, end_time, base_price) VALUES
-
 (1, 1, 1, '2026-10-10', '13:00:00', '16:15:00', 320.00),
 (2, 2, 1, '2026-10-10', '17:00:00', '19:25:00', 300.00),
 (3, 3, 1, '2026-10-10', '20:00:00', '23:00:00', 340.00),
-
 (4, 3, 2, '2026-10-10', '14:00:00', '17:00:00', 450.00),
 (5, 4, 2, '2026-10-10', '18:00:00', '19:35:00', 400.00);
+
+
 
 INSERT INTO products (product_id, product_name, category, unit_cost, retail_price, current_stock, reorder_level, image_path, is_active) VALUES
 (1, 'Classic Butter Popcorn (Large)', 'Popcorn', 35.00, 120.00, 85, 20, 'uploads/products/Butter_Popcorn.jpg', 1),
@@ -140,8 +140,8 @@ INSERT INTO tickets (ticket_id, order_id, screening_id, seat_id, hall_id, price_
 (1, 1, 1, 20, 1, 320.00, 'Valid'),
 (2, 1, 1, 21, 1, 320.00, 'Valid');
 
-INSERT INTO order_items (order_item_id, order_id, product_id, combo_id, quantity, unit_price_charged) VALUES
-(1, 1, NULL, 1, 1, 160.00);
+INSERT INTO order_items (order_item_id, order_id, product_id, quantity, unit_price_charged) VALUES
+(1, 1, 1, 1, 160.00);
 
 INSERT INTO payments (payment_id, order_id, payment_method, amount_paid, change_returned, reference_number, payment_date) VALUES
 (1, 1, 'Cash', 1000.00, 200.00, NULL, '2026-10-10 12:31:02');
@@ -149,9 +149,9 @@ INSERT INTO payments (payment_id, order_id, payment_method, amount_paid, change_
 INSERT INTO orders (order_id, order_number, user_id, subtotal_amount, tax_amount, order_status, created_at) VALUES
 (2, 'ORD-20261010-0002', 4, 187.50, 22.50, 'Completed', '2026-10-10 12:45:20');
 
-INSERT INTO order_items (order_item_id, order_id, product_id, combo_id, quantity, unit_price_charged) VALUES
-(2, 2, 7, NULL, 1, 150.00),
-(3, 2, 4, NULL, 1, 60.00);
+INSERT INTO order_items (order_item_id, order_id, product_id, quantity, unit_price_charged) VALUES
+(2, 2, 7, 1, 150.00),
+(3, 2, 4, 1, 60.00);
 
 INSERT INTO payments (payment_id, order_id, payment_method, amount_paid, change_returned, reference_number, payment_date) VALUES
 (2, 2, 'E-Wallet', 210.00, 0.00, 'GCASH-REF-89472190', '2026-10-10 12:46:11');
@@ -159,7 +159,7 @@ INSERT INTO payments (payment_id, order_id, payment_method, amount_paid, change_
 INSERT INTO seat_holds (screening_id, seat_id, hall_id, session_token, hold_expires_at, created_at) VALUES
 (2, 11, 1, 'sess_9f83a21b44c84d7890e0c1f516a', DATE_ADD(NOW(), INTERVAL 8 MINUTE), NOW());
 
-INSERT INTO utility_expenses (expense_id, utility_type, billing_month, billing_year, bill_amount, payment_date, notes, recorded_by, created_at) VALUES
+INSERT INTO utility_expenses (expense_id, utility_type, billing_month, billing_year, bill_amount, payment_date, notes, user_id, created_at) VALUES
 (1, 'Electricity', 8, 2026, 38500.00, '2026-09-05', 'Meralco Electric Draw - Dual laser projectors, audio amps & central HVAC', 1, '2026-09-05 10:14:00'),
 (2, 'Water', 8, 2026, 4200.00, '2026-09-06', 'Manila Water - Restrooms sanitation & snack preparation sinks', 1, '2026-09-06 11:20:00'),
 (3, 'Electricity', 9, 2026, 41200.00, '2026-10-04', 'Meralco Electric Draw - Full month theater operations and HVAC run', 2, '2026-10-04 09:30:00'),
