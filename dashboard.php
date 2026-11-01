@@ -48,7 +48,8 @@ if ($resLowStock) {
 }
 $lowStockCount = count($lowStockAlerts);
 
-// 3. Today's Screenings
+// 3. Today's Screenings (Upcoming & Active)
+$nowDateTime = date('Y-m-d H:i:s');
 $resTodayScreenings = mysqli_query($conn, "
     SELECT s.screening_id, s.screening_date, s.start_time, s.end_time, s.base_price,
            m.title AS movie_title, m.rating AS movie_rating, h.hall_name,
@@ -56,6 +57,7 @@ $resTodayScreenings = mysqli_query($conn, "
     FROM screenings s
     INNER JOIN movies m ON s.movie_id = m.movie_id
     INNER JOIN halls h ON s.hall_id = h.hall_id
+    WHERE CONCAT(s.screening_date, ' ', s.start_time) >= '{$nowDateTime}'
     ORDER BY s.screening_date ASC, s.start_time ASC
     LIMIT 4
 ");
@@ -105,7 +107,7 @@ $netOperatingMargin = $grossRevenue - $totalUtilities;
 <div class="sb-dash-wrapper">
 
     <!-- 1. DASHBOARD HERO BANNER -->
-    <div class="dash-hero card">
+    <div class="dash-hero">
         <div class="dash-hero-backdrop" aria-hidden="true">
             <div class="dash-hero-glow"></div>
             <div class="dash-hero-grid-pattern"></div>

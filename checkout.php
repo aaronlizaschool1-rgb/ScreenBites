@@ -6,6 +6,18 @@
 
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/seat_pricing.php';
+require_once __DIR__ . '/includes/seat_holds.php';
+
+// Sync cart with active holds (FR4: Seat Hold & Timeout auto-expiration)
+$sessionToken = session_id();
+$removedHolds = sync_cart_with_seat_holds($conn, $sessionToken);
+if ($removedHolds > 0) {
+    set_flash('error', "Your 8-minute seat reservation expired. The seat(s) have been released back to the hall.");
+    header("Location: " . BASE_URL . "/view_cart.php");
+    exit;
+}
+
+$holdExpiryTimestamp = get_session_hold_expiry($conn, $sessionToken);
 
 $cart = $_SESSION['cart'] ?? [];
 
@@ -115,6 +127,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($cart)) {
 
                     mysqli_stmt_bind_param($stmtTicket, "iiiid", $orderId, $scId, $seatId, $hallId, $price);
                     mysqli_stmt_execute($stmtTicket);
+
+                    // FR4: Release seat hold upon successful ticket generation
+                    release_seat_hold($conn, $scId, $seatId);
                 } elseif ($item['type'] === 'concession') {
                     $prodId = (int)$item['id'];
                     $qty = (int)$item['qty'];
@@ -285,6 +300,22 @@ require_once __DIR__ . '/includes/header.php';
         <a href="<?= BASE_URL; ?>/view_cart.php" class="btn btn-secondary">&larr; Back to Cart</a>
     </div>
 
+    <?php if ($holdExpiryTimestamp && $holdExpiryTimestamp > time()): ?>
+        <div class="seat-hold-banner" id="seatHoldBanner" data-expiry="<?= $holdExpiryTimestamp; ?>">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <span style="font-size: 1.5rem;">⏱️</span>
+                <div>
+                    <strong style="color: #f59e0b; font-size: 1rem; display: block;">Seats Held For Checkout</strong>
+                    <span style="font-size: 0.85rem; color: var(--text-muted);">Complete transaction before the lock expires to avoid losing your seats.</span>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Time Remaining:</span>
+                <span class="seat-hold-timer" id="holdCountdownDisplay">--:--</span>
+            </div>
+        </div>
+    <?php endif; ?>
+
     <?php if (!empty($errorMsg)): ?>
         <div class="sb-alert sb-alert-danger"><?= sanitize($errorMsg); ?></div>
     <?php endif; ?>
@@ -332,28 +363,9 @@ require_once __DIR__ . '/includes/header.php';
                                         1 seat
                                     </span>
                                 <?php else: ?>
-                                    <div style="display: inline-flex; align-items: center; border: 1.5px solid var(--c-line, #dcdff0); border-radius: 6px; background: #fff; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                                        <button type="button" 
-                                                class="btn-co-qty" 
-                                                data-action="decrease" 
-                                                data-key="<?= sanitize($key); ?>" 
-                                                style="border: none; background: #f8fafc; color: var(--c-ink, #1d1f3a); width: 28px; height: 30px; font-weight: 700; cursor: pointer; display: grid; place-items: center; font-size: 1rem; border-right: 1px solid var(--c-line, #dcdff0);" 
-                                                title="Decrease quantity">&minus;</button>
-                                        <input type="number" 
-                                               value="<?= $qty; ?>" 
-                                               min="0" 
-                                               max="<?= $maxQty; ?>" 
-                                               data-key="<?= sanitize($key); ?>" 
-                                               data-price="<?= $price; ?>" 
-                                               class="co-qty-input" 
-                                               style="width: 42px; height: 30px; text-align: center; border: none; font-size: 0.88rem; font-weight: 700; color: var(--c-ink, #1d1f3a); -moz-appearance: textfield;">
-                                        <button type="button" 
-                                                class="btn-co-qty" 
-                                                data-action="increase" 
-                                                data-key="<?= sanitize($key); ?>" 
-                                                style="border: none; background: #f8fafc; color: var(--c-ink, #1d1f3a); width: 28px; height: 30px; font-weight: 700; cursor: pointer; display: grid; place-items: center; font-size: 1rem; border-left: 1px solid var(--c-line, #dcdff0);" 
-                                                title="Increase quantity">&plus;</button>
-                                    </div>
+                                    <span style="font-weight: 700; color: var(--c-ink, #1d1f3a); background: #f1f5f9; padding: 0.2rem 0.55rem; border-radius: 4px; font-size: 0.82rem; border: 1px solid var(--c-line, #dcdff0); display: inline-block;">
+                                        <?= $qty; ?>
+                                    </span>
                                 <?php endif; ?>
                             </td>
                             <td style="text-align: right; font-weight: 700; color: var(--accent-gold, #d97706);" id="co-line-total-<?= sanitize($key); ?>">
@@ -418,177 +430,41 @@ require_once __DIR__ . '/includes/header.php';
 document.addEventListener('DOMContentLoaded', function() {
     'use strict';
 
-    var updateUrl = <?= json_encode(BASE_URL . '/cart_update.php'); ?>;
-    var taxRate = <?= json_encode(TAX_RATE); ?>;
-    var currencySymbol = '₱';
-    var isTenderManuallyModified = false;
 
-    var tenderInput = document.getElementById('amount_paid');
-    if (tenderInput) {
-        tenderInput.addEventListener('input', function() {
-            isTenderManuallyModified = true;
-        });
-    }
 
-    function formatMoney(amount) {
-        return currencySymbol + parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
 
-    function recalculateCheckoutDOM() {
-        var rows = document.querySelectorAll('.co-item-row');
-        if (rows.length === 0) {
-            window.location.href = <?= json_encode(BASE_URL . '/view_cart.php'); ?>;
-            return;
-        }
 
-        var grandTotal = 0.00;
-        rows.forEach(function(row) {
-            var price = parseFloat(row.getAttribute('data-price')) || 0.00;
-            var input = row.querySelector('.co-qty-input');
-            var qty = input ? (parseInt(input.value, 10) || 0) : 1;
-            var lineTotal = price * qty;
-            grandTotal += lineTotal;
 
-            var subCell = row.querySelector('[id^="co-line-total-"]');
-            if (subCell) {
-                subCell.textContent = formatMoney(lineTotal);
+    // Live Seat Hold Countdown Timer (FR4)
+    var banner = document.getElementById('seatHoldBanner');
+    if (banner) {
+        var expiryTimestamp = parseInt(banner.getAttribute('data-expiry'), 10);
+        var display = document.getElementById('holdCountdownDisplay');
+
+        function updateCountdown() {
+            var now = Math.floor(Date.now() / 1000);
+            var remaining = expiryTimestamp - now;
+
+            if (remaining <= 0) {
+                display.textContent = '00:00';
+                display.style.color = '#ef4444';
+                // Reload page to trigger PHP hold expiration and cart cleanup
+                window.location.reload();
+                return;
             }
-        });
 
-        var vatSubtotal = grandTotal / (1 + taxRate);
-        var vatAmount = grandTotal - vatSubtotal;
+            var mins = Math.floor(remaining / 60);
+            var secs = remaining % 60;
+            display.textContent = (mins < 10 ? '0' : '') + mins + ':' + (secs < 10 ? '0' : '') + secs;
 
-        var vSubElem = document.getElementById('coVatSubtotalDisplay');
-        var vAmtElem = document.getElementById('coVatAmountDisplay');
-        var gTotElem = document.getElementById('coGrandTotalDisplay');
-        var tenderElem = document.getElementById('amount_paid');
-        var tenderHelp = document.getElementById('tenderHelp');
-
-        if (vSubElem) vSubElem.textContent = formatMoney(vatSubtotal);
-        if (vAmtElem) vAmtElem.textContent = formatMoney(vatAmount);
-        if (gTotElem) gTotElem.textContent = formatMoney(grandTotal);
-
-        if (tenderElem) {
-            tenderElem.setAttribute('min', grandTotal.toFixed(2));
-            if (!isTenderManuallyModified || parseFloat(tenderElem.value) < grandTotal) {
-                tenderElem.value = grandTotal.toFixed(2);
+            if (remaining <= 60) {
+                display.style.color = '#ef4444';
             }
         }
-        if (tenderHelp) {
-            tenderHelp.textContent = 'Minimum payment: ' + formatMoney(grandTotal);
-        }
+
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
     }
-
-    function syncCheckoutQty(key, newQty) {
-        var formData = new FormData();
-        formData.append('type', 'ajax_update_qty');
-        formData.append('item_key', key);
-        formData.append('quantity', newQty);
-
-        fetch(updateUrl, {
-            method: 'POST',
-            body: formData
-        })
-        .then(function(res) { return res.json(); })
-        .then(function(data) {
-            if (data.success) {
-                if (data.removed) {
-                    var row = document.getElementById('co-row-' + key);
-                    if (row) row.remove();
-                    recalculateCheckoutDOM();
-                } else if (data.item) {
-                    var subCell = document.getElementById('co-line-total-' + key);
-                    if (subCell && data.item.line_total_fmt) {
-                        subCell.textContent = data.item.line_total_fmt;
-                    }
-                    if (data.grand_total_fmt) {
-                        var gTot = document.getElementById('coGrandTotalDisplay');
-                        if (gTot) gTot.textContent = data.grand_total_fmt;
-                    }
-                    if (data.vat_subtotal_fmt) {
-                        var vSub = document.getElementById('coVatSubtotalDisplay');
-                        if (vSub) vSub.textContent = data.vat_subtotal_fmt;
-                    }
-                    if (data.vat_amount_fmt) {
-                        var vAmt = document.getElementById('coVatAmountDisplay');
-                        if (vAmt) vAmt.textContent = data.vat_amount_fmt;
-                    }
-                    var tenderElem = document.getElementById('amount_paid');
-                    if (tenderElem) {
-                        tenderElem.setAttribute('min', data.grand_total.toFixed(2));
-                        if (!isTenderManuallyModified || parseFloat(tenderElem.value) < data.grand_total) {
-                            tenderElem.value = data.grand_total.toFixed(2);
-                        }
-                    }
-                }
-            }
-        })
-        .catch(function(err) {
-            console.error('Checkout sync error:', err);
-        });
-    }
-
-    document.querySelectorAll('.btn-co-qty').forEach(function(btn) {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            var key = this.getAttribute('data-key');
-            var action = this.getAttribute('data-action');
-            var row = document.getElementById('co-row-' + key);
-            if (!row) return;
-
-            var input = row.querySelector('.co-qty-input');
-            if (!input) return;
-
-            var curVal = parseInt(input.value, 10) || 0;
-            var maxVal = parseInt(input.getAttribute('max'), 10) || 999;
-            var newVal = curVal;
-
-            if (action === 'increase') {
-                if (curVal < maxVal) newVal = curVal + 1;
-            } else if (action === 'decrease') {
-                newVal = curVal - 1;
-            }
-
-            if (newVal <= 0) {
-                if (confirm('Remove this concession from order?')) {
-                    row.remove();
-                    recalculateCheckoutDOM();
-                    syncCheckoutQty(key, 0);
-                }
-            } else {
-                input.value = newVal;
-                recalculateCheckoutDOM();
-                syncCheckoutQty(key, newVal);
-            }
-        });
-    });
-
-    document.querySelectorAll('.co-qty-input').forEach(function(input) {
-        input.addEventListener('change', function() {
-            var key = this.getAttribute('data-key');
-            var val = parseInt(this.value, 10) || 0;
-            var maxVal = parseInt(this.getAttribute('max'), 10) || 999;
-
-            if (val <= 0) {
-                var row = document.getElementById('co-row-' + key);
-                if (confirm('Remove this concession from order?')) {
-                    if (row) row.remove();
-                    recalculateCheckoutDOM();
-                    syncCheckoutQty(key, 0);
-                } else {
-                    this.value = 1;
-                    recalculateCheckoutDOM();
-                }
-            } else {
-                if (val > maxVal) {
-                    val = maxVal;
-                    this.value = val;
-                }
-                recalculateCheckoutDOM();
-                syncCheckoutQty(key, val);
-            }
-        });
-    });
 });
 </script>
 

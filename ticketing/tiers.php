@@ -11,7 +11,11 @@ require_admin();
 
 $pageTitle = 'Seat Tiers & Pricing Configuration';
 require_once dirname(__DIR__) . '/includes/header.php';
+?>
 
+<link rel="stylesheet" href="<?= BASE_URL; ?>/assets/css/seat-matrix.css">
+
+<?php
 // Fetch all tiers with count of assigned seats
 $sql = "SELECT st.tier_id, st.tier_name, st.tier_surcharge, st.created_at,
                COUNT(s.seat_id) AS assigned_seats_count
@@ -32,7 +36,7 @@ if ($res) {
 <div class="sb-page-header">
     <div>
         <h1>Seat Tiers &amp; Pricing Configuration</h1>
-        <p>Manage cinema seat tier categories, pricing premiums, and surcharge multipliers (FR3).</p>
+        <p>Manage cinema seat tier categories, pricing premiums, and surcharge multipliers.</p>
     </div>
     <div>
         <a href="<?= BASE_URL; ?>/schedules/index.php" class="btn btn-secondary">&larr; Schedules</a>
@@ -80,9 +84,11 @@ if ($res) {
                                 <strong style="font-size: 1rem; color: var(--c-ink, #1d1f3a);"><?= sanitize($tier['tier_name']); ?></strong>
                             </td>
                             <td>
-                                <span class="seat-box <?= $tierClass; ?>" style="display: inline-flex; width: 34px; height: 34px; font-size: 0.75rem; vertical-align: middle;">
-                                    <?= $tId === 2 ? '♥' : ($tId === 3 ? '★' : '01'); ?>
-                                </span>
+                                <div class="seatmap" style="display: inline-block;">
+                                    <span class="seat tier-<?= $tId; ?>" style="cursor: default; pointer-events: none;" title="<?= sanitize($tier['tier_name']); ?>">
+                                        <span class="seat-num"><?= $tId === 3 ? 'VIP' : ($tId === 2 ? 'CPL' : '01'); ?></span>
+                                    </span>
+                                </div>
                             </td>
                             <td>
                                 <?php if ($surcharge > 0): ?>
@@ -116,11 +122,6 @@ if ($res) {
             </tbody>
         </table>
     </div>
-</div>
-
-<div style="margin-top: 1.5rem; padding: 1.25rem; background: #f8fafc; border: 1px solid var(--c-line, #dcdff0); border-radius: 10px; font-size: 0.88rem; color: var(--c-muted, #5d6180);">
-    <strong style="color: var(--c-indigo, #2b2d7a); display: block; margin-bottom: 0.25rem;">📌 FR3 Pricing Rule:</strong>
-    Ticket pricing is strictly calculated dynamically at the moment of reservation: each seat's configured tier surcharge is added to the screening's base showtime price. Modifying surcharges above dynamically adjusts prices for all future seat reservations and prevents cross-tier pricing errors.
 </div>
 
 <?php require_once dirname(__DIR__) . '/includes/footer.php'; ?>

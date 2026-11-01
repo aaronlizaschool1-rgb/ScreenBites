@@ -6,6 +6,7 @@
 
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/seat_pricing.php';
+require_once __DIR__ . '/includes/seat_holds.php';
 
 if (!isset($_SESSION['cart'])) {
     $_SESSION['cart'] = [];
@@ -113,7 +114,7 @@ if ($type === 'add_combo') {
     exit;
 }
 
-// 2. Add Movie Tickets from Seat Grid (Tier-Based Anti-Tamper Verification)
+// 2. Add Movie Tickets from Seat Grid (Tier-Based Anti-Tamper Verification & FR4 Seat Hold)
 if ($type === 'add_tickets') {
     $screeningId = (int)($_POST['screening_id'] ?? 0);
     $selectedSeats = (array)($_POST['seats'] ?? []);
@@ -134,6 +135,24 @@ if ($type === 'add_tickets') {
 
     $sc = $pricedData['screening'];
     $timeFmt = date('M d, g:i A', strtotime($sc['screening_date'] . ' ' . $sc['start_time']));
+    $sessionToken = session_id();
+    $hallId = (int)$sc['hall_id'];
+
+    // Try to hold each seat for 8 minutes
+    $heldSeats = [];
+    foreach ($pricedData['seats'] as $seatId => $seat) {
+        $holdOk = hold_seat($conn, $screeningId, $seatId, $hallId, $sessionToken);
+        if (!$holdOk) {
+            // Roll back any previously acquired holds for this attempt
+            foreach ($heldSeats as $hId) {
+                release_seat_hold($conn, $screeningId, $hId);
+            }
+            set_flash('error', "Seat {$seat['label']} was just held by another customer. Please select another seat.");
+            header("Location: " . BASE_URL . "/ticketing/seat_matrix.php?screening_id={$screeningId}");
+            exit;
+        }
+        $heldSeats[] = $seatId;
+    }
 
     foreach ($pricedData['seats'] as $seatId => $seat) {
         $key = "ticket_{$screeningId}_{$seatId}";
@@ -151,124 +170,49 @@ if ($type === 'add_tickets') {
         ];
     }
 
-    set_flash('success', count($pricedData['seats']) . ' ticket(s) added to your cart.');
+    set_flash('success', count($pricedData['seats']) . ' ticket(s) held for 8 minutes and added to your cart.');
     header("Location: " . BASE_URL . "/view_cart.php");
     exit;
 }
 
-// 3. AJAX Dynamic Quantity Update & Item Removal (Real-Time Sync)
-if ($type === 'ajax_update_qty') {
-    header('Content-Type: application/json');
-    $itemKey = trim($_POST['item_key'] ?? '');
-    $newQty = (int)($_POST['quantity'] ?? 0);
-
-    $removed = false;
-    $updatedItem = null;
-
-    if (isset($_SESSION['cart'][$itemKey])) {
-        if ($newQty <= 0) {
-            unset($_SESSION['cart'][$itemKey]);
-            $removed = true;
-        } elseif ($_SESSION['cart'][$itemKey]['type'] === 'concession' || $_SESSION['cart'][$itemKey]['type'] === 'combo') {
-            $max = (int)($_SESSION['cart'][$itemKey]['max_qty'] ?? 999);
-            $finalQty = max(1, min($newQty, $max));
-            $_SESSION['cart'][$itemKey]['qty'] = $finalQty;
-            $updatedItem = [
-                'key'        => $itemKey,
-                'qty'        => $finalQty,
-                'unit_price' => (float)$_SESSION['cart'][$itemKey]['price'],
-                'line_total' => round((float)$_SESSION['cart'][$itemKey]['price'] * $finalQty, 2),
-                'line_total_fmt' => format_currency((float)$_SESSION['cart'][$itemKey]['price'] * $finalQty)
-            ];
-        }
-    }
-
-    $grandTotal = 0.00;
-    $cartCount = 0;
-    foreach ($_SESSION['cart'] as $it) {
-        $grandTotal += ((float)$it['price'] * (int)$it['qty']);
-        $cartCount += (int)$it['qty'];
-    }
-    $vatSubtotal = round($grandTotal / (1 + TAX_RATE), 2);
-    $vatAmount = round($grandTotal - $vatSubtotal, 2);
-
-    echo json_encode([
-        'success'          => true,
-        'removed'          => $removed,
-        'item'             => $updatedItem,
-        'cart_count'       => $cartCount,
-        'grand_total'      => $grandTotal,
-        'vat_subtotal'     => $vatSubtotal,
-        'vat_amount'       => $vatAmount,
-        'grand_total_fmt'  => format_currency($grandTotal),
-        'vat_subtotal_fmt' => format_currency($vatSubtotal),
-        'vat_amount_fmt'   => format_currency($vatAmount)
-    ]);
-    exit;
-}
-
-if ($type === 'ajax_remove_item') {
-    header('Content-Type: application/json');
-    $itemKey = trim($_POST['item_key'] ?? '');
-    if (isset($_SESSION['cart'][$itemKey])) {
-        unset($_SESSION['cart'][$itemKey]);
-    }
-
-    $grandTotal = 0.00;
-    $cartCount = 0;
-    foreach ($_SESSION['cart'] as $it) {
-        $grandTotal += ((float)$it['price'] * (int)$it['qty']);
-        $cartCount += (int)$it['qty'];
-    }
-    $vatSubtotal = round($grandTotal / (1 + TAX_RATE), 2);
-    $vatAmount = round($grandTotal - $vatSubtotal, 2);
-
-    echo json_encode([
-        'success'          => true,
-        'cart_count'       => $cartCount,
-        'grand_total'      => $grandTotal,
-        'vat_subtotal'     => $vatSubtotal,
-        'vat_amount'       => $vatAmount,
-        'grand_total_fmt'  => format_currency($grandTotal),
-        'vat_subtotal_fmt' => format_currency($vatSubtotal),
-        'vat_amount_fmt'   => format_currency($vatAmount)
-    ]);
-    exit;
-}
-
-// 4. Batch Update Quantities and Remove Items (Traditional POST Fallback)
+// 3. Batch Update Quantities (Traditional Form POST - Zero JSON)
 if ($type === 'update') {
-    // Update quantities for concession items
     if (isset($_POST['product_qty']) && is_array($_POST['product_qty'])) {
         foreach ($_POST['product_qty'] as $key => $newQty) {
             $newQty = (int)$newQty;
             if (isset($_SESSION['cart'][$key])) {
                 if ($newQty <= 0) {
+                    if ($_SESSION['cart'][$key]['type'] === 'ticket') {
+                        $scId = (int)$_SESSION['cart'][$key]['screening_id'];
+                        $stId = (int)$_SESSION['cart'][$key]['seat_id'];
+                        release_seat_hold($conn, $scId, $stId);
+                    }
                     unset($_SESSION['cart'][$key]);
                 } elseif ($_SESSION['cart'][$key]['type'] === 'concession' || $_SESSION['cart'][$key]['type'] === 'combo') {
                     $max = (int)($_SESSION['cart'][$key]['max_qty'] ?? 999);
-                    $_SESSION['cart'][$key]['qty'] = min($newQty, $max);
+                    $_SESSION['cart'][$key]['qty'] = max(1, min($newQty, $max));
                 }
             }
         }
-    }
-
-    // Process checkbox removals
-    if (isset($_POST['remove_code']) && is_array($_POST['remove_code'])) {
-        foreach ($_POST['remove_code'] as $key) {
-            unset($_SESSION['cart'][$key]);
-        }
+        set_flash('success', 'Cart updated successfully.');
     }
 
     header("Location: " . BASE_URL . "/view_cart.php");
     exit;
 }
 
-// 4. Single Remove Link
+// 4. Single Item Removal (Standard GET Link - Zero JSON)
 if ($type === 'remove') {
-    $key = $_GET['code'] ?? '';
+    $key = trim($_GET['code'] ?? '');
     if (!empty($key) && isset($_SESSION['cart'][$key])) {
+        if ($_SESSION['cart'][$key]['type'] === 'ticket') {
+            $scId = (int)$_SESSION['cart'][$key]['screening_id'];
+            $stId = (int)$_SESSION['cart'][$key]['seat_id'];
+            release_seat_hold($conn, $scId, $stId);
+        }
+        $removedName = $_SESSION['cart'][$key]['name'] ?? 'Item';
         unset($_SESSION['cart'][$key]);
+        set_flash('success', "{$removedName} removed from cart.");
     }
     header("Location: " . BASE_URL . "/view_cart.php");
     exit;

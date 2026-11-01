@@ -52,11 +52,13 @@ $resCombos = mysqli_query($conn, $sqlCombos);
             $synopsis   = !empty($movie['synopsis']) ? (string)$movie['synopsis'] : 'Experience ' . $title . ' on the big screen with high-fidelity digital projection.';
             $trailerId  = get_youtube_id($movie['trailer_url']);
 
-            // Fetch screenings for this movie
+            // Fetch upcoming screenings for this movie (filter out past/concluded showtimes)
+            $currentDateTime = date('Y-m-d H:i:s');
             $scSql = "SELECT s.screening_id, s.screening_date, s.start_time, s.base_price, h.hall_name 
                       FROM screenings s
                       INNER JOIN halls h ON s.hall_id = h.hall_id
                       WHERE s.movie_id = {$mId}
+                        AND CONCAT(s.screening_date, ' ', s.start_time) >= '{$currentDateTime}'
                       ORDER BY s.screening_date ASC, s.start_time ASC";
             $scRes = mysqli_query($conn, $scSql);
         ?>
@@ -116,7 +118,14 @@ $resCombos = mysqli_query($conn, $sqlCombos);
                                 <?php endwhile; ?>
                             </div>
                         <?php else: ?>
-                            <p style="font-size: 0.82rem; color: var(--text-muted); font-style: italic; margin: 0.25rem 0;">No upcoming showtimes scheduled.</p>
+                            <div style="background: rgba(43, 45, 122, 0.04); border: 1px dashed var(--c-line, #dcdff0); border-radius: 8px; padding: 0.75rem 0.5rem; text-align: center;">
+                                <span style="font-size: 0.8rem; color: var(--c-muted, #5d6180); font-weight: 600; display: block;">
+                                    🎬 No upcoming showtimes scheduled
+                                </span>
+                                <small style="font-size: 0.72rem; color: var(--c-muted, #8b90b2); display: block; margin-top: 0.2rem;">
+                                    Check back soon for new showtimes
+                                </small>
+                            </div>
                         <?php endif; ?>
                     </div>
 

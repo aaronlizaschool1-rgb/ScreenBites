@@ -1907,7 +1907,8 @@
   overflow-y: auto;
 }
 
-.cart-item-row {
+.cart-items-list .cart-item-row,
+div.cart-item-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -2848,10 +2849,12 @@
   gap: 1.5rem;
 }
 
-.dash-hero {
-  background: linear-gradient(135deg, #0e1037 0%, #1a1c58 50%, #282b7c 100%);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+.dash-hero,
+.card.dash-hero,
+div.dash-hero {
+  background: linear-gradient(135deg, #0e1037 0%, #1a1c58 50%, #282b7c 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
   border-radius: 16px;
   padding: 1.85rem 2.2rem;
   box-shadow: 0 12px 36px rgba(14, 16, 55, 0.22);
@@ -2950,12 +2953,12 @@
   font-size: 2rem;
   font-weight: 800;
   letter-spacing: -0.025em;
-  color: #ffffff;
+  color: #ffffff !important;
 }
 
 .dash-subtitle {
   margin: 0;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.88) !important;
   font-size: 0.95rem;
   line-height: 1.45;
 }
@@ -2972,7 +2975,7 @@
   align-items: center;
   gap: 0.5rem;
   background: linear-gradient(135deg, var(--c-gold) 0%, #f7c75c 100%);
-  color: #1a1600;
+  color: #1a1600 !important;
   border: none;
   font-weight: 700;
   padding: 0.68rem 1.25rem;
@@ -2984,7 +2987,7 @@
 
 .dash-btn-cta:hover {
   background: linear-gradient(135deg, #ffd370 0%, #f5b93a 100%);
-  color: #000;
+  color: #000 !important;
   transform: translateY(-2px);
   box-shadow: 0 6px 22px rgba(245, 185, 58, 0.45);
 }
@@ -2993,9 +2996,9 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  color: #ffffff !important;
   padding: 0.65rem 1.15rem;
   border-radius: 10px;
   font-weight: 600;
@@ -3005,9 +3008,9 @@
 }
 
 .dash-btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.16);
-  border-color: rgba(255, 255, 255, 0.45);
-  color: #ffffff;
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+  color: #ffffff !important;
   transform: translateY(-2px);
 }
 
