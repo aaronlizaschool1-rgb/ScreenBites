@@ -1,5 +1,6 @@
 SET FOREIGN_KEY_CHECKS = 0;
 
+DROP TABLE IF EXISTS reviews;
 DROP TABLE IF EXISTS stock_restocks;
 DROP TABLE IF EXISTS audit_logs;
 DROP TABLE IF EXISTS utility_expenses;
@@ -25,12 +26,15 @@ CREATE TABLE users (
     user_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     full_name VARCHAR(100) NOT NULL,
     username VARCHAR(50) NOT NULL,
+    email VARCHAR(150) NULL,
     password_hash VARCHAR(255) NOT NULL,
-    role ENUM('Administrator', 'Ticketing Staff', 'Snackbar Cashier') NOT NULL,
+    avatar_path VARCHAR(255) NULL,
+    role ENUM('Customer', 'Administrator', 'Ticketing Staff', 'Snackbar Cashier') NOT NULL DEFAULT 'Customer',
     status ENUM('Active', 'Inactive') NOT NULL DEFAULT 'Active',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT uq_users_username UNIQUE (username)
+    CONSTRAINT uq_users_username UNIQUE (username),
+    CONSTRAINT uq_users_email UNIQUE (email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE halls (
@@ -82,6 +86,17 @@ CREATE TABLE movies (
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_movie_duration CHECK (duration_minutes > 0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE movie_images (
+    image_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    movie_id INT UNSIGNED NOT NULL,
+    image_path VARCHAR(255) NOT NULL,
+    is_primary BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_movie_images_movie FOREIGN KEY (movie_id)
+        REFERENCES movies (movie_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    INDEX idx_movie_images_movie (movie_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE screenings (
@@ -164,9 +179,11 @@ CREATE TABLE orders (
     order_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     order_number VARCHAR(32) NOT NULL,
     user_id INT UNSIGNED NOT NULL,
+    customer_name VARCHAR(100) NULL,
+    customer_email VARCHAR(150) NULL,
     subtotal_amount DECIMAL(10, 2) NOT NULL,
     tax_amount DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
-    order_status ENUM('Completed', 'Cancelled', 'Refunded') NOT NULL DEFAULT 'Completed',
+    order_status ENUM('Pending', 'Paid', 'Completed', 'Cancelled', 'Refunded') NOT NULL DEFAULT 'Completed',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT uq_orders_number UNIQUE (order_number),
     CONSTRAINT fk_orders_users FOREIGN KEY (user_id)
@@ -293,3 +310,70 @@ CREATE TABLE audit_logs (
     INDEX idx_audit_timeline (created_at),
     INDEX idx_audit_user_action (user_id, action_type)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE reviews (
+    review_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id INT UNSIGNED NOT NULL,
+    item_type ENUM('movie', 'concession') NOT NULL,
+    item_id INT UNSIGNED NOT NULL,
+    rating TINYINT UNSIGNED NOT NULL,
+    review_text TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_reviews_users FOREIGN KEY (user_id) 
+        REFERENCES users (user_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT chk_review_rating CHECK (rating BETWEEN 1 AND 5),
+    INDEX idx_reviews_item (item_type, item_id),
+    INDEX idx_reviews_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================================
+-- RELATIONAL DATABASE VIEWS (Academic Assessment: Unit 1)
+-- Consolidated order and transaction ledger aggregating tickets, concessions,
+-- and payment status for operational reporting and administrative auditing.
+-- ============================================================================
+CREATE OR REPLACE VIEW view_order_transaction_details AS
+SELECT 
+    o.order_id,
+    o.order_number,
+    o.customer_name,
+    o.customer_email,
+    o.created_at AS order_date,
+    o.order_status,
+    o.subtotal_amount,
+    o.tax_amount,
+    (o.subtotal_amount + o.tax_amount) AS grand_total,
+    u.user_id,
+    u.username AS processed_by_username,
+    u.full_name AS processed_by_name,
+    u.role AS processed_by_role,
+    p.payment_id,
+    p.payment_method,
+    p.amount_paid,
+    p.change_returned,
+    p.payment_date,
+    COALESCE(tc.ticket_count, 0) AS total_tickets,
+    COALESCE(tc.ticket_total, 0.00) AS ticket_subtotal,
+    COALESCE(ic.concession_count, 0) AS total_concessions,
+    COALESCE(ic.concession_total, 0.00) AS concession_subtotal,
+    COALESCE(cc.combo_count, 0) AS total_combos,
+    COALESCE(cc.combo_total, 0.00) AS combo_subtotal
+FROM orders o
+LEFT JOIN users u ON o.user_id = u.user_id
+LEFT JOIN payments p ON o.order_id = p.order_id
+LEFT JOIN (
+    SELECT order_id, COUNT(*) AS ticket_count, SUM(price_charged) AS ticket_total 
+    FROM tickets 
+    GROUP BY order_id
+) tc ON o.order_id = tc.order_id
+LEFT JOIN (
+    SELECT order_id, SUM(quantity) AS concession_count, SUM(quantity * unit_price_charged) AS concession_total 
+    FROM order_items 
+    GROUP BY order_id
+) ic ON o.order_id = ic.order_id
+LEFT JOIN (
+    SELECT order_id, SUM(quantity) AS combo_count, SUM(quantity * unit_price_charged) AS combo_total 
+    FROM order_combos 
+    GROUP BY order_id
+) cc ON o.order_id = cc.order_id;
+

@@ -25,6 +25,12 @@ date_default_timezone_set('Asia/Manila');
 define('CURRENCY_SYMBOL', '₱');
 define('TAX_RATE', 0.12);
 
+// Mailtrap Sandbox Credentials (Term Test Lab)
+define('MAILTRAP_HOST', 'sandbox.smtp.mailtrap.io');
+define('MAILTRAP_PORT', 2525);
+define('MAILTRAP_USER', '312649aee7d340');
+define('MAILTRAP_PASS', '7bec3dc61ba28b');
+
 // Dynamic Base URL computation
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
 $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
@@ -33,8 +39,12 @@ $docRoot = str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT'] ?? 'C:/xampp/htdocs'
 $relativeSubdir = str_replace($docRoot, '', $projectRoot);
 define('BASE_URL', rtrim($protocol . $host . $relativeSubdir, '/'));
 
-// Include Authentication Helpers (PedalWorks-Dynamics pattern)
+// Include Authentication & Academic Procedural Helpers (PedalWorks-Dynamics pattern)
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/validation.php';
+require_once __DIR__ . '/upload.php';
+require_once __DIR__ . '/profanity_filter.php';
+require_once __DIR__ . '/reviews.php';
 
 // Simple helper functions
 function format_currency($amount): string {

@@ -9,18 +9,54 @@ require_once __DIR__ . '/includes/config.php';
 
 $pageTitle = 'Now Showing Cinema & Lounge';
 require_once __DIR__ . '/includes/header.php';
+require_once __DIR__ . '/includes/reviews.php';
 
-// Fetch active movies with their upcoming screenings
-$sqlMovies = "SELECT * FROM movies WHERE is_active = 1 ORDER BY movie_id ASC";
-$resMovies = mysqli_query($conn, $sqlMovies);
+// Quiz 3: Homepage Search Parameterized Query
+$searchQuery = trim($_GET['q'] ?? '');
 
-// Fetch concessions for quick add-to-cart
-$sqlSnacks = "SELECT * FROM products WHERE is_active = 1 ORDER BY category ASC, product_name ASC LIMIT 6";
-$resSnacks = mysqli_query($conn, $sqlSnacks);
+// 1. Fetch active movies (parameterized LIKE query if search submitted)
+if (!empty($searchQuery)) {
+    $mSql = "SELECT * FROM movies 
+             WHERE is_active = 1 
+               AND (title LIKE ? OR genre LIKE ? OR synopsis LIKE ?)
+             ORDER BY movie_id ASC";
+    $mStmt = mysqli_prepare($conn, $mSql);
+    $like = "%" . $searchQuery . "%";
+    mysqli_stmt_bind_param($mStmt, "sss", $like, $like, $like);
+    mysqli_stmt_execute($mStmt);
+    $resMovies = mysqli_stmt_get_result($mStmt);
+} else {
+    $sqlMovies = "SELECT * FROM movies WHERE is_active = 1 ORDER BY movie_id ASC";
+    $resMovies = mysqli_query($conn, $sqlMovies);
+}
 
-// Fetch value combos
-$sqlCombos = "SELECT * FROM combos WHERE is_active = 1 ORDER BY combo_id ASC LIMIT 2";
-$resCombos = mysqli_query($conn, $sqlCombos);
+// 2. Fetch concessions (parameterized LIKE query if search submitted)
+if (!empty($searchQuery)) {
+    $sSql = "SELECT * FROM products 
+             WHERE is_active = 1 
+               AND (product_name LIKE ? OR category LIKE ?)
+             ORDER BY category ASC, product_name ASC";
+    $sStmt = mysqli_prepare($conn, $sSql);
+    $like = "%" . $searchQuery . "%";
+    mysqli_stmt_bind_param($sStmt, "ss", $like, $like);
+    mysqli_stmt_execute($sStmt);
+    $resSnacks = mysqli_stmt_get_result($sStmt);
+
+    $cbSql = "SELECT * FROM combos 
+              WHERE is_active = 1 
+                AND (combo_name LIKE ? OR description LIKE ?)
+              ORDER BY combo_id ASC";
+    $cbStmt = mysqli_prepare($conn, $cbSql);
+    mysqli_stmt_bind_param($cbStmt, "ss", $like, $like);
+    mysqli_stmt_execute($cbStmt);
+    $resCombos = mysqli_stmt_get_result($cbStmt);
+} else {
+    $sqlSnacks = "SELECT * FROM products WHERE is_active = 1 ORDER BY category ASC, product_name ASC LIMIT 6";
+    $resSnacks = mysqli_query($conn, $sqlSnacks);
+
+    $sqlCombos = "SELECT * FROM combos WHERE is_active = 1 ORDER BY combo_id ASC LIMIT 2";
+    $resCombos = mysqli_query($conn, $sqlCombos);
+}
 ?>
 
 <div class="sb-page-header">
@@ -33,6 +69,34 @@ $resCombos = mysqli_query($conn, $sqlCombos);
             <a href="<?= BASE_URL; ?>/movies/create.php" class="btn btn-primary">+ Add New Movie</a>
             <a href="<?= BASE_URL; ?>/schedules/create.php" class="btn btn-secondary">+ Schedule Screening</a>
         </div>
+    <?php endif; ?>
+</div>
+
+<!-- Homepage Search Input Bar -->
+<div class="card" style="padding: 1.25rem; margin-bottom: 2rem; background: var(--c-surface, #ffffff);">
+    <form method="GET" action="<?= BASE_URL; ?>/index.php" style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 260px; position: relative;">
+            <input type="text" 
+                   name="q" 
+                   value="<?= sanitize($searchQuery); ?>" 
+                   placeholder="Search movies by title, genre, synopsis, or find snack concessions..." 
+                   class="form-control" 
+                   style="padding-left: 2.25rem;">
+            <span style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--c-muted); font-size: 1rem;">🔍</span>
+        </div>
+        <button type="submit" class="btn btn-primary" style="padding: 0.55rem 1.25rem; font-weight: 700;">
+            Search Catalog
+        </button>
+        <?php if (!empty($searchQuery)): ?>
+            <a href="<?= BASE_URL; ?>/index.php" class="btn btn-secondary" style="padding: 0.55rem 1rem;">
+                Clear Filter
+            </a>
+        <?php endif; ?>
+    </form>
+    <?php if (!empty($searchQuery)): ?>
+        <p style="margin: 0.75rem 0 0; font-size: 0.88rem; color: var(--c-muted);">
+            Showing filtered results for: <strong>&ldquo;<?= sanitize($searchQuery); ?>&rdquo;</strong>
+        </p>
     <?php endif; ?>
 </div>
 
@@ -92,6 +156,17 @@ $resCombos = mysqli_query($conn, $sqlCombos);
                         <span><?= $timeText; ?></span> &bull; <span><?= sanitize($genreText); ?></span>
                     </div>
 
+                    <?php $revSum = get_item_review_summary($conn, 'movie', $mId); ?>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; font-size: 0.82rem;">
+                        <span style="color: #f59e0b; font-weight: 700;">
+                            ★ <?= $revSum['count'] > 0 ? number_format($revSum['average'], 1) : 'New'; ?>
+                            <span style="color: var(--c-muted); font-weight: 400; font-size: 0.75rem;">(<?= $revSum['count']; ?>)</span>
+                        </span>
+                        <a href="<?= BASE_URL; ?>/movie_details.php?id=<?= $mId; ?>#reviews" style="color: var(--c-indigo); font-weight: 600; text-decoration: none;">
+                            Reviews &amp; Details &rarr;
+                        </a>
+                    </div>
+
                     <div style="margin-top: auto; margin-bottom: 0.75rem;">
                         <strong style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.35rem; text-transform: uppercase;">
                             Available Screenings:
@@ -139,7 +214,12 @@ $resCombos = mysqli_query($conn, $sqlCombos);
             </div>
         <?php endwhile; ?>
     <?php else: ?>
-        <p style="color: var(--text-muted);">No movies currently in catalog.</p>
+        <div style="grid-column: 1 / -1; padding: 3rem 1rem; text-align: center; background: #f8fafc; border: 1px dashed var(--c-line); border-radius: 8px;">
+            <span style="font-size: 2rem; display: block; margin-bottom: 0.5rem;">🎬</span>
+            <p style="color: var(--c-muted); margin: 0; font-size: 0.95rem;">
+                <?= !empty($searchQuery) ? "No movie titles matched &ldquo;" . sanitize($searchQuery) . "&rdquo;. Try searching another title or genre." : "No movies currently in catalog."; ?>
+            </p>
+        </div>
     <?php endif; ?>
 </div>
 
@@ -234,6 +314,17 @@ $resCombos = mysqli_query($conn, $sqlCombos);
                         
                         <div class="sb-item-price"><?= format_currency($snack['retail_price']); ?></div>
 
+                        <?php $revSumSnack = get_item_review_summary($conn, 'concession', $sId); ?>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin: 0.35rem 0 0.6rem 0; font-size: 0.8rem;">
+                            <span style="color: #f59e0b; font-weight: 700;">
+                                ★ <?= $revSumSnack['count'] > 0 ? number_format($revSumSnack['average'], 1) : 'New'; ?>
+                                <span style="color: var(--c-muted, #64748b); font-weight: 400; font-size: 0.72rem;">(<?= $revSumSnack['count']; ?>)</span>
+                            </span>
+                            <a href="<?= BASE_URL; ?>/concessions/details.php?id=<?= $sId; ?>#reviews" style="color: var(--c-indigo, #6366f1); font-weight: 600; text-decoration: none;">
+                                Reviews &rarr;
+                            </a>
+                        </div>
+
                         <div style="display: flex; gap: 0.5rem; align-items: center; margin-top: auto;">
                             <input type="number" name="quantity" value="1" min="1" max="<?= max(1, (int)$snack['current_stock']); ?>" class="form-control" style="width: 70px; text-align: center;">
                             <button type="submit" class="btn btn-primary" style="flex: 1;">+ Add</button>
@@ -242,6 +333,15 @@ $resCombos = mysqli_query($conn, $sqlCombos);
                 </form>
             </div>
         <?php endwhile; ?>
+    <?php endif; ?>
+
+    <?php if ((!$resCombos || mysqli_num_rows($resCombos) === 0) && (!$resSnacks || mysqli_num_rows($resSnacks) === 0)): ?>
+        <div style="grid-column: 1 / -1; padding: 2.5rem 1rem; text-align: center; background: #f8fafc; border: 1px dashed var(--c-line); border-radius: 8px;">
+            <span style="font-size: 2rem; display: block; margin-bottom: 0.5rem;">🍿</span>
+            <p style="color: var(--c-muted); margin: 0; font-size: 0.95rem;">
+                <?= !empty($searchQuery) ? "No snack concessions matched &ldquo;" . sanitize($searchQuery) . "&rdquo;." : "No snack items available."; ?>
+            </p>
+        </div>
     <?php endif; ?>
 </div>
 

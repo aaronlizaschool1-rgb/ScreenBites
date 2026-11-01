@@ -67,6 +67,12 @@ require_once dirname(__DIR__) . '/includes/header.php';
             <input type="file" id="poster_file" name="poster_file" class="form-control" accept="image/jpeg,image/png,image/webp">
         </div>
 
+        <div class="form-group">
+            <label for="photos">Additional Movie Gallery Stills (Multiple Uploads)</label>
+            <input type="file" id="photos" name="photos[]" class="form-control" accept="image/jpeg,image/png,image/webp" multiple>
+            <small style="color: var(--c-muted); display: block; margin-top: 0.25rem;">Select one or multiple images for the movie gallery thumbnail strip (Max 2MB per photo, JPG/PNG/WebP).</small>
+        </div>
+
         <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;">
             <a href="<?= BASE_URL; ?>/movies/index.php" class="btn btn-secondary">Cancel</a>
             <button type="submit" class="btn btn-primary">Save to Now Showing</button>

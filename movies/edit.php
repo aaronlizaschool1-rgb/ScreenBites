@@ -17,6 +17,15 @@ if (!$movie) {
     exit;
 }
 
+// Fetch secondary gallery images
+$galleryImages = [];
+$giRes = mysqli_query($conn, "SELECT image_id, image_path FROM movie_images WHERE movie_id = {$id} AND is_primary = 0 ORDER BY image_id ASC");
+if ($giRes) {
+    while ($gi = mysqli_fetch_assoc($giRes)) {
+        $galleryImages[] = $gi;
+    }
+}
+
 $pageTitle = 'Edit ' . $movie['title'];
 require_once dirname(__DIR__) . '/includes/header.php';
 ?>
@@ -84,6 +93,30 @@ require_once dirname(__DIR__) . '/includes/header.php';
                 </div>
             <?php endif; ?>
             <input type="file" id="poster_file" name="poster_file" class="form-control" accept="image/jpeg,image/png,image/webp">
+        </div>
+
+        <div class="form-group">
+            <label>Current Gallery Stills</label>
+            <?php if (!empty($galleryImages)): ?>
+                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.5rem;">
+                    <?php foreach ($galleryImages as $gi): ?>
+                        <div style="position: relative; display: inline-block; border: 1px solid var(--c-line, #e2e8f0); border-radius: 6px; padding: 4px; background: #fff;">
+                            <img src="<?= BASE_URL . '/' . $gi['image_path']; ?>" alt="Still" style="width: 80px; height: 60px; object-fit: cover; border-radius: 4px; display: block;">
+                            <label style="display: flex; align-items: center; gap: 0.25rem; font-size: 0.72rem; color: #ef4444; margin-top: 4px; cursor: pointer;">
+                                <input type="checkbox" name="delete_images[]" value="<?= (int)$gi['image_id']; ?>"> Delete
+                            </label>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php else: ?>
+                <p style="color: var(--c-muted); font-size: 0.85rem; margin: 0 0 0.5rem 0;">No secondary gallery images uploaded yet.</p>
+            <?php endif; ?>
+        </div>
+
+        <div class="form-group">
+            <label for="photos">Upload Additional Gallery Stills (Multiple)</label>
+            <input type="file" id="photos" name="photos[]" class="form-control" accept="image/jpeg,image/png,image/webp" multiple>
+            <small style="color: var(--c-muted); display: block; margin-top: 0.25rem;">Select one or more images to add to the movie gallery (Max 2MB per photo, JPG/PNG/WebP).</small>
         </div>
 
         <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;">

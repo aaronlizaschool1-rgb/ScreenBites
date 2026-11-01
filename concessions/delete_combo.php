@@ -31,7 +31,7 @@ if ($id > 0) {
             set_flash('success', 'Combo bundle was successfully deleted.');
         } catch (Throwable $e) {
             mysqli_rollback($conn);
-            set_flash('error', 'Error deleting combo bundle: ' . $e->getMessage());
+            set_flash('error', 'Error deleting combo bundle: ' . (mysqli_error($conn) ?: 'Internal database error.'));
         }
     }
 }

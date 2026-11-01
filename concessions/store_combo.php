@@ -44,7 +44,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $sqlCombo = "INSERT INTO combos (combo_name, description, combo_price, is_active, created_at)
                      VALUES ('{$nameEsc}', {$descEsc}, {$price}, 1, NOW())";
         if (!mysqli_query($conn, $sqlCombo)) {
-            throw new Exception("Error inserting combo: " . mysqli_error($conn));
+            mysqli_rollback($conn);
+            set_flash('error', 'Error inserting combo: ' . mysqli_error($conn));
+            header("Location: " . BASE_URL . "/concessions/combos.php");
+            exit;
         }
         $newComboId = mysqli_insert_id($conn);
 
@@ -63,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         set_flash('success', "Combo bundle '{$name}' was successfully created!");
     } catch (Throwable $e) {
         mysqli_rollback($conn);
-        set_flash('error', 'Failed to save combo bundle: ' . $e->getMessage());
+        set_flash('error', 'Failed to save combo bundle: ' . (mysqli_error($conn) ?: 'Internal database error.'));
     }
 
     header("Location: " . BASE_URL . "/concessions/combos.php");

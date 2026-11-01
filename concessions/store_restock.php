@@ -52,7 +52,11 @@ try {
     mysqli_stmt_bind_param($stmt, 'iidsdsi', $productId, $quantityAdded, $purchaseCost, $supplierName, $invoiceReference, $notes, $receivedBy);
     
     if (!mysqli_stmt_execute($stmt)) {
-        throw new Exception("Failed to insert restock ledger: " . mysqli_stmt_error($stmt));
+        $dbErr = mysqli_stmt_error($stmt);
+        mysqli_stmt_close($stmt);
+        mysqli_rollback($conn);
+        $_SESSION['flash_error'] = "Failed to insert restock ledger: " . $dbErr;
+        redirect(BASE_URL . '/concessions/restock.php?product_id=' . $productId);
     }
     $restockId = mysqli_insert_id($conn);
     mysqli_stmt_close($stmt);
@@ -62,7 +66,11 @@ try {
     $upStmt = mysqli_prepare($conn, $updateSql);
     mysqli_stmt_bind_param($upStmt, 'ii', $quantityAdded, $productId);
     if (!mysqli_stmt_execute($upStmt)) {
-        throw new Exception("Failed to update product stock: " . mysqli_stmt_error($upStmt));
+        $dbErr = mysqli_stmt_error($upStmt);
+        mysqli_stmt_close($upStmt);
+        mysqli_rollback($conn);
+        $_SESSION['flash_error'] = "Failed to update product stock: " . $dbErr;
+        redirect(BASE_URL . '/concessions/restock.php?product_id=' . $productId);
     }
     mysqli_stmt_close($upStmt);
 
@@ -75,8 +83,8 @@ try {
     $_SESSION['flash_success'] = "Successfully added +{$quantityAdded} units to {$product['product_name']}. New on-hand stock: {$newStock}.";
     redirect(BASE_URL . '/concessions/restock_history.php');
 
-} catch (Exception $e) {
+} catch (Throwable $e) {
     mysqli_rollback($conn);
-    $_SESSION['flash_error'] = "Stock receiving error: " . $e->getMessage();
+    $_SESSION['flash_error'] = "Stock receiving error: " . (mysqli_error($conn) ?: 'Internal database error.');
     redirect(BASE_URL . '/concessions/restock.php?product_id=' . $productId);
 }

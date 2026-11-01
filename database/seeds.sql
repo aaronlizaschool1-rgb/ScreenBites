@@ -38,11 +38,11 @@ ALTER TABLE users            AUTO_INCREMENT = 1;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
-INSERT INTO users (user_id, full_name, username, password_hash, role, status) VALUES
-(1, 'Luzada, John Rey D.', 'admin_john', '$2y$10$QcuXYsoJREs5OSFs9ISeH.9uDAlq9dHaq0SHIRYRMwp6rD1/ILmsW', 'Administrator', 'Active'),
-(2, 'Macapagal, Aaron Louis F.', 'admin_aaron', '$2y$10$QcuXYsoJREs5OSFs9ISeH.9uDAlq9dHaq0SHIRYRMwp6rD1/ILmsW', 'Administrator', 'Active'),
-(3, 'Maria Santos', 'ticketing_maria', '$2y$10$QcuXYsoJREs5OSFs9ISeH.9uDAlq9dHaq0SHIRYRMwp6rD1/ILmsW', 'Ticketing Staff', 'Active'),
-(4, 'Carlos Reyes', 'cashier_carlos', '$2y$10$QcuXYsoJREs5OSFs9ISeH.9uDAlq9dHaq0SHIRYRMwp6rD1/ILmsW', 'Snackbar Cashier', 'Active');
+INSERT INTO users (user_id, full_name, username, email, password_hash, role, status) VALUES
+(1, 'Luzada, John Rey D.', 'admin_john', 'john@screenbites.local', '$2y$10$QcuXYsoJREs5OSFs9ISeH.9uDAlq9dHaq0SHIRYRMwp6rD1/ILmsW', 'Administrator', 'Active'),
+(2, 'Macapagal, Aaron Louis F.', 'admin_aaron', 'aaron@screenbites.local', '$2y$10$QcuXYsoJREs5OSFs9ISeH.9uDAlq9dHaq0SHIRYRMwp6rD1/ILmsW', 'Administrator', 'Active'),
+(3, 'Maria Santos', 'ticketing_maria', 'maria@screenbites.local', '$2y$10$QcuXYsoJREs5OSFs9ISeH.9uDAlq9dHaq0SHIRYRMwp6rD1/ILmsW', 'Ticketing Staff', 'Active'),
+(4, 'Carlos Reyes', 'cashier_carlos', 'carlos@screenbites.local', '$2y$10$QcuXYsoJREs5OSFs9ISeH.9uDAlq9dHaq0SHIRYRMwp6rD1/ILmsW', 'Snackbar Cashier', 'Active');
 
 INSERT INTO halls (hall_id, hall_name, total_rows, total_columns, is_active) VALUES
 (1, 'Cinema 1 - Main Auditorium', 5, 8, 1),

@@ -175,6 +175,15 @@ $isActive = function(string $path) use ($currentUri): bool {
                 <p class="app-nav-title">Finance</p>
                 <ul>
                     <li>
+                        <a href="<?= BASE_URL; ?>/admin/orders.php"<?= $isActive('admin/orders') ? ' aria-current="page"' : ''; ?>>
+                            <span class="app-nav-icon">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                            </span>
+                            <span class="app-nav-label">Orders &amp; Transactions</span>
+                            <?php if ($isActive('admin/orders')): ?><span class="app-nav-indicator"></span><?php endif; ?>
+                        </a>
+                    </li>
+                    <li>
                         <a href="<?= BASE_URL; ?>/utilities/index.php"<?= $isActive('utilities') ? ' aria-current="page"' : ''; ?>>
                             <span class="app-nav-icon">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
@@ -218,6 +227,15 @@ $isActive = function(string $path) use ($currentUri): bool {
                 <p class="app-nav-title">System</p>
                 <ul>
                     <li>
+                        <a href="<?= BASE_URL; ?>/admin/users.php"<?= $isActive('admin/users') ? ' aria-current="page"' : ''; ?>>
+                            <span class="app-nav-icon">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                            </span>
+                            <span class="app-nav-label">User Management</span>
+                            <?php if ($isActive('admin/users')): ?><span class="app-nav-indicator"></span><?php endif; ?>
+                        </a>
+                    </li>
+                    <li>
                         <a href="<?= BASE_URL; ?>/audit/index.php"<?= $isActive('audit') ? ' aria-current="page"' : ''; ?>>
                             <span class="app-nav-icon">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M9 12l2 2 4-4"></path></svg>
@@ -237,27 +255,47 @@ $isActive = function(string $path) use ($currentUri): bool {
             <div class="app-user-card">
                 <div class="app-user-row">
                     <div class="app-avatar-wrap">
-                        <span class="app-avatar" aria-hidden="true"><?= htmlspecialchars(mb_strtoupper(mb_substr(trim($user['full_name'] ?? $user['username']), 0, 1))); ?></span>
+                        <?php if (!empty($user['avatar_path']) && file_exists(dirname(__DIR__) . '/' . $user['avatar_path'])): ?>
+                            <img src="<?= BASE_URL . '/' . htmlspecialchars($user['avatar_path']); ?>" 
+                                 alt="Avatar" 
+                                 style="width: 38px; height: 38px; object-fit: cover; border-radius: 50%; border: 1.5px solid var(--c-indigo);">
+                        <?php else: ?>
+                            <span class="app-avatar" aria-hidden="true"><?= htmlspecialchars(mb_strtoupper(mb_substr(trim($user['full_name'] ?? $user['username']), 0, 1))); ?></span>
+                        <?php endif; ?>
                         <span class="app-status-indicator" title="Active"></span>
                     </div>
                     <div class="app-user-info">
-                        <p class="app-user-name" title="<?= sanitize($user['full_name'] ?? $user['username']); ?>"><?= sanitize($user['full_name'] ?? $user['username']); ?></p>
-                        <span class="app-user-role"><?= sanitize($user['role'] ?? 'Staff'); ?></span>
+                        <a href="<?= BASE_URL; ?>/profile.php" style="text-decoration: none; color: inherit;" title="Manage Profile">
+                            <p class="app-user-name" title="<?= sanitize($user['full_name'] ?? $user['username']); ?>"><?= sanitize($user['full_name'] ?? $user['username']); ?></p>
+                        </a>
+                        <span class="app-user-role"><?= sanitize($user['role'] ?? 'Guest'); ?></span>
                     </div>
                 </div>
-                <a class="app-signout-btn" href="<?= BASE_URL; ?>/logout.php" title="Sign out">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                        <polyline points="16 17 21 12 16 7"></polyline>
-                        <line x1="21" y1="12" x2="9" y2="12"></line>
-                    </svg>
-                    <span>Sign Out</span>
-                </a>
+                <div style="display: flex; gap: 0.35rem; margin-top: 0.5rem;">
+                    <a class="app-signout-btn" href="<?= BASE_URL; ?>/profile.php" title="My Profile Settings" style="flex: 1; justify-content: center;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        <span>Profile</span>
+                    </a>
+                    <a class="app-signout-btn" href="<?= BASE_URL; ?>/logout.php" title="Sign out" style="flex: 1; justify-content: center;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                        <span>Sign Out</span>
+                    </a>
+                </div>
             </div>
         <?php else: ?>
-            <div style="padding: 0.5rem;">
-                <a href="<?= BASE_URL; ?>/login.php" class="btn btn-secondary" style="width: 100%; text-align: center; display: block; font-weight: 600;">
-                    Staff Console Sign In
+            <div style="padding: 0.5rem; display: flex; flex-direction: column; gap: 0.45rem;">
+                <a href="<?= BASE_URL; ?>/login.php" class="btn btn-secondary" style="width: 100%; text-align: center; display: block; font-weight: 600; padding: 0.45rem;">
+                    Sign In
+                </a>
+                <a href="<?= BASE_URL; ?>/register.php" class="btn btn-primary" style="width: 100%; text-align: center; display: block; font-weight: 600; padding: 0.45rem;">
+                    Create Account
                 </a>
             </div>
         <?php endif; ?>

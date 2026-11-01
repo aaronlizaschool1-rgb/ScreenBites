@@ -11,34 +11,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id       = (int)($_POST['product_id'] ?? 0);
     $name     = trim($_POST['product_name'] ?? '');
     $category = trim($_POST['category'] ?? 'Popcorn');
-    $stock    = max(0, (int)($_POST['current_stock'] ?? 0));
-    $retail   = max(0.01, (float)($_POST['retail_price'] ?? 0.00));
-    $cost     = max(0.00, (float)($_POST['unit_cost'] ?? 0.00));
+    $stock    = (int)($_POST['current_stock'] ?? 0);
+    $retail   = (float)($_POST['retail_price'] ?? 0.00);
+    $cost     = (float)($_POST['unit_cost'] ?? 0.00);
+
+    if ($id <= 0) {
+        set_flash('error', 'Invalid concession product identifier specified.');
+        header("Location: " . BASE_URL . "/concessions/index.php");
+        exit;
+    }
+
+    // Procedural validation
+    $err = validate_required($name, 'Product name')
+        ?? validate_in_array($category, ['Popcorn', 'Beverage', 'Snacks', 'Candy'], 'Category')
+        ?? validate_numeric_range($stock, 0, 10000, 'Current stock')
+        ?? validate_numeric_range($retail, 0.01, 100000, 'Retail price')
+        ?? validate_numeric_range($cost, 0.00, 100000, 'Unit cost');
+
     if ($cost > $retail) {
         $cost = $retail;
     }
 
-    if ($id <= 0 || empty($name)) {
-        header("Location: " . BASE_URL . "/concessions/index.php");
+    if ($err !== null) {
+        set_flash('error', $err);
+        header("Location: " . BASE_URL . "/concessions/edit.php?id=" . $id);
         exit;
+    }
+
+    // Fetch old image to delete on replacement
+    $oldImg = null;
+    $chkRes = mysqli_query($conn, "SELECT image_path FROM products WHERE product_id = {$id} LIMIT 1");
+    if ($chkRow = mysqli_fetch_assoc($chkRes)) {
+        $oldImg = $chkRow['image_path'];
     }
 
     $nameEsc = mysqli_real_escape_string($conn, $name);
     $catEsc  = mysqli_real_escape_string($conn, $category);
 
     $imgSqlPart = "";
-    if (!empty($_FILES['image_file']['name']) && $_FILES['image_file']['error'] === UPLOAD_ERR_OK) {
-        $uploadDir = dirname(__DIR__) . '/uploads/products';
-        if (!is_dir($uploadDir)) {
-            @mkdir($uploadDir, 0777, true);
+    if (!empty($_FILES['image_file']['name'])) {
+        $uploadResult = handle_image_upload($_FILES['image_file'], 'products', $oldImg);
+        if (!$uploadResult['success']) {
+            set_flash('error', 'Product image upload failed: ' . $uploadResult['error']);
+            header("Location: " . BASE_URL . "/concessions/edit.php?id=" . $id);
+            exit;
         }
-        $rawName = basename($_FILES['image_file']['name']);
-        $safeName = preg_replace('/[^a-zA-Z0-9._-]/', '_', $rawName);
-        $target = $uploadDir . '/' . $safeName;
-        if (move_uploaded_file($_FILES['image_file']['tmp_name'], $target)) {
-            $imageRelPath = 'uploads/products/' . $safeName;
-            $imgSqlPart = ", image_path = '" . mysqli_real_escape_string($conn, $imageRelPath) . "'";
-        }
+        $imageRelPath = $uploadResult['path'];
+        $imgSqlPart = ", image_path = '" . mysqli_real_escape_string($conn, $imageRelPath) . "'";
     }
 
     $sql = "UPDATE products 
@@ -50,8 +69,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 {$imgSqlPart}
             WHERE product_id = {$id}";
 
-    mysqli_query($conn, $sql);
-    audit_log('INVENTORY_OVERRIDE', 'products', $id, "Updated stock to {$stock} units and price to " . format_currency($retail) . " for '{$name}'");
+    if (mysqli_query($conn, $sql)) {
+        audit_log('INVENTORY_OVERRIDE', 'products', $id, "Updated stock to {$stock} units and price to " . format_currency($retail) . " for '{$name}'");
+        set_flash('success', "Snack '{$name}' was successfully updated.");
+    } else {
+        set_flash('error', 'Database error updating product: ' . mysqli_error($conn));
+    }
+
     header("Location: " . BASE_URL . "/concessions/index.php");
     exit;
 }

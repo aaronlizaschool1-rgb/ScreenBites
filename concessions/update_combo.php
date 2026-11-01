@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         set_flash('success', "Combo bundle '{$name}' was successfully updated!");
     } catch (Throwable $e) {
         mysqli_rollback($conn);
-        set_flash('error', 'Failed to update combo bundle: ' . $e->getMessage());
+        set_flash('error', 'Failed to update combo bundle: ' . (mysqli_error($conn) ?: 'Internal database error.'));
     }
 
     header("Location: " . BASE_URL . "/concessions/combos.php");

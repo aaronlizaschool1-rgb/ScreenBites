@@ -192,6 +192,17 @@ $catIcons = ['Popcorn' => '🍿', 'Beverage' => '🥤', 'Snacks' => '🌭', 'Can
 
                     <div class="sb-item-price"><?= format_currency($row['retail_price']); ?></div>
 
+                    <?php $revSum = get_item_review_summary($conn, 'concession', $pId); ?>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin: 0.35rem 0 0.6rem 0; font-size: 0.82rem;">
+                        <span style="color: #f59e0b; font-weight: 700;">
+                            ★ <?= $revSum['count'] > 0 ? number_format($revSum['average'], 1) : 'New'; ?>
+                            <span style="color: var(--text-muted, #64748b); font-weight: 400; font-size: 0.75rem;">(<?= $revSum['count']; ?>)</span>
+                        </span>
+                        <a href="<?= BASE_URL; ?>/concessions/details.php?id=<?= $pId; ?>#reviews" style="color: var(--primary, #6366f1); font-weight: 600; text-decoration: none;">
+                            Reviews &amp; Details &rarr;
+                        </a>
+                    </div>
+
                     <div style="display: flex; gap: 0.5rem; align-items: center; margin-top: auto;">
                         <?php if ($inStock): ?>
                             <input type="number" name="quantity" value="1" min="1" max="<?= (int)$row['current_stock']; ?>" class="form-control" style="width: 70px; text-align: center;">

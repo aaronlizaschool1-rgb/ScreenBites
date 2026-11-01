@@ -7,6 +7,7 @@
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/seat_pricing.php';
 require_once __DIR__ . '/includes/seat_holds.php';
+require_once __DIR__ . '/includes/mailer.php';
 
 // Sync cart with active holds (FR4: Seat Hold & Timeout auto-expiration)
 $sessionToken = session_id();
@@ -47,11 +48,22 @@ $amountPaid = 0.00;
 $errorMsg = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($cart)) {
-    $paymentMethod = $_POST['payment_method'] ?? 'Cash';
-    $amountPaid    = (float)($_POST['amount_paid'] ?? $grandTotal);
+    $paymentMethod = trim($_POST['payment_method'] ?? 'Cash');
+    $amountPaidRaw = trim($_POST['amount_paid'] ?? '');
+    $amountPaid    = (float)$amountPaidRaw;
+    $customerName  = trim($_POST['customer_name'] ?? '');
+    if (empty($customerName)) {
+        $customerName = is_logged_in() ? (current_user()['full_name'] ?? 'Staff Order') : 'Valued Guest';
+    }
+    $customerEmail = trim($_POST['customer_email'] ?? '');
 
-    if ($amountPaid < $grandTotal) {
+    // Pure server-side validation (Anti-HTML5 Validation Constraint)
+    if (empty($paymentMethod)) {
+        $errorMsg = "Please select a payment method.";
+    } elseif ($amountPaidRaw === '' || !is_numeric($amountPaidRaw) || $amountPaid < $grandTotal) {
         $errorMsg = "Payment tender amount must be at least " . format_currency($grandTotal);
+    } elseif (!empty($customerEmail) && !validate_email($customerEmail)) {
+        $errorMsg = "Please enter a valid email format (e.g. guest@example.com).";
     } else {
         $changeDue = round($amountPaid - $grandTotal, 2);
         $orderNumber = 'SB-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(3)));
@@ -59,11 +71,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($cart)) {
 
         mysqli_begin_transaction($conn);
         try {
-            // 1. Insert order
-            $sqlOrder = "INSERT INTO orders (order_number, user_id, subtotal_amount, tax_amount, order_status, created_at)
-                         VALUES (?, ?, ?, ?, 'Completed', NOW())";
+            // 1. Insert order with customer metadata
+            $sqlOrder = "INSERT INTO orders (order_number, user_id, customer_name, customer_email, subtotal_amount, tax_amount, order_status, created_at)
+                         VALUES (?, ?, ?, ?, ?, ?, 'Completed', NOW())";
             $stmtOrder = mysqli_prepare($conn, $sqlOrder);
-            mysqli_stmt_bind_param($stmtOrder, "sidd", $orderNumber, $userId, $subtotalVatEx, $vatAmount);
+            mysqli_stmt_bind_param($stmtOrder, "sissdd", $orderNumber, $userId, $customerName, $customerEmail, $subtotalVatEx, $vatAmount);
             mysqli_stmt_execute($stmtOrder);
             $orderId = mysqli_insert_id($conn);
             mysqli_stmt_close($stmtOrder);
@@ -139,7 +151,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($cart)) {
                     $pStockRes = mysqli_query($conn, "SELECT current_stock, product_name FROM products WHERE product_id = {$prodId} LIMIT 1 FOR UPDATE");
                     $pStock = mysqli_fetch_assoc($pStockRes);
                     if (!$pStock || (int)$pStock['current_stock'] < $qty) {
-                        throw new Exception("Insufficient stock for " . ($pStock['product_name'] ?? 'product'));
+                        $txAbortReason = "Insufficient stock for " . ($pStock['product_name'] ?? 'product');
+                        break;
                     }
 
                     mysqli_stmt_bind_param($stmtOrderItem, "iiid", $orderId, $prodId, $qty, $price);
@@ -165,7 +178,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($cart)) {
                         $pStockRes = mysqli_query($conn, "SELECT current_stock, product_name FROM products WHERE product_id = {$childId} LIMIT 1 FOR UPDATE");
                         $pStock = mysqli_fetch_assoc($pStockRes);
                         if (!$pStock || (int)$pStock['current_stock'] < $childNeeded) {
-                            throw new Exception("Insufficient stock for constituent item " . ($pStock['product_name'] ?? 'product') . " in bundle.");
+                            $txAbortReason = "Insufficient stock for constituent item " . ($pStock['product_name'] ?? 'product') . " in bundle.";
+                            break 2;
                         }
 
                         mysqli_stmt_bind_param($stmtDecStock, "ii", $childNeeded, $childId);
@@ -178,33 +192,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($cart)) {
             mysqli_stmt_close($stmtOrderCombo);
             mysqli_stmt_close($stmtDecStock);
 
-            // 4. Record payment
-            $sqlPay = "INSERT INTO payments (order_id, payment_method, amount_paid, change_returned, payment_date)
-                       VALUES (?, ?, ?, ?, NOW())";
-            $stmtPay = mysqli_prepare($conn, $sqlPay);
-            mysqli_stmt_bind_param($stmtPay, "isdd", $orderId, $paymentMethod, $amountPaid, $changeDue);
-            mysqli_stmt_execute($stmtPay);
-            mysqli_stmt_close($stmtPay);
+            if (!empty($txAbortReason)) {
+                mysqli_rollback($conn);
+                $errorMsg = 'Transaction failed: ' . $txAbortReason;
+            } else {
+                // 4. Record payment
+                $sqlPay = "INSERT INTO payments (order_id, payment_method, amount_paid, change_returned, payment_date)
+                           VALUES (?, ?, ?, ?, NOW())";
+                $stmtPay = mysqli_prepare($conn, $sqlPay);
+                mysqli_stmt_bind_param($stmtPay, "isdd", $orderId, $paymentMethod, $amountPaid, $changeDue);
+                mysqli_stmt_execute($stmtPay);
+                mysqli_stmt_close($stmtPay);
 
-            mysqli_commit($conn);
+                mysqli_commit($conn);
 
-            // Clear session cart
-            $_SESSION['completed_order'] = [
-                'order_number'   => $orderNumber,
-                'items'          => $cart,
-                'grand_total'    => $grandTotal,
-                'vat_subtotal'   => $subtotalVatEx,
-                'vat_amount'     => $vatAmount,
-                'payment_method' => $paymentMethod,
-                'amount_paid'    => $amountPaid,
-                'change_due'     => $changeDue,
-                'date'           => date('F j, Y, g:i A')
-            ];
-            unset($_SESSION['cart']);
-            $orderCompleted = true;
+                // Term Test Lab: Attempt to dispatch digital PDF receipt via Mailtrap SMTP
+                $emailSent = false;
+                if (!empty($customerEmail) && validate_email($customerEmail)) {
+                    $emailSent = send_transaction_email((int)$orderId, $customerEmail);
+                }
+
+                // Clear session cart and persist completed order details
+                $_SESSION['completed_order'] = [
+                    'order_id'       => (int)$orderId,
+                    'order_number'   => $orderNumber,
+                    'customer_name'  => $customerName,
+                    'customer_email' => $customerEmail,
+                    'email_sent'     => $emailSent,
+                    'items'          => $cart,
+                    'grand_total'    => $grandTotal,
+                    'vat_subtotal'   => $subtotalVatEx,
+                    'vat_amount'     => $vatAmount,
+                    'payment_method' => $paymentMethod,
+                    'amount_paid'    => $amountPaid,
+                    'change_due'     => $changeDue,
+                    'date'           => date('F j, Y, g:i A')
+                ];
+                unset($_SESSION['cart']);
+                $orderCompleted = true;
+            }
         } catch (Throwable $e) {
             mysqli_rollback($conn);
-            $errorMsg = 'Transaction failed: ' . $e->getMessage();
+            $errorMsg = 'Transaction failed: ' . (mysqli_error($conn) ?: 'Please try again.');
         }
     }
 }
@@ -278,9 +307,24 @@ require_once __DIR__ . '/includes/header.php';
             </div>
         </div>
 
-        <div style="display: flex; gap: 0.75rem; justify-content: center;">
-            <button type="button" class="btn btn-secondary" onclick="window.print()">Print Receipt</button>
-            <a href="<?= BASE_URL; ?>/index.php" class="btn btn-primary">Done / Back to Home</a>
+        <?php if (!empty($ord['customer_email'])): ?>
+            <div style="background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 8px; padding: 0.85rem; margin-bottom: 1.5rem; text-align: center; font-size: 0.88rem; color: #3730a3;">
+                <?php if (!empty($ord['email_sent'])): ?>
+                    <span>📧 Digital PDF receipt was successfully dispatched to <strong><?= sanitize($ord['customer_email']); ?></strong> via Mailtrap.</span>
+                <?php else: ?>
+                    <span>📧 Customer receipt registered for <strong><?= sanitize($ord['customer_email']); ?></strong>.</span>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
+
+        <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
+            <?php if (!empty($ord['order_id'])): ?>
+                <a href="<?= BASE_URL; ?>/receipt.php?order_id=<?= (int)$ord['order_id']; ?>" target="_blank" class="btn btn-primary" style="font-weight: 700;">
+                    📄 Download Official PDF Receipt
+                </a>
+            <?php endif; ?>
+            <button type="button" class="btn btn-secondary" onclick="window.print()">Print</button>
+            <a href="<?= BASE_URL; ?>/index.php" class="btn btn-secondary">Done / Back to Home</a>
         </div>
     </div>
 
@@ -379,7 +423,7 @@ require_once __DIR__ . '/includes/header.php';
 
         <div class="sb-card">
             <h2 style="font-size: 1.2rem; margin-bottom: 1rem;">Payment Details</h2>
-            <form method="POST" action="<?= BASE_URL; ?>/checkout.php" id="checkoutPaymentForm">
+            <form method="POST" action="<?= BASE_URL; ?>/checkout.php" id="checkoutPaymentForm" novalidate>
                 <div class="sb-dark-panel" style="padding: 1.15rem; margin-bottom: 1.25rem;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; color: #94a3b8; font-size: 0.85rem;">
                         <span>Vatable Subtotal:</span>
@@ -396,8 +440,30 @@ require_once __DIR__ . '/includes/header.php';
                 </div>
 
                 <div class="form-group">
+                    <label for="customer_name">Customer Name</label>
+                    <input type="text" 
+                           name="customer_name" 
+                           id="customer_name" 
+                           value="<?= sanitize(is_logged_in() ? current_user()['full_name'] : ''); ?>" 
+                           placeholder="e.g. Maria Santos" 
+                           class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="customer_email">Customer Email <span style="font-weight: 400; color: var(--c-muted);">(for digital PDF receipt)</span></label>
+                    <input type="text" 
+                           name="customer_email" 
+                           id="customer_email" 
+                           placeholder="guest@example.com" 
+                           class="form-control">
+                    <small style="color: var(--c-muted, #5d6180); display: block; margin-top: 0.25rem;">
+                        Official PDF receipt will be dispatched via Mailtrap SMTP.
+                    </small>
+                </div>
+
+                <div class="form-group">
                     <label for="payment_method">Payment Method</label>
-                    <select name="payment_method" id="payment_method" class="form-control" required>
+                    <select name="payment_method" id="payment_method" class="form-control">
                         <option value="Cash">Cash</option>
                         <option value="E-Wallet">E-Wallet (GCash / Maya)</option>
                         <option value="Card">Debit / Credit Card</option>
@@ -408,12 +474,10 @@ require_once __DIR__ . '/includes/header.php';
                     <label for="amount_paid">Amount Tendered (PHP)</label>
                     <input type="number" 
                            step="0.01" 
-                           min="<?= $grandTotal; ?>" 
                            name="amount_paid" 
                            id="amount_paid" 
                            value="<?= $grandTotal; ?>" 
-                           class="form-control" 
-                           required>
+                           class="form-control">
                     <small style="color: var(--c-muted, #5d6180); display: block; margin-top: 0.35rem;" id="tenderHelp">
                         Minimum payment: <?= format_currency($grandTotal); ?>
                     </small>
