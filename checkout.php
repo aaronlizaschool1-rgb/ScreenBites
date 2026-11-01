@@ -79,17 +79,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($cart)) {
                     $scId = (int)$item['screening_id'];
                     $seatId = (int)$item['seat_id'];
 
-                    // Fresh server-side anti-tamper recalculation of tier price
+                    // Fresh server-side anti-tamper recalculation of tier price and expiration check
                     $stRes = mysqli_query($conn, "
-                        SELECT s.hall_id, st.tier_name, st.tier_surcharge, sc.base_price
+                        SELECT s.hall_id, st.tier_name, st.tier_surcharge, sc.base_price, sc.screening_date, sc.end_time, m.title AS movie_title
                         FROM seats s
                         INNER JOIN seat_tiers st ON s.tier_id = st.tier_id
                         INNER JOIN screenings sc ON sc.screening_id = {$scId}
+                        INNER JOIN movies m ON sc.movie_id = m.movie_id
                         WHERE s.seat_id = {$seatId} LIMIT 1
                     ");
                     $stRow = mysqli_fetch_assoc($stRes);
                     if (!$stRow) {
                         throw new Exception("Invalid seat or screening reference in cart.");
+                    }
+
+                    // Check if screening concluded while customer was in cart/checkout
+                    $scEndTime = strtotime($stRow['screening_date'] . ' ' . $stRow['end_time']);
+                    if ($scEndTime && $scEndTime < time()) {
+                        throw new Exception("Screening for '{$stRow['movie_title']}' has already concluded at " . date('g:i A', $scEndTime) . " and cannot be checked out.");
+                    }
+
+                    // Concurrency Protection: Check if seat is already booked for this screening
+                    $checkSeatRes = mysqli_query($conn, "
+                        SELECT ticket_id 
+                        FROM tickets 
+                        WHERE screening_id = {$scId} AND seat_id = {$seatId} AND ticket_status = 'Valid' 
+                        LIMIT 1 FOR UPDATE
+                    ");
+                    if (mysqli_num_rows($checkSeatRes) > 0) {
+                        throw new Exception("Seat " . ($item['seat_name'] ?? '#' . $seatId) . " is already reserved by another customer. Please choose another seat.");
                     }
 
                     $hallId = (int)$stRow['hall_id'];
@@ -102,8 +120,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($cart)) {
                     $qty = (int)$item['qty'];
                     $price = (float)$item['price'];
 
-                    // Check stock
-                    $pStockRes = mysqli_query($conn, "SELECT current_stock, product_name FROM products WHERE product_id = {$prodId} LIMIT 1");
+                    // Concurrency Protection: Lock product row with FOR UPDATE
+                    $pStockRes = mysqli_query($conn, "SELECT current_stock, product_name FROM products WHERE product_id = {$prodId} LIMIT 1 FOR UPDATE");
                     $pStock = mysqli_fetch_assoc($pStockRes);
                     if (!$pStock || (int)$pStock['current_stock'] < $qty) {
                         throw new Exception("Insufficient stock for " . ($pStock['product_name'] ?? 'product'));
@@ -123,13 +141,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($cart)) {
                     mysqli_stmt_bind_param($stmtOrderCombo, "iiid", $orderId, $comboId, $comboQty, $price);
                     mysqli_stmt_execute($stmtOrderCombo);
 
-                    // Deduct each constituent item in combo_items
+                    // Concurrency Protection: Deduct each constituent item in combo_items with FOR UPDATE
                     $ciRes = mysqli_query($conn, "SELECT product_id, quantity FROM combo_items WHERE combo_id = {$comboId}");
                     while ($child = mysqli_fetch_assoc($ciRes)) {
                         $childId = (int)$child['product_id'];
                         $childNeeded = (int)$child['quantity'] * $comboQty;
 
-                        $pStockRes = mysqli_query($conn, "SELECT current_stock, product_name FROM products WHERE product_id = {$childId} LIMIT 1");
+                        $pStockRes = mysqli_query($conn, "SELECT current_stock, product_name FROM products WHERE product_id = {$childId} LIMIT 1 FOR UPDATE");
                         $pStock = mysqli_fetch_assoc($pStockRes);
                         if (!$pStock || (int)$pStock['current_stock'] < $childNeeded) {
                             throw new Exception("Insufficient stock for constituent item " . ($pStock['product_name'] ?? 'product') . " in bundle.");

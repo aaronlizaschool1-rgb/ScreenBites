@@ -1,5 +1,6 @@
 SET FOREIGN_KEY_CHECKS = 0;
 
+DELETE FROM stock_restocks;
 DELETE FROM audit_logs;
 DELETE FROM utility_expenses;
 DELETE FROM payments;
@@ -18,6 +19,7 @@ DELETE FROM halls;
 DELETE FROM movies;
 DELETE FROM users;
 
+ALTER TABLE stock_restocks   AUTO_INCREMENT = 1;
 ALTER TABLE audit_logs       AUTO_INCREMENT = 1;
 ALTER TABLE utility_expenses AUTO_INCREMENT = 1;
 ALTER TABLE payments         AUTO_INCREMENT = 1;
@@ -102,7 +104,12 @@ INSERT INTO screenings (screening_id, movie_id, hall_id, screening_date, start_t
 (2, 2, 1, '2026-10-10', '17:00:00', '19:25:00', 300.00),
 (3, 3, 1, '2026-10-10', '20:00:00', '23:00:00', 340.00),
 (4, 3, 2, '2026-10-10', '14:00:00', '17:00:00', 450.00),
-(5, 4, 2, '2026-10-10', '18:00:00', '19:35:00', 400.00);
+(5, 4, 2, '2026-10-10', '18:00:00', '19:35:00', 400.00),
+(6, 1, 1, CURDATE(), '13:00:00', '16:32:00', 320.00),
+(7, 23, 1, CURDATE(), '17:00:00', '18:55:00', 280.00),
+(8, 25, 2, CURDATE(), '19:30:00', '21:38:00', 450.00),
+(9, 21, 1, DATE_ADD(CURDATE(), INTERVAL 1 DAY), '14:00:00', '16:00:00', 300.00),
+(10, 24, 2, DATE_ADD(CURDATE(), INTERVAL 1 DAY), '16:30:00', '18:30:00', 400.00);
 
 
 

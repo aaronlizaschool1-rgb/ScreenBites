@@ -131,7 +131,7 @@ function verify_and_price_seats(mysqli $conn, int $screeningId, array $seatIds):
     }
 
     // 1. Fetch screening
-    $sqlSc = "SELECT s.screening_id, s.screening_date, s.start_time, s.base_price, s.hall_id,
+    $sqlSc = "SELECT s.screening_id, s.screening_date, s.start_time, s.end_time, s.base_price, s.hall_id,
                      m.title AS movie_title, h.hall_name
               FROM screenings s
               INNER JOIN movies m ON s.movie_id = m.movie_id
@@ -150,6 +150,13 @@ function verify_and_price_seats(mysqli $conn, int $screeningId, array $seatIds):
 
     if (!$screening) {
         $result['error'] = 'Screening showtime not found.';
+        return $result;
+    }
+
+    // Check if screening has already concluded (past end_time)
+    $screeningEndTimestamp = strtotime($screening['screening_date'] . ' ' . $screening['end_time']);
+    if ($screeningEndTimestamp && $screeningEndTimestamp < time()) {
+        $result['error'] = 'This screening concluded at ' . date('g:i A', $screeningEndTimestamp) . ' and is closed for booking.';
         return $result;
     }
 

@@ -16,7 +16,7 @@ if ($screeningId <= 0) {
 }
 
 // 1. Fetch screening details
-$sql = "SELECT s.screening_id, s.screening_date, s.start_time, s.base_price, 
+$sql = "SELECT s.screening_id, s.screening_date, s.start_time, s.end_time, s.base_price, 
                m.movie_id, m.title AS movie_title, m.poster_path, m.duration_minutes, m.rating,
                h.hall_id, h.hall_name
         FROM screenings s
@@ -28,7 +28,15 @@ $res = mysqli_query($conn, $sql);
 $screening = mysqli_fetch_assoc($res);
 
 if (!$screening) {
-    header("Location: " . BASE_URL . "/index.php");
+    header("Location: " . BASE_URL . "/schedules/index.php");
+    exit;
+}
+
+// Concurrency & Expiration Protection: Block past concluded screenings
+$screeningEndTimestamp = strtotime($screening['screening_date'] . ' ' . $screening['end_time']);
+if ($screeningEndTimestamp && $screeningEndTimestamp < time()) {
+    set_flash('error', 'This screening has already concluded at ' . date('g:i A', $screeningEndTimestamp) . ' and is closed for booking.');
+    header("Location: " . BASE_URL . "/schedules/index.php?date=" . urlencode($screening['screening_date']));
     exit;
 }
 

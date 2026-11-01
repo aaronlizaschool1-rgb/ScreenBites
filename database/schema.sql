@@ -1,5 +1,6 @@
 SET FOREIGN_KEY_CHECKS = 0;
 
+DROP TABLE IF EXISTS stock_restocks;
 DROP TABLE IF EXISTS audit_logs;
 DROP TABLE IF EXISTS utility_expenses;
 DROP TABLE IF EXISTS payments;
@@ -175,6 +176,21 @@ CREATE TABLE orders (
     INDEX idx_orders_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS stock_restocks (
+    restock_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    product_id INT UNSIGNED NOT NULL,
+    quantity_added INT NOT NULL,
+    purchase_cost DECIMAL(10, 2) NOT NULL,
+    supplier_name VARCHAR(150) NOT NULL,
+    invoice_reference VARCHAR(100) NULL,
+    notes TEXT NULL,
+    received_by INT UNSIGNED NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_restocks_products FOREIGN KEY (product_id)
+        REFERENCES products (product_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    INDEX idx_restocks_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE tickets (
     ticket_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     order_id INT UNSIGNED NOT NULL,
@@ -184,7 +200,7 @@ CREATE TABLE tickets (
     price_charged DECIMAL(8, 2) NOT NULL,
     ticket_status ENUM('Valid', 'Cancelled') NOT NULL DEFAULT 'Valid',
 
-    INDEX idx_tickets_seat_screening (screening_id, seat_id),
+    CONSTRAINT uq_screening_seat UNIQUE (screening_id, seat_id),
     CONSTRAINT fk_tickets_orders FOREIGN KEY (order_id)
         REFERENCES orders (order_id) ON DELETE CASCADE ON UPDATE CASCADE,
 
@@ -266,13 +282,7 @@ CREATE TABLE utility_expenses (
 CREATE TABLE audit_logs (
     log_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id INT UNSIGNED NOT NULL,
-    action_type ENUM(
-        'CANCEL_TICKET',
-        'REFUND_ORDER',
-        'INVENTORY_OVERRIDE',
-        'EXPENSE_MODIFIED',
-        'LOGIN_FAILURE'
-    ) NOT NULL,
+    action_type VARCHAR(50) NOT NULL,
     target_table VARCHAR(50) NOT NULL,
     record_id INT UNSIGNED NOT NULL,
     details TEXT NOT NULL,

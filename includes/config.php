@@ -18,6 +18,9 @@ $conn = mysqli_connect($db_host, $db_username, $db_passwd, $db_name)
 
 mysqli_set_charset($conn, "utf8mb4");
 
+// Timezone configuration (Manila / Philippine Standard Time)
+date_default_timezone_set('Asia/Manila');
+
 // Currency & Business constants
 define('CURRENCY_SYMBOL', '₱');
 define('TAX_RATE', 0.12);
