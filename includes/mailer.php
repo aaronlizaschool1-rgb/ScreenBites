@@ -359,6 +359,15 @@ function send_transaction_email(int $orderId, string $recipientEmail, array $ord
         $mail->Username   = defined('MAILTRAP_USER') ? MAILTRAP_USER : '312649aee7d340';
         $mail->Password   = defined('MAILTRAP_PASS') ? MAILTRAP_PASS : '7bec3dc61ba28b';
         $mail->CharSet    = 'UTF-8';
+        $mail->SMTPSecure = 'tls'; 
+
+        $mail->SMTPOptions = [
+    'ssl' => [
+        'verify_peer'       => false,
+        'verify_peer_name'  => false,
+        'allow_self_signed' => true,
+    ],
+];
 
         $mail->setFrom('orders@screenbites.com', 'ScreenBites Cinema Lounge');
         $customerDisplayName = !empty($ord['customer_name']) ? $ord['customer_name'] : 'Cinema Guest';

@@ -27,9 +27,9 @@ define('TAX_RATE', 0.12);
 
 // Mailtrap Sandbox Credentials (Term Test Lab)
 define('MAILTRAP_HOST', 'sandbox.smtp.mailtrap.io');
-define('MAILTRAP_PORT', 2525);
-define('MAILTRAP_USER', '312649aee7d340');
-define('MAILTRAP_PASS', '7bec3dc61ba28b');
+define('MAILTRAP_PORT', 587);
+define('MAILTRAP_USER', '02ee9b634cec42');
+define('MAILTRAP_PASS', '11010eac78f293');
 
 // Dynamic Base URL computation
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';

@@ -18,6 +18,14 @@ desktop.ini
 .env.production
 config/db_credentials.php
 
+# FPDF documentation and utility scripts
+includes/fpdf/doc/
+includes/fpdf/makefont/
+includes/fpdf/tutorial/
+
+# Scratch test scripts
+scratch/
+
 # Web Server & Local Runtime (XAMPP / Apache)
 error_log
 access_log
@@ -28,8 +36,12 @@ yarn-debug.log*
 # Uploads & Dynamic Storage
 uploads/receipts/*
 uploads/posters/*
+uploads/avatars/*
+uploads/movies/*
 !uploads/posters/.gitkeep
 !uploads/receipts/.gitkeep
+!uploads/avatars/.gitkeep
+!uploads/movies/.gitkeep
 storage/backups/*
 storage/logs/*
 !storage/logs/.gitkeep
