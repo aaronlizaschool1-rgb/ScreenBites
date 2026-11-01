@@ -48,8 +48,13 @@ function set_flash(string $type, string $message): void {
     } elseif ($type === 'error') {
         $_SESSION['flash_error'] = $message;
     } else {
-        $_SESSION['flash_warning'] = $message;
+        $_SESSION['flash_info'] = $message;
     }
+}
+
+function redirect(string $url): void {
+    header("Location: " . $url);
+    exit;
 }
 
 function get_youtube_id(?string $urlOrId): ?string {

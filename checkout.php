@@ -5,6 +5,7 @@
  */
 
 require_once __DIR__ . '/includes/config.php';
+require_once __DIR__ . '/includes/seat_pricing.php';
 
 $cart = $_SESSION['cart'] ?? [];
 
@@ -77,12 +78,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($cart)) {
                 if ($item['type'] === 'ticket') {
                     $scId = (int)$item['screening_id'];
                     $seatId = (int)$item['seat_id'];
-                    $price = (float)$item['price'];
 
-                    // Get hall_id
-                    $hRes = mysqli_query($conn, "SELECT hall_id FROM screenings WHERE screening_id = {$scId} LIMIT 1");
-                    $hRow = mysqli_fetch_assoc($hRes);
-                    $hallId = (int)($hRow['hall_id'] ?? 1);
+                    // Fresh server-side anti-tamper recalculation of tier price
+                    $stRes = mysqli_query($conn, "
+                        SELECT s.hall_id, st.tier_name, st.tier_surcharge, sc.base_price
+                        FROM seats s
+                        INNER JOIN seat_tiers st ON s.tier_id = st.tier_id
+                        INNER JOIN screenings sc ON sc.screening_id = {$scId}
+                        WHERE s.seat_id = {$seatId} LIMIT 1
+                    ");
+                    $stRow = mysqli_fetch_assoc($stRes);
+                    if (!$stRow) {
+                        throw new Exception("Invalid seat or screening reference in cart.");
+                    }
+
+                    $hallId = (int)$stRow['hall_id'];
+                    $price = calculate_seat_price((float)$stRow['base_price'], (float)$stRow['tier_surcharge']);
 
                     mysqli_stmt_bind_param($stmtTicket, "iiiid", $orderId, $scId, $seatId, $hallId, $price);
                     mysqli_stmt_execute($stmtTicket);
@@ -196,7 +207,12 @@ require_once __DIR__ . '/includes/header.php';
                 <?php foreach ($ord['items'] as $it): ?>
                     <tr>
                         <td>
-                            <strong><?= sanitize($it['name']); ?></strong><br>
+                            <strong><?= sanitize($it['name']); ?></strong>
+                            <?php if ($it['type'] === 'ticket' && !empty($it['tier_name'])): ?>
+                                <span style="background: rgba(43, 45, 122, 0.1); color: var(--c-indigo, #2b2d7a); font-size: 0.72rem; padding: 0.12rem 0.4rem; border-radius: 4px; font-weight: 700; margin-left: 0.35rem; border: 1px solid rgba(43, 45, 122, 0.25);">
+                                    🎟️ <?= sanitize($it['tier_name']); ?>
+                                </span>
+                            <?php endif; ?><br>
                             <small style="color: var(--c-muted, #5d6180);"><?= sanitize($it['details'] ?? ''); ?></small>
                         </td>
                         <td style="text-align: center;"><?= (int)$it['qty']; ?></td>
@@ -255,27 +271,75 @@ require_once __DIR__ . '/includes/header.php';
         <div class="sb-alert sb-alert-danger"><?= sanitize($errorMsg); ?></div>
     <?php endif; ?>
 
-    <div style="display: grid; grid-template-columns: 1fr 340px; gap: 1.5rem; align-items: start;">
+    <div style="display: grid; grid-template-columns: 1fr 340px; gap: 1.5rem; align-items: start;" id="checkoutLayout">
         <div class="sb-card">
-            <h2 style="font-size: 1.2rem; margin-bottom: 1rem;">Order Items Summary</h2>
-            <table class="sb-table">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2 style="font-size: 1.2rem; margin: 0;">Order Items Summary</h2>
+                <span style="font-size: 0.8rem; color: var(--c-muted, #5d6180);">Concession quantities can be adjusted live</span>
+            </div>
+
+            <table class="sb-table" id="checkoutTable">
                 <thead>
                     <tr>
                         <th>Item</th>
-                        <th style="text-align: center;">Qty</th>
-                        <th style="text-align: right;">Line Total</th>
+                        <th style="text-align: center; width: 140px;">Qty</th>
+                        <th style="text-align: right; width: 120px;">Line Total</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($cart as $item): ?>
-                        <tr>
+                    <?php foreach ($cart as $key => $item): 
+                        $price = (float)$item['price'];
+                        $qty = (int)$item['qty'];
+                        $lineTotal = $price * $qty;
+                        $isTicket = ($item['type'] === 'ticket');
+                        $maxQty = (int)($item['max_qty'] ?? 99);
+                    ?>
+                        <tr class="co-item-row" id="co-row-<?= sanitize($key); ?>" data-key="<?= sanitize($key); ?>" data-price="<?= $price; ?>">
                             <td>
-                                <strong><?= sanitize($item['name']); ?></strong><br>
-                                <small style="color: var(--text-muted);"><?= sanitize($item['details'] ?? ''); ?></small>
+                                <strong><?= sanitize($item['name']); ?></strong>
+                                <?php if ($item['type'] === 'ticket' && !empty($item['tier_name'])): ?>
+                                    <span style="background: rgba(43, 45, 122, 0.1); color: var(--c-indigo, #2b2d7a); font-size: 0.72rem; padding: 0.12rem 0.4rem; border-radius: 4px; font-weight: 700; margin-left: 0.35rem; border: 1px solid rgba(43, 45, 122, 0.25);">
+                                        🎟️ <?= sanitize($item['tier_name']); ?>
+                                    </span>
+                                <?php elseif ($item['type'] === 'combo'): ?>
+                                    <span style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; font-size: 0.72rem; padding: 0.12rem 0.4rem; border-radius: 4px; font-weight: 600; margin-left: 0.35rem; border: 1px solid rgba(245, 158, 11, 0.35);">
+                                        🎁 Value Bundle
+                                    </span>
+                                <?php endif; ?><br>
+                                <small style="color: var(--c-muted, #5d6180);"><?= sanitize($item['details'] ?? ''); ?></small>
                             </td>
-                            <td style="text-align: center;"><?= (int)$item['qty']; ?></td>
-                            <td style="text-align: right; font-weight: 600;">
-                                <?= format_currency((float)$item['price'] * (int)$item['qty']); ?>
+                            <td style="text-align: center;">
+                                <?php if ($isTicket): ?>
+                                    <span style="font-weight: 700; color: var(--c-indigo, #2b2d7a); background: #eef2ff; padding: 0.2rem 0.55rem; border-radius: 4px; font-size: 0.8rem; border: 1px solid #c7d2fe;">
+                                        1 seat
+                                    </span>
+                                <?php else: ?>
+                                    <div style="display: inline-flex; align-items: center; border: 1.5px solid var(--c-line, #dcdff0); border-radius: 6px; background: #fff; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                                        <button type="button" 
+                                                class="btn-co-qty" 
+                                                data-action="decrease" 
+                                                data-key="<?= sanitize($key); ?>" 
+                                                style="border: none; background: #f8fafc; color: var(--c-ink, #1d1f3a); width: 28px; height: 30px; font-weight: 700; cursor: pointer; display: grid; place-items: center; font-size: 1rem; border-right: 1px solid var(--c-line, #dcdff0);" 
+                                                title="Decrease quantity">&minus;</button>
+                                        <input type="number" 
+                                               value="<?= $qty; ?>" 
+                                               min="0" 
+                                               max="<?= $maxQty; ?>" 
+                                               data-key="<?= sanitize($key); ?>" 
+                                               data-price="<?= $price; ?>" 
+                                               class="co-qty-input" 
+                                               style="width: 42px; height: 30px; text-align: center; border: none; font-size: 0.88rem; font-weight: 700; color: var(--c-ink, #1d1f3a); -moz-appearance: textfield;">
+                                        <button type="button" 
+                                                class="btn-co-qty" 
+                                                data-action="increase" 
+                                                data-key="<?= sanitize($key); ?>" 
+                                                style="border: none; background: #f8fafc; color: var(--c-ink, #1d1f3a); width: 28px; height: 30px; font-weight: 700; cursor: pointer; display: grid; place-items: center; font-size: 1rem; border-left: 1px solid var(--c-line, #dcdff0);" 
+                                                title="Increase quantity">&plus;</button>
+                                    </div>
+                                <?php endif; ?>
+                            </td>
+                            <td style="text-align: right; font-weight: 700; color: var(--accent-gold, #d97706);" id="co-line-total-<?= sanitize($key); ?>">
+                                <?= format_currency($lineTotal); ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -285,19 +349,19 @@ require_once __DIR__ . '/includes/header.php';
 
         <div class="sb-card">
             <h2 style="font-size: 1.2rem; margin-bottom: 1rem;">Payment Details</h2>
-            <form method="POST" action="<?= BASE_URL; ?>/checkout.php">
-                <div class="sb-dark-panel" style="padding: 1rem; margin-bottom: 1.25rem;">
+            <form method="POST" action="<?= BASE_URL; ?>/checkout.php" id="checkoutPaymentForm">
+                <div class="sb-dark-panel" style="padding: 1.15rem; margin-bottom: 1.25rem;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; color: #94a3b8; font-size: 0.85rem;">
                         <span>Vatable Subtotal:</span>
-                        <span style="color: #f1f5f9; font-weight: 600;"><?= format_currency($subtotalVatEx); ?></span>
+                        <span style="color: #f1f5f9; font-weight: 600;" id="coVatSubtotalDisplay"><?= format_currency($subtotalVatEx); ?></span>
                     </div>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; color: #94a3b8; font-size: 0.85rem;">
                         <span>VAT (12%):</span>
-                        <span style="color: #f1f5f9; font-weight: 600;"><?= format_currency($vatAmount); ?></span>
+                        <span style="color: #f1f5f9; font-weight: 600;" id="coVatAmountDisplay"><?= format_currency($vatAmount); ?></span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; font-size: 1.25rem; font-weight: 700; color: #ffffff; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 0.5rem;">
+                    <div style="display: flex; justify-content: space-between; font-size: 1.3rem; font-weight: 800; color: #ffffff; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 0.6rem;">
                         <span>Grand Total:</span>
-                        <span style="color: var(--accent-gold, #f59e0b);"><?= format_currency($grandTotal); ?></span>
+                        <span style="color: var(--accent-gold, #f59e0b);" id="coGrandTotalDisplay"><?= format_currency($grandTotal); ?></span>
                     </div>
                 </div>
 
@@ -320,14 +384,195 @@ require_once __DIR__ . '/includes/header.php';
                            value="<?= $grandTotal; ?>" 
                            class="form-control" 
                            required>
+                    <small style="color: var(--c-muted, #5d6180); display: block; margin-top: 0.35rem;" id="tenderHelp">
+                        Minimum payment: <?= format_currency($grandTotal); ?>
+                    </small>
                 </div>
 
-                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">
-                    Confirm & Complete Order
+                <button type="submit" class="btn btn-primary" id="btnConfirmOrder" style="width: 100%; margin-top: 0.5rem; font-weight: 700; padding: 0.75rem;">
+                    Confirm &amp; Complete Order &rarr;
                 </button>
             </form>
         </div>
     </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    'use strict';
+
+    var updateUrl = <?= json_encode(BASE_URL . '/cart_update.php'); ?>;
+    var taxRate = <?= json_encode(TAX_RATE); ?>;
+    var currencySymbol = '₱';
+    var isTenderManuallyModified = false;
+
+    var tenderInput = document.getElementById('amount_paid');
+    if (tenderInput) {
+        tenderInput.addEventListener('input', function() {
+            isTenderManuallyModified = true;
+        });
+    }
+
+    function formatMoney(amount) {
+        return currencySymbol + parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function recalculateCheckoutDOM() {
+        var rows = document.querySelectorAll('.co-item-row');
+        if (rows.length === 0) {
+            window.location.href = <?= json_encode(BASE_URL . '/view_cart.php'); ?>;
+            return;
+        }
+
+        var grandTotal = 0.00;
+        rows.forEach(function(row) {
+            var price = parseFloat(row.getAttribute('data-price')) || 0.00;
+            var input = row.querySelector('.co-qty-input');
+            var qty = input ? (parseInt(input.value, 10) || 0) : 1;
+            var lineTotal = price * qty;
+            grandTotal += lineTotal;
+
+            var subCell = row.querySelector('[id^="co-line-total-"]');
+            if (subCell) {
+                subCell.textContent = formatMoney(lineTotal);
+            }
+        });
+
+        var vatSubtotal = grandTotal / (1 + taxRate);
+        var vatAmount = grandTotal - vatSubtotal;
+
+        var vSubElem = document.getElementById('coVatSubtotalDisplay');
+        var vAmtElem = document.getElementById('coVatAmountDisplay');
+        var gTotElem = document.getElementById('coGrandTotalDisplay');
+        var tenderElem = document.getElementById('amount_paid');
+        var tenderHelp = document.getElementById('tenderHelp');
+
+        if (vSubElem) vSubElem.textContent = formatMoney(vatSubtotal);
+        if (vAmtElem) vAmtElem.textContent = formatMoney(vatAmount);
+        if (gTotElem) gTotElem.textContent = formatMoney(grandTotal);
+
+        if (tenderElem) {
+            tenderElem.setAttribute('min', grandTotal.toFixed(2));
+            if (!isTenderManuallyModified || parseFloat(tenderElem.value) < grandTotal) {
+                tenderElem.value = grandTotal.toFixed(2);
+            }
+        }
+        if (tenderHelp) {
+            tenderHelp.textContent = 'Minimum payment: ' + formatMoney(grandTotal);
+        }
+    }
+
+    function syncCheckoutQty(key, newQty) {
+        var formData = new FormData();
+        formData.append('type', 'ajax_update_qty');
+        formData.append('item_key', key);
+        formData.append('quantity', newQty);
+
+        fetch(updateUrl, {
+            method: 'POST',
+            body: formData
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (data.success) {
+                if (data.removed) {
+                    var row = document.getElementById('co-row-' + key);
+                    if (row) row.remove();
+                    recalculateCheckoutDOM();
+                } else if (data.item) {
+                    var subCell = document.getElementById('co-line-total-' + key);
+                    if (subCell && data.item.line_total_fmt) {
+                        subCell.textContent = data.item.line_total_fmt;
+                    }
+                    if (data.grand_total_fmt) {
+                        var gTot = document.getElementById('coGrandTotalDisplay');
+                        if (gTot) gTot.textContent = data.grand_total_fmt;
+                    }
+                    if (data.vat_subtotal_fmt) {
+                        var vSub = document.getElementById('coVatSubtotalDisplay');
+                        if (vSub) vSub.textContent = data.vat_subtotal_fmt;
+                    }
+                    if (data.vat_amount_fmt) {
+                        var vAmt = document.getElementById('coVatAmountDisplay');
+                        if (vAmt) vAmt.textContent = data.vat_amount_fmt;
+                    }
+                    var tenderElem = document.getElementById('amount_paid');
+                    if (tenderElem) {
+                        tenderElem.setAttribute('min', data.grand_total.toFixed(2));
+                        if (!isTenderManuallyModified || parseFloat(tenderElem.value) < data.grand_total) {
+                            tenderElem.value = data.grand_total.toFixed(2);
+                        }
+                    }
+                }
+            }
+        })
+        .catch(function(err) {
+            console.error('Checkout sync error:', err);
+        });
+    }
+
+    document.querySelectorAll('.btn-co-qty').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            var key = this.getAttribute('data-key');
+            var action = this.getAttribute('data-action');
+            var row = document.getElementById('co-row-' + key);
+            if (!row) return;
+
+            var input = row.querySelector('.co-qty-input');
+            if (!input) return;
+
+            var curVal = parseInt(input.value, 10) || 0;
+            var maxVal = parseInt(input.getAttribute('max'), 10) || 999;
+            var newVal = curVal;
+
+            if (action === 'increase') {
+                if (curVal < maxVal) newVal = curVal + 1;
+            } else if (action === 'decrease') {
+                newVal = curVal - 1;
+            }
+
+            if (newVal <= 0) {
+                if (confirm('Remove this concession from order?')) {
+                    row.remove();
+                    recalculateCheckoutDOM();
+                    syncCheckoutQty(key, 0);
+                }
+            } else {
+                input.value = newVal;
+                recalculateCheckoutDOM();
+                syncCheckoutQty(key, newVal);
+            }
+        });
+    });
+
+    document.querySelectorAll('.co-qty-input').forEach(function(input) {
+        input.addEventListener('change', function() {
+            var key = this.getAttribute('data-key');
+            var val = parseInt(this.value, 10) || 0;
+            var maxVal = parseInt(this.getAttribute('max'), 10) || 999;
+
+            if (val <= 0) {
+                var row = document.getElementById('co-row-' + key);
+                if (confirm('Remove this concession from order?')) {
+                    if (row) row.remove();
+                    recalculateCheckoutDOM();
+                    syncCheckoutQty(key, 0);
+                } else {
+                    this.value = 1;
+                    recalculateCheckoutDOM();
+                }
+            } else {
+                if (val > maxVal) {
+                    val = maxVal;
+                    this.value = val;
+                }
+                recalculateCheckoutDOM();
+                syncCheckoutQty(key, val);
+            }
+        });
+    });
+});
+</script>
 
 <?php endif; ?>
 

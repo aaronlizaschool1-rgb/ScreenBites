@@ -5,6 +5,7 @@
  */
 
 require_once __DIR__ . '/includes/config.php';
+require_once __DIR__ . '/includes/seat_pricing.php';
 
 if (!isset($_SESSION['cart'])) {
     $_SESSION['cart'] = [];
@@ -112,52 +113,130 @@ if ($type === 'add_combo') {
     exit;
 }
 
-// 2. Add Movie Tickets from Seat Grid
+// 2. Add Movie Tickets from Seat Grid (Tier-Based Anti-Tamper Verification)
 if ($type === 'add_tickets') {
     $screeningId = (int)($_POST['screening_id'] ?? 0);
     $selectedSeats = (array)($_POST['seats'] ?? []);
 
-    if ($screeningId > 0 && !empty($selectedSeats)) {
-        // Fetch screening info
-        $sql = "SELECT s.screening_id, s.start_time, s.screening_date, s.base_price, m.title AS movie_title, h.hall_name 
-                FROM screenings s
-                INNER JOIN movies m ON s.movie_id = m.movie_id
-                INNER JOIN halls h ON s.hall_id = h.hall_id
-                WHERE s.screening_id = {$screeningId} LIMIT 1";
-        $scRes = mysqli_query($conn, $sql);
-        $sc = mysqli_fetch_assoc($scRes);
-
-        if ($sc) {
-            $price = (float)$sc['base_price'];
-            $timeFmt = date('M d, g:i A', strtotime($sc['screening_date'] . ' ' . $sc['start_time']));
-
-            foreach ($selectedSeats as $seatId) {
-                $seatId = (int)$seatId;
-                $seatRes = mysqli_query($conn, "SELECT seat_row, seat_number FROM seats WHERE seat_id = {$seatId} LIMIT 1");
-                $seat = mysqli_fetch_assoc($seatRes);
-
-                if ($seat) {
-                    $seatLabel = $seat['seat_row'] . $seat['seat_number'];
-                    $key = "ticket_{$screeningId}_{$seatId}";
-
-                    $_SESSION['cart'][$key] = [
-                        'type'         => 'ticket',
-                        'screening_id' => $screeningId,
-                        'seat_id'      => $seatId,
-                        'name'         => $sc['movie_title'] . " (Seat " . $seatLabel . ")",
-                        'price'        => $price,
-                        'qty'          => 1,
-                        'details'      => $sc['hall_name'] . ' • ' . $timeFmt
-                    ];
-                }
-            }
-        }
+    if ($screeningId <= 0 || empty($selectedSeats)) {
+        set_flash('error', 'Please select at least one seat to reserve.');
+        header("Location: " . ($screeningId > 0 ? BASE_URL . "/ticketing/seat_matrix.php?screening_id={$screeningId}" : BASE_URL . "/index.php"));
+        exit;
     }
+
+    $pricedData = verify_and_price_seats($conn, $screeningId, $selectedSeats);
+
+    if (!$pricedData['valid']) {
+        set_flash('error', $pricedData['error']);
+        header("Location: " . BASE_URL . "/ticketing/seat_matrix.php?screening_id={$screeningId}");
+        exit;
+    }
+
+    $sc = $pricedData['screening'];
+    $timeFmt = date('M d, g:i A', strtotime($sc['screening_date'] . ' ' . $sc['start_time']));
+
+    foreach ($pricedData['seats'] as $seatId => $seat) {
+        $key = "ticket_{$screeningId}_{$seatId}";
+        $_SESSION['cart'][$key] = [
+            'type'           => 'ticket',
+            'screening_id'   => $screeningId,
+            'seat_id'        => $seatId,
+            'name'           => $sc['movie_title'] . " (Seat " . $seat['label'] . ")",
+            'tier_id'        => $seat['tier_id'],
+            'tier_name'      => $seat['tier_name'],
+            'tier_surcharge' => $seat['tier_surcharge'],
+            'price'          => $seat['computed_price'],
+            'qty'            => 1,
+            'details'        => $sc['hall_name'] . ' • ' . $timeFmt . ' • ' . $seat['tier_name'] . ' Tier'
+        ];
+    }
+
+    set_flash('success', count($pricedData['seats']) . ' ticket(s) added to your cart.');
     header("Location: " . BASE_URL . "/view_cart.php");
     exit;
 }
 
-// 3. Batch Update Quantities and Remove Items
+// 3. AJAX Dynamic Quantity Update & Item Removal (Real-Time Sync)
+if ($type === 'ajax_update_qty') {
+    header('Content-Type: application/json');
+    $itemKey = trim($_POST['item_key'] ?? '');
+    $newQty = (int)($_POST['quantity'] ?? 0);
+
+    $removed = false;
+    $updatedItem = null;
+
+    if (isset($_SESSION['cart'][$itemKey])) {
+        if ($newQty <= 0) {
+            unset($_SESSION['cart'][$itemKey]);
+            $removed = true;
+        } elseif ($_SESSION['cart'][$itemKey]['type'] === 'concession' || $_SESSION['cart'][$itemKey]['type'] === 'combo') {
+            $max = (int)($_SESSION['cart'][$itemKey]['max_qty'] ?? 999);
+            $finalQty = max(1, min($newQty, $max));
+            $_SESSION['cart'][$itemKey]['qty'] = $finalQty;
+            $updatedItem = [
+                'key'        => $itemKey,
+                'qty'        => $finalQty,
+                'unit_price' => (float)$_SESSION['cart'][$itemKey]['price'],
+                'line_total' => round((float)$_SESSION['cart'][$itemKey]['price'] * $finalQty, 2),
+                'line_total_fmt' => format_currency((float)$_SESSION['cart'][$itemKey]['price'] * $finalQty)
+            ];
+        }
+    }
+
+    $grandTotal = 0.00;
+    $cartCount = 0;
+    foreach ($_SESSION['cart'] as $it) {
+        $grandTotal += ((float)$it['price'] * (int)$it['qty']);
+        $cartCount += (int)$it['qty'];
+    }
+    $vatSubtotal = round($grandTotal / (1 + TAX_RATE), 2);
+    $vatAmount = round($grandTotal - $vatSubtotal, 2);
+
+    echo json_encode([
+        'success'          => true,
+        'removed'          => $removed,
+        'item'             => $updatedItem,
+        'cart_count'       => $cartCount,
+        'grand_total'      => $grandTotal,
+        'vat_subtotal'     => $vatSubtotal,
+        'vat_amount'       => $vatAmount,
+        'grand_total_fmt'  => format_currency($grandTotal),
+        'vat_subtotal_fmt' => format_currency($vatSubtotal),
+        'vat_amount_fmt'   => format_currency($vatAmount)
+    ]);
+    exit;
+}
+
+if ($type === 'ajax_remove_item') {
+    header('Content-Type: application/json');
+    $itemKey = trim($_POST['item_key'] ?? '');
+    if (isset($_SESSION['cart'][$itemKey])) {
+        unset($_SESSION['cart'][$itemKey]);
+    }
+
+    $grandTotal = 0.00;
+    $cartCount = 0;
+    foreach ($_SESSION['cart'] as $it) {
+        $grandTotal += ((float)$it['price'] * (int)$it['qty']);
+        $cartCount += (int)$it['qty'];
+    }
+    $vatSubtotal = round($grandTotal / (1 + TAX_RATE), 2);
+    $vatAmount = round($grandTotal - $vatSubtotal, 2);
+
+    echo json_encode([
+        'success'          => true,
+        'cart_count'       => $cartCount,
+        'grand_total'      => $grandTotal,
+        'vat_subtotal'     => $vatSubtotal,
+        'vat_amount'       => $vatAmount,
+        'grand_total_fmt'  => format_currency($grandTotal),
+        'vat_subtotal_fmt' => format_currency($vatSubtotal),
+        'vat_amount_fmt'   => format_currency($vatAmount)
+    ]);
+    exit;
+}
+
+// 4. Batch Update Quantities and Remove Items (Traditional POST Fallback)
 if ($type === 'update') {
     // Update quantities for concession items
     if (isset($_POST['product_qty']) && is_array($_POST['product_qty'])) {

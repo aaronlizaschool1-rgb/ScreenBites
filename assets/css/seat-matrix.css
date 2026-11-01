@@ -183,10 +183,11 @@
 
 .seat-box {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 42px;
   background: var(--c-surface, #ffffff);
   border: 1.5px solid var(--c-line, #dcdff0);
   border-radius: 8px;
@@ -194,30 +195,306 @@
   font-size: .82rem;
   font-weight: 600;
   transition: all .15s ease;
+  position: relative;
+  user-select: none;
 }
+
+/* Tier 1 - Standard Seat */
+.seat-checkbox-wrap.tier-1 .seat-box,
+.seat-box.tier-1 {
+  border-color: #2b2d7a;
+  background: #ffffff;
+  color: #1d1f58;
+}
+.seat-checkbox-wrap.tier-1 .seat-box::after {
+  content: "";
+  position: absolute;
+  bottom: 2px;
+  left: 6px;
+  right: 6px;
+  height: 3px;
+  background: #9ea1d6;
+  border-radius: 2px;
+}
+
+/* Tier 2 - Deluxe Couple Seats (Slightly wider, rose/amber tone) */
+.seat-checkbox-wrap.tier-2 .seat-box,
+.seat-box.tier-2 {
+  width: 50px;
+  border: 2px solid #e11d48;
+  background: #fff1f2;
+  color: #9f1239;
+}
+.seat-checkbox-wrap.tier-2 .seat-box::after {
+  content: "♥";
+  position: absolute;
+  top: 1px;
+  right: 3px;
+  font-size: 0.62rem;
+  color: #e11d48;
+  line-height: 1;
+}
+
+/* Tier 3 - VIP Recliner (Luxe gold/emerald trim) */
+.seat-checkbox-wrap.tier-3 .seat-box,
+.seat-box.tier-3 {
+  width: 46px;
+  border: 2px solid #d97706;
+  background: #fffbeb;
+  color: #92400e;
+}
+.seat-checkbox-wrap.tier-3 .seat-box::after {
+  content: "★";
+  position: absolute;
+  top: 1px;
+  right: 3px;
+  font-size: 0.65rem;
+  color: #d97706;
+  line-height: 1;
+}
+
+/* Tier Zone Section Dividers */
+.tier-zone-divider {
+  width: min(94%, 720px);
+  margin: 1.75rem auto 0.85rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.55rem 1.15rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+.tier-zone-divider.zone-tier-1 {
+  background: #f1f3fa;
+  border: 1px solid #dcdff0;
+  border-left: 4px solid var(--c-indigo, #2b2d7a);
+  color: var(--c-indigo-dark, #1d1f58);
+}
+.tier-zone-divider.zone-tier-2 {
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  border-left: 4px solid #e11d48;
+  color: #9f1239;
+}
+.tier-zone-divider.zone-tier-3 {
+  background: #fffbeb;
+  border: 1px solid #fef3c7;
+  border-left: 4px solid #d97706;
+  color: #92400e;
+}
+.tier-zone-divider .zone-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 0.88rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.tier-zone-divider .zone-price {
+  font-weight: 800;
+  font-family: "Bricolage Grotesque", sans-serif;
+  font-size: 0.95rem;
+}
+
+/* Row-Level Tier Badges */
+.seat-row-label-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 90px;
+  justify-content: flex-end;
+}
+.seat-row-label-wrap.label-right {
+  justify-content: flex-start;
+}
+.seat-row-tier-pill {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.12rem 0.4rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.seat-row-tier-pill.pill-tier-1 {
+  background: rgba(43, 45, 122, 0.1);
+  color: var(--c-indigo, #2b2d7a);
+  border: 1px solid rgba(43, 45, 122, 0.2);
+}
+.seat-row-tier-pill.pill-tier-2 {
+  background: #ffe4e6;
+  color: #e11d48;
+  border: 1px solid #fecdd3;
+}
+.seat-row-tier-pill.pill-tier-3 {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+/* Per-seat Micro Tags */
+.seat-tier-micro {
+  font-size: 0.56rem;
+  line-height: 1;
+  font-weight: 800;
+  text-transform: uppercase;
+  margin-top: 1px;
+  letter-spacing: 0.02em;
+  opacity: 0.85;
+}
+
 
 .seat-checkbox-wrap:hover .seat-box {
-  border-color: var(--c-indigo, #2b2d7a);
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(43, 45, 122, 0.15);
+}
+.seat-checkbox-wrap.tier-2:hover .seat-box {
+  box-shadow: 0 4px 12px rgba(225, 29, 72, 0.25);
+}
+.seat-checkbox-wrap.tier-3:hover .seat-box {
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.25);
 }
 
+/* Checked / Selected State (Universal Vibrant Amber Gold) */
 .seat-checkbox-wrap input[type="checkbox"]:checked + .seat-box {
-  background: var(--c-gold, #f5b93a);
-  color: #000;
-  border-color: var(--c-gold, #f5b93a);
+  background: var(--c-gold, #f5b93a) !important;
+  color: #000000 !important;
+  border-color: #d97706 !important;
   font-weight: 800;
-  box-shadow: 0 4px 10px rgba(245, 185, 58, 0.35);
+  box-shadow: 0 4px 14px rgba(245, 185, 58, 0.45);
+  transform: translateY(-3px) scale(1.04);
+}
+.seat-checkbox-wrap input[type="checkbox"]:checked + .seat-box::after {
+  content: "✓" !important;
+  color: #000000 !important;
+  font-size: 0.75rem !important;
 }
 
+/* Sold State */
 .seat-checkbox-wrap.is-sold {
   cursor: not-allowed;
 }
-
 .seat-checkbox-wrap.is-sold .seat-box {
-  background: #fdeaec;
-  border-color: #f3b7be;
-  color: var(--c-red, #d93a4a);
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #94a3b8 !important;
   text-decoration: line-through;
-  opacity: .6;
-  transform: none;
+  opacity: .55;
+  transform: none !important;
+  box-shadow: none !important;
 }
+.seat-checkbox-wrap.is-sold .seat-box::after {
+  content: "✕" !important;
+  color: #94a3b8 !important;
+  font-size: 0.7rem !important;
+}
+
+/* Tier Legend Strip */
+.tier-legend-strip {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin: 0 auto 1.5rem;
+  padding: 0.85rem 1.25rem;
+  background: #f8fafc;
+  border: 1px solid var(--c-line, #dcdff0);
+  border-radius: 10px;
+  font-size: 0.86rem;
+}
+.tier-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.tier-legend-item .swatch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.tier-legend-item .tier-pill-tag {
+  display: inline-block;
+  font-size: 0.72rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-weight: 700;
+  margin-left: 0.25rem;
+}
+
+/* Real-Time Calculation & Summary Panel */
+.seat-live-summary {
+  background: #0f121d;
+  color: #f1f5f9;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  box-shadow: 0 6px 20px rgba(15, 18, 29, 0.25);
+}
+.seat-live-summary .summary-details {
+  text-align: left;
+  flex: 1;
+  min-width: 260px;
+}
+.seat-live-summary .summary-title {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  margin-bottom: 0.35rem;
+  font-weight: 700;
+}
+.seat-live-summary .selected-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  min-height: 28px;
+  align-items: center;
+}
+.seat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: #ffffff;
+  font-weight: 600;
+}
+.seat-chip .chip-tier {
+  font-size: 0.7rem;
+  color: var(--c-gold, #f5b93a);
+  text-transform: uppercase;
+}
+.seat-live-summary .summary-pricing {
+  text-align: right;
+  min-width: 200px;
+}
+.seat-live-summary .summary-subtotal {
+  font-size: 1.6rem;
+  font-weight: 800;
+  font-family: "Bricolage Grotesque", "Figtree", sans-serif;
+  color: var(--c-gold, #f5b93a);
+  line-height: 1.1;
+}
+.seat-live-summary .summary-tier-breakdown {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  margin-top: 0.25rem;
+}
+

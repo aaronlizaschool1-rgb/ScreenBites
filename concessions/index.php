@@ -73,6 +73,12 @@ $catIcons = ['Popcorn' => '🍿', 'Beverage' => '🥤', 'Snacks' => '🌭', 'Can
     </div>
     <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
         <?php if (is_admin()): ?>
+            <a href="<?= BASE_URL; ?>/concessions/restock.php" class="btn btn-secondary" style="border: 1px solid rgba(16, 185, 129, 0.4); color: #10b981;">
+                📦 Receive Stock
+            </a>
+            <a href="<?= BASE_URL; ?>/concessions/restock_history.php" class="btn btn-secondary">
+                📋 Restock Log
+            </a>
             <a href="<?= BASE_URL; ?>/concessions/combos.php" class="btn btn-secondary" style="border: 1px solid rgba(245, 158, 11, 0.4); color: #f59e0b;">
                 🎁 Manage Combos
             </a>
@@ -196,7 +202,8 @@ $catIcons = ['Popcorn' => '🍿', 'Beverage' => '🥤', 'Snacks' => '🌭', 'Can
                     </div>
 
                     <?php if (is_admin()): ?>
-                        <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--card-border); display: flex; gap: 0.5rem;">
+                        <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--card-border); display: flex; gap: 0.35rem;">
+                            <a href="<?= BASE_URL; ?>/concessions/restock.php?product_id=<?= $pId; ?>" class="btn btn-sm btn-secondary" style="color: #10b981; border: 1px solid rgba(16, 185, 129, 0.4);" title="Receive Stock for this item">+ Stock</a>
                             <a href="<?= BASE_URL; ?>/concessions/edit.php?id=<?= $pId; ?>" class="btn btn-sm btn-secondary" style="flex: 1; text-align: center;">Edit</a>
                             <a href="<?= BASE_URL; ?>/concessions/delete.php?id=<?= $pId; ?>" class="btn btn-sm btn-danger" onclick="return confirm('Delete this snack item?');">Delete</a>
                         </div>
