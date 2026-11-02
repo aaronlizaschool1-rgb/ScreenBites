@@ -255,7 +255,7 @@ $isActive = function(string $path) use ($currentUri): bool {
             <div class="app-user-card">
                 <div class="app-user-row">
                     <div class="app-avatar-wrap">
-                        <?php if (!empty($user['avatar_path']) && file_exists(dirname(__DIR__) . '/' . $user['avatar_path'])): ?>
+                        <?php if (!empty($user['avatar_path']) && file_exists(PROJECT_ROOT . '/' . $user['avatar_path'])): ?>
                             <img src="<?= BASE_URL . '/' . htmlspecialchars($user['avatar_path']); ?>" 
                                  alt="Avatar" 
                                  style="width: 38px; height: 38px; object-fit: cover; border-radius: 50%; border: 1.5px solid var(--c-indigo);">

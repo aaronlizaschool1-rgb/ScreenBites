@@ -37,6 +37,7 @@ $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
 $projectRoot = str_replace('\\', '/', dirname(__DIR__));
 $docRoot = str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT'] ?? 'C:/xampp/htdocs');
 $relativeSubdir = str_replace($docRoot, '', $projectRoot);
+define('PROJECT_ROOT', dirname(__DIR__));
 define('BASE_URL', rtrim($protocol . $host . $relativeSubdir, '/'));
 
 // Include Authentication & Academic Procedural Helpers (PedalWorks-Dynamics pattern)

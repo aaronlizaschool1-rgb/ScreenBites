@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Check for avatar removal request
                 if ($removeAvatar && !empty($userData['avatar_path'])) {
-                    $oldAbs = dirname(__DIR__) . '/' . ltrim($userData['avatar_path'], '/\\');
+                    $oldAbs = PROJECT_ROOT . '/' . ltrim($userData['avatar_path'], '/\\');
                     if (file_exists($oldAbs) && is_file($oldAbs)) {
                         @unlink($oldAbs);
                     }
@@ -149,7 +149,7 @@ require_once __DIR__ . '/includes/header.php';
     <!-- Left Column: User Summary Card -->
     <div class="card" style="padding: 1.5rem; text-align: center;">
         <div style="position: relative; width: 110px; height: 110px; margin: 0 auto 1rem;">
-            <?php if (!empty($userData['avatar_path']) && file_exists(dirname(__DIR__) . '/' . $userData['avatar_path'])): ?>
+            <?php if (!empty($userData['avatar_path']) && file_exists(PROJECT_ROOT . '/' . $userData['avatar_path'])): ?>
                 <img src="<?= BASE_URL . '/' . htmlspecialchars($userData['avatar_path']); ?>" 
                      alt="Avatar" 
                      style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; border: 3px solid var(--c-indigo); box-shadow: 0 4px 12px rgba(0,0,0,0.1);">

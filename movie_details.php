@@ -294,7 +294,7 @@ require_once __DIR__ . '/includes/header.php';
                     <div style="border-bottom: 1px solid var(--c-line); padding-bottom: 1.25rem;">
                         <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
                             <div style="display: flex; align-items: center; gap: 0.75rem;">
-                                <?php if (!empty($rev['avatar_path']) && file_exists(dirname(__DIR__) . '/' . $rev['avatar_path'])): ?>
+                                <?php if (!empty($rev['avatar_path']) && file_exists(PROJECT_ROOT . '/' . $rev['avatar_path'])): ?>
                                     <img src="<?= BASE_URL . '/' . htmlspecialchars($rev['avatar_path']); ?>" 
                                          alt="Reviewer" 
                                          style="width: 38px; height: 38px; object-fit: cover; border-radius: 50%; border: 1.5px solid var(--c-line);">

@@ -262,7 +262,7 @@ require_once dirname(__DIR__) . '/includes/header.php';
                         <tr>
                             <!-- Avatar Thumbnail -->
                             <td>
-                                <?php if (!empty($u['avatar_path']) && file_exists(dirname(__DIR__) . '/' . $u['avatar_path'])): ?>
+                                <?php if (!empty($u['avatar_path']) && file_exists(PROJECT_ROOT . '/' . $u['avatar_path'])): ?>
                                     <img src="<?= BASE_URL . '/' . htmlspecialchars($u['avatar_path']); ?>" 
                                          alt="Avatar" 
                                          style="width: 36px; height: 36px; object-fit: cover; border-radius: 50%; border: 1.5px solid var(--c-line);">
