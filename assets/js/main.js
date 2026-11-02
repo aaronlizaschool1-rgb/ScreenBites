@@ -6,7 +6,6 @@
   var scrim = document.getElementById('appScrim');
   var sidebar = document.getElementById('appSidebar');
 
-  
   function setNav(open) {
     body.classList.toggle('nav-open', open);
     if (toggle) {
@@ -33,7 +32,6 @@
     });
   }
 
-  
   document.querySelectorAll('.flash').forEach(function (el) {
     function dismiss() {
       el.classList.add('is-leaving');

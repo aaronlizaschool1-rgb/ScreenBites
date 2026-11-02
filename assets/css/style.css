@@ -9,7 +9,6 @@
   --c-surface: #ffffff;
   --c-page: #f3f4fa;
 
-  /* Aliases & Semantic Extensions */
   --text-muted: #64748b;
   --card-border: #dcdff0;
   --accent-gold: #f59e0b;
@@ -17,7 +16,6 @@
   --accent-emerald: #10b981;
 }
 
-/* High-contrast Cinema Dark Accent Panel */
 .sb-dark-panel {
   background: #0f121d;
   color: #f1f5f9;
@@ -4404,9 +4402,6 @@ div.dash-hero {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 
-/* ==========================================================================
-   ScreenBites Procedural UI Bridge - Perfectly Mapped to Theme Tokens
-   ========================================================================== */
 .sb-container {
   width: 100%;
 }

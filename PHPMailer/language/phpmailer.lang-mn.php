@@ -1,11 +1,4 @@
 <?php
-
-/**
- * Mongolian PHPMailer language file: refer to English translation for definitive list
- * @package PHPMailer
- * @author @wispas
- */
-
 $PHPMAILER_LANG['authenticate']         = 'Алдаа SMTP: Холбогдож чадсангүй.';
 $PHPMAILER_LANG['connect_host']         = 'Алдаа SMTP: SMTP- сервертэй холбогдож болохгүй байна.';
 $PHPMAILER_LANG['data_not_accepted']    = 'Алдаа SMTP: зөвшөөрөгдсөнгүй.';

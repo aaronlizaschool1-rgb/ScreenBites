@@ -1,16 +1,9 @@
 <?php
-/**
- * ScreenBites - Self-Service User Profile Management
- * Fulfills MP2: User CRUD (100% Pure Procedural PHP)
- * Profile updates, avatar replacement via includes/upload.php, and secure password changes
- */
-
 require_once __DIR__ . '/includes/config.php';
 require_login();
 
 $userId = (int)current_user()['user_id'];
 
-// 1. Fetch fresh user record from database
 $stmt = mysqli_prepare($conn, "SELECT user_id, full_name, username, email, password_hash, avatar_path, role, status, created_at FROM users WHERE user_id = ? LIMIT 1");
 mysqli_stmt_bind_param($stmt, "i", $userId);
 mysqli_stmt_execute($stmt);
@@ -26,11 +19,9 @@ if (!$userData) {
 $error = '';
 $success = '';
 
-// Handle POST Submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
-    // Action A: Update Profile Information & Avatar
     if ($action === 'update_profile') {
         $fullName     = trim($_POST['full_name'] ?? '');
         $email        = trim($_POST['email'] ?? '');
@@ -45,7 +36,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif (!validate_email($email)) {
             set_flash('error', 'Please enter a valid email address.');
         } else {
-            // Check if email is in use by another user
             $chkStmt = mysqli_prepare($conn, "SELECT user_id FROM users WHERE email = ? AND user_id != ? LIMIT 1");
             mysqli_stmt_bind_param($chkStmt, "si", $email, $userId);
             mysqli_stmt_execute($chkStmt);
@@ -57,7 +47,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $newAvatarPath = $userData['avatar_path'];
 
-                // Check for avatar removal request
                 if ($removeAvatar && !empty($userData['avatar_path'])) {
                     $oldAbs = PROJECT_ROOT . '/' . ltrim($userData['avatar_path'], '/\\');
                     if (file_exists($oldAbs) && is_file($oldAbs)) {
@@ -66,7 +55,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $newAvatarPath = null;
                 }
 
-                // Handle file upload replacement if submitted
                 if (!empty($_FILES['avatar_file']['name'])) {
                     $uploadRes = handle_image_upload($_FILES['avatar_file'], 'avatars', $userData['avatar_path']);
                     if (!$uploadRes['success']) {
@@ -77,14 +65,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $newAvatarPath = $uploadRes['path'];
                 }
 
-                // Update database procedurally
                 $updStmt = mysqli_prepare($conn, "UPDATE users SET full_name = ?, email = ?, avatar_path = ? WHERE user_id = ?");
                 mysqli_stmt_bind_param($updStmt, "sssi", $fullName, $email, $newAvatarPath, $userId);
                 $ok = mysqli_stmt_execute($updStmt);
                 mysqli_stmt_close($updStmt);
 
                 if ($ok) {
-                    // Update session state
                     $_SESSION['user']['full_name']   = $fullName;
                     $_SESSION['user']['email']       = $email;
                     $_SESSION['user']['avatar_path'] = $newAvatarPath;
@@ -100,7 +86,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // Action B: Change Password
     if ($action === 'change_password') {
         $currPassword = $_POST['current_password'] ?? '';
         $newPassword  = $_POST['new_password'] ?? '';
@@ -145,13 +130,12 @@ require_once __DIR__ . '/includes/header.php';
 </div>
 
 <div style="display: grid; grid-template-columns: 280px 1fr; gap: 1.5rem; align-items: start;">
-    
-    <!-- Left Column: User Summary Card -->
+
     <div class="card" style="padding: 1.5rem; text-align: center;">
         <div style="position: relative; width: 110px; height: 110px; margin: 0 auto 1rem;">
             <?php if (!empty($userData['avatar_path']) && file_exists(PROJECT_ROOT . '/' . $userData['avatar_path'])): ?>
-                <img src="<?= BASE_URL . '/' . htmlspecialchars($userData['avatar_path']); ?>" 
-                     alt="Avatar" 
+                <img src="<?= BASE_URL . '/' . htmlspecialchars($userData['avatar_path']); ?>"
+                     alt="Avatar"
                      style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; border: 3px solid var(--c-indigo); box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
             <?php else: ?>
                 <div style="width: 100%; height: 100%; border-radius: 50%; background: linear-gradient(135deg, var(--c-indigo) 0%, #4338ca 100%); color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; font-weight: 800; border: 3px solid #e0e7ff; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
@@ -184,9 +168,8 @@ require_once __DIR__ . '/includes/header.php';
         </div>
     </div>
 
-    <!-- Right Column: Edit Forms -->
     <div>
-        <!-- Profile Info Form -->
+
         <div class="card" style="padding: 1.5rem; margin-bottom: 1.5rem;">
             <h3 style="margin: 0 0 0.25rem; font-size: 1.15rem; color: var(--c-ink);">Profile Information</h3>
             <p style="color: var(--c-muted); font-size: 0.85rem; margin: 0 0 1.25rem;">Update your display name, contact email address, and profile photo.</p>
@@ -197,39 +180,39 @@ require_once __DIR__ . '/includes/header.php';
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <div class="form-group">
                         <label for="full_name">Full Legal Name</label>
-                        <input type="text" 
-                               id="full_name" 
-                               name="full_name" 
-                               class="form-control" 
+                        <input type="text"
+                               id="full_name"
+                               name="full_name"
+                               class="form-control"
                                value="<?= sanitize($userData['full_name']); ?>">
                     </div>
 
                     <div class="form-group">
                         <label for="username">Username (Permanent)</label>
-                        <input type="text" 
-                               id="username" 
-                               value="<?= sanitize($userData['username']); ?>" 
-                               class="form-control" 
-                               disabled 
+                        <input type="text"
+                               id="username"
+                               value="<?= sanitize($userData['username']); ?>"
+                               class="form-control"
+                               disabled
                                style="background: #f8fafc; color: #64748b; cursor: not-allowed;">
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="email">Email Address <span style="font-weight: 400; color: var(--c-muted);">(Receives digital PDF receipts)</span></label>
-                    <input type="text" 
-                           id="email" 
-                           name="email" 
-                           class="form-control" 
+                    <input type="text"
+                           id="email"
+                           name="email"
+                           class="form-control"
                            value="<?= sanitize($userData['email'] ?? ''); ?>">
                 </div>
 
                 <div class="form-group">
                     <label for="avatar_file">Change Profile Photo <span style="font-weight: 400; color: var(--c-muted);">(Max 2MB &bull; JPEG, PNG, WebP)</span></label>
-                    <input type="file" 
-                           id="avatar_file" 
-                           name="avatar_file" 
-                           class="form-control" 
+                    <input type="file"
+                           id="avatar_file"
+                           name="avatar_file"
+                           class="form-control"
                            accept="image/jpeg,image/png,image/webp">
                     <small style="color: var(--c-muted); display: block; margin-top: 0.25rem;">
                         Upload a photo to replace your current avatar. Processed via native procedural upload handler.
@@ -251,7 +234,6 @@ require_once __DIR__ . '/includes/header.php';
             </form>
         </div>
 
-        <!-- Security & Password Change Form -->
         <div class="card" style="padding: 1.5rem;">
             <h3 style="margin: 0 0 0.25rem; font-size: 1.15rem; color: var(--c-ink);">Change Password</h3>
             <p style="color: var(--c-muted); font-size: 0.85rem; margin: 0 0 1.25rem;">Verify your current credentials and set a new secure password.</p>
@@ -261,29 +243,29 @@ require_once __DIR__ . '/includes/header.php';
 
                 <div class="form-group">
                     <label for="current_password">Current Password</label>
-                    <input type="password" 
-                           id="current_password" 
-                           name="current_password" 
-                           class="form-control" 
+                    <input type="password"
+                           id="current_password"
+                           name="current_password"
+                           class="form-control"
                            placeholder="Enter current password">
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <div class="form-group">
                         <label for="new_password">New Password</label>
-                        <input type="password" 
-                               id="new_password" 
-                               name="new_password" 
-                               class="form-control" 
+                        <input type="password"
+                               id="new_password"
+                               name="new_password"
+                               class="form-control"
                                placeholder="Min. 8 characters">
                     </div>
 
                     <div class="form-group">
                         <label for="confirm_new_password">Confirm New Password</label>
-                        <input type="password" 
-                               id="confirm_new_password" 
-                               name="confirm_new_password" 
-                               class="form-control" 
+                        <input type="password"
+                               id="confirm_new_password"
+                               name="confirm_new_password"
+                               class="form-control"
                                placeholder="Re-enter new password">
                     </div>
                 </div>

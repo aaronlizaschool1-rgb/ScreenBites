@@ -1,16 +1,10 @@
 <?php
-/**
- * ScreenBites - Create Concession Combo Bundle
- * Procedural module modeled after PedalWorks-Dynamics
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 require_admin();
 
 $pageTitle = 'Create Concession Combo';
 require_once dirname(__DIR__) . '/includes/header.php';
 
-// Fetch all active products that can be included in this bundle
 $pRes = mysqli_query($conn, "SELECT product_id, product_name, category, retail_price, current_stock FROM products WHERE is_active = 1 ORDER BY category ASC, product_name ASC");
 $allProducts = [];
 while ($p = mysqli_fetch_assoc($pRes)) {
@@ -28,7 +22,7 @@ while ($p = mysqli_fetch_assoc($pRes)) {
 
 <div class="sb-card" style="max-width: 720px; margin: 0 auto;">
     <form method="POST" action="<?= BASE_URL; ?>/concessions/store_combo.php">
-        
+
         <div class="form-group">
             <label for="combo_name">Bundle / Combo Name *</label>
             <input type="text" id="combo_name" name="combo_name" class="form-control" required placeholder="e.g. Cinema Couples Duo Treat">
@@ -64,7 +58,7 @@ while ($p = mysqli_fetch_assoc($pRes)) {
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($allProducts as $prod): 
+                        <?php foreach ($allProducts as $prod):
                             $pId = (int)$prod['product_id'];
                         ?>
                             <tr>
@@ -81,12 +75,12 @@ while ($p = mysqli_fetch_assoc($pRes)) {
                                     </span>
                                 </td>
                                 <td style="text-align: center;">
-                                    <input type="number" 
-                                           name="items[<?= $pId; ?>]" 
-                                           value="0" 
-                                           min="0" 
-                                           max="20" 
-                                           class="form-control" 
+                                    <input type="number"
+                                           name="items[<?= $pId; ?>]"
+                                           value="0"
+                                           min="0"
+                                           max="20"
+                                           class="form-control"
                                            style="width: 70px; text-align: center; display: inline-block; padding: 0.25rem;">
                                 </td>
                             </tr>

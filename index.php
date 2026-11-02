@@ -1,23 +1,15 @@
 <?php
-/**
- * ScreenBites - Cinema Box Office Catalog & Home
- * Modeled after PedalWorks-Dynamics procedural architecture
- * UI/UX styled from ScreenBites_oop_backup
- */
-
 require_once __DIR__ . '/includes/config.php';
 
 $pageTitle = 'Now Showing Cinema & Lounge';
 require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/includes/reviews.php';
 
-// Quiz 3: Homepage Search Parameterized Query
 $searchQuery = trim($_GET['q'] ?? '');
 
-// 1. Fetch active movies (parameterized LIKE query if search submitted)
 if (!empty($searchQuery)) {
-    $mSql = "SELECT * FROM movies 
-             WHERE is_active = 1 
+    $mSql = "SELECT * FROM movies
+             WHERE is_active = 1
                AND (title LIKE ? OR genre LIKE ? OR synopsis LIKE ?)
              ORDER BY movie_id ASC";
     $mStmt = mysqli_prepare($conn, $mSql);
@@ -30,10 +22,9 @@ if (!empty($searchQuery)) {
     $resMovies = mysqli_query($conn, $sqlMovies);
 }
 
-// 2. Fetch concessions (parameterized LIKE query if search submitted)
 if (!empty($searchQuery)) {
-    $sSql = "SELECT * FROM products 
-             WHERE is_active = 1 
+    $sSql = "SELECT * FROM products
+             WHERE is_active = 1
                AND (product_name LIKE ? OR category LIKE ?)
              ORDER BY category ASC, product_name ASC";
     $sStmt = mysqli_prepare($conn, $sSql);
@@ -42,8 +33,8 @@ if (!empty($searchQuery)) {
     mysqli_stmt_execute($sStmt);
     $resSnacks = mysqli_stmt_get_result($sStmt);
 
-    $cbSql = "SELECT * FROM combos 
-              WHERE is_active = 1 
+    $cbSql = "SELECT * FROM combos
+              WHERE is_active = 1
                 AND (combo_name LIKE ? OR description LIKE ?)
               ORDER BY combo_id ASC";
     $cbStmt = mysqli_prepare($conn, $cbSql);
@@ -72,15 +63,14 @@ if (!empty($searchQuery)) {
     <?php endif; ?>
 </div>
 
-<!-- Homepage Search Input Bar -->
 <div class="card" style="padding: 1.25rem; margin-bottom: 2rem; background: var(--c-surface, #ffffff);">
     <form method="GET" action="<?= BASE_URL; ?>/index.php" style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
         <div style="flex: 1; min-width: 260px; position: relative;">
-            <input type="text" 
-                   name="q" 
-                   value="<?= sanitize($searchQuery); ?>" 
-                   placeholder="Search movies by title, genre, synopsis, or find snack concessions..." 
-                   class="form-control" 
+            <input type="text"
+                   name="q"
+                   value="<?= sanitize($searchQuery); ?>"
+                   placeholder="Search movies by title, genre, synopsis, or find snack concessions..."
+                   class="form-control"
                    style="padding-left: 2.25rem;">
             <span style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--c-muted); font-size: 1rem;">🔍</span>
         </div>
@@ -100,10 +90,9 @@ if (!empty($searchQuery)) {
     <?php endif; ?>
 </div>
 
-<!-- Movies Section -->
 <div class="sb-grid" style="margin-bottom: 3rem;">
     <?php if ($resMovies && mysqli_num_rows($resMovies) > 0): ?>
-        <?php while ($movie = mysqli_fetch_assoc($resMovies)): 
+        <?php while ($movie = mysqli_fetch_assoc($resMovies)):
             $mId        = (int)$movie['movie_id'];
             $title      = (string)$movie['title'];
             $posterPath = !empty($movie['poster_path']) ? BASE_URL . '/' . ltrim($movie['poster_path'], '/') : BASE_URL . '/assets/img/default-poster.jpg';
@@ -116,9 +105,8 @@ if (!empty($searchQuery)) {
             $synopsis   = !empty($movie['synopsis']) ? (string)$movie['synopsis'] : 'Experience ' . $title . ' on the big screen with high-fidelity digital projection.';
             $trailerId  = get_youtube_id($movie['trailer_url']);
 
-            // Fetch upcoming screenings for this movie (filter out past/concluded showtimes)
             $currentDateTime = date('Y-m-d H:i:s');
-            $scSql = "SELECT s.screening_id, s.screening_date, s.start_time, s.base_price, h.hall_name 
+            $scSql = "SELECT s.screening_id, s.screening_date, s.start_time, s.base_price, h.hall_name
                       FROM screenings s
                       INNER JOIN halls h ON s.hall_id = h.hall_id
                       WHERE s.movie_id = {$mId}
@@ -129,10 +117,10 @@ if (!empty($searchQuery)) {
             <div class="sb-item-card" style="display: flex; flex-direction: column;">
                 <div style="position: relative;">
                     <img src="<?= $posterPath; ?>" alt="<?= sanitize($title); ?>" class="sb-item-thumb">
-                    
-                    <button type="button" 
+
+                    <button type="button"
                             class="sm-play-link"
-                            data-open-trailer 
+                            data-open-trailer
                             data-title="<?= sanitize($title); ?>"
                             data-rating="<?= sanitize($rating); ?>"
                             data-runtime="<?= $timeText; ?>"
@@ -174,7 +162,7 @@ if (!empty($searchQuery)) {
 
                         <?php if ($scRes && mysqli_num_rows($scRes) > 0): ?>
                             <div style="display: flex; flex-direction: column; gap: 0.35rem;">
-                                <?php while ($sc = mysqli_fetch_assoc($scRes)): 
+                                <?php while ($sc = mysqli_fetch_assoc($scRes)):
                                     $timeLabel = date('M d, g:i A', strtotime($sc['screening_date'] . ' ' . $sc['start_time']));
                                 ?>
                                     <div class="sb-dark-panel" style="display: flex; justify-content: space-between; align-items: center; padding: 0.45rem 0.65rem; border-radius: 6px; font-size: 0.82rem;">
@@ -184,7 +172,7 @@ if (!empty($searchQuery)) {
                                         </div>
                                         <div style="text-align: right;">
                                             <span style="color: var(--accent-gold, #f59e0b); font-weight: 700;"><?= format_currency($sc['base_price']); ?></span><br>
-                                            <a href="<?= BASE_URL; ?>/ticketing/seat_matrix.php?screening_id=<?= (int)$sc['screening_id']; ?>" 
+                                            <a href="<?= BASE_URL; ?>/ticketing/seat_matrix.php?screening_id=<?= (int)$sc['screening_id']; ?>"
                                                class="btn btn-sm btn-primary" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; margin-top: 0.2rem;">
                                                 Select Seats &rarr;
                                             </a>
@@ -223,7 +211,6 @@ if (!empty($searchQuery)) {
     <?php endif; ?>
 </div>
 
-<!-- Concessions Section -->
 <div class="sb-page-header">
     <div>
         <h2>Snacks &amp; Concessions</h2>
@@ -234,7 +221,7 @@ if (!empty($searchQuery)) {
 
 <div class="sb-grid" style="margin-bottom: 2rem;">
     <?php if ($resCombos && mysqli_num_rows($resCombos) > 0): ?>
-        <?php while ($c = mysqli_fetch_assoc($resCombos)): 
+        <?php while ($c = mysqli_fetch_assoc($resCombos)):
             $cId = (int)$c['combo_id'];
             $ciRes = mysqli_query($conn, "SELECT ci.quantity, p.product_name, p.current_stock FROM combo_items ci INNER JOIN products p ON ci.product_id = p.product_id WHERE ci.combo_id = {$cId}");
             $parts = [];
@@ -288,9 +275,9 @@ if (!empty($searchQuery)) {
     <?php endif; ?>
 
     <?php if ($resSnacks && mysqli_num_rows($resSnacks) > 0): ?>
-        <?php 
+        <?php
         $catIcons = ['Popcorn' => '🍿', 'Beverage' => '🥤', 'Snacks' => '🌭', 'Candy' => '🍫'];
-        while ($snack = mysqli_fetch_assoc($resSnacks)): 
+        while ($snack = mysqli_fetch_assoc($resSnacks)):
             $sId = (int)$snack['product_id'];
             $hasImg = !empty($snack['image_path']) && file_exists(__DIR__ . '/' . $snack['image_path']);
             $icon = $catIcons[$snack['category']] ?? '🍿';
@@ -311,7 +298,7 @@ if (!empty($searchQuery)) {
                     <div class="sb-item-body">
                         <h3 class="sb-item-title"><?= sanitize($snack['product_name']); ?></h3>
                         <p class="sb-item-meta"><?= sanitize($snack['category']); ?> &bull; Stock: <?= (int)$snack['current_stock']; ?></p>
-                        
+
                         <div class="sb-item-price"><?= format_currency($snack['retail_price']); ?></div>
 
                         <?php $revSumSnack = get_item_review_summary($conn, 'concession', $sId); ?>
@@ -345,7 +332,6 @@ if (!empty($searchQuery)) {
     <?php endif; ?>
 </div>
 
-<!-- NATIVE HTML5 MOVIE TRAILER DIALOG -->
 <dialog class="sm-trailer-modal" id="trailerModal" aria-labelledby="trailerModalTitle">
     <div class="sm-modal-backdrop" id="closeTrailerBackdrop"></div>
     <div class="sm-modal-container">
@@ -378,7 +364,6 @@ if (!empty($searchQuery)) {
     </div>
 </dialog>
 
-<!-- VANILLA JS TRAILER MODAL TRIGGER -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     'use strict';

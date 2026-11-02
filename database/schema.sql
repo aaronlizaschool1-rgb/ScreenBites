@@ -320,20 +320,15 @@ CREATE TABLE reviews (
     review_text TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_reviews_users FOREIGN KEY (user_id) 
+    CONSTRAINT fk_reviews_users FOREIGN KEY (user_id)
         REFERENCES users (user_id) ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT chk_review_rating CHECK (rating BETWEEN 1 AND 5),
     INDEX idx_reviews_item (item_type, item_id),
     INDEX idx_reviews_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================================================
--- RELATIONAL DATABASE VIEWS (Academic Assessment: Unit 1)
--- Consolidated order and transaction ledger aggregating tickets, concessions,
--- and payment status for operational reporting and administrative auditing.
--- ============================================================================
 CREATE OR REPLACE VIEW view_order_transaction_details AS
-SELECT 
+SELECT
     o.order_id,
     o.order_number,
     o.customer_name,
@@ -362,18 +357,18 @@ FROM orders o
 LEFT JOIN users u ON o.user_id = u.user_id
 LEFT JOIN payments p ON o.order_id = p.order_id
 LEFT JOIN (
-    SELECT order_id, COUNT(*) AS ticket_count, SUM(price_charged) AS ticket_total 
-    FROM tickets 
+    SELECT order_id, COUNT(*) AS ticket_count, SUM(price_charged) AS ticket_total
+    FROM tickets
     GROUP BY order_id
 ) tc ON o.order_id = tc.order_id
 LEFT JOIN (
-    SELECT order_id, SUM(quantity) AS concession_count, SUM(quantity * unit_price_charged) AS concession_total 
-    FROM order_items 
+    SELECT order_id, SUM(quantity) AS concession_count, SUM(quantity * unit_price_charged) AS concession_total
+    FROM order_items
     GROUP BY order_id
 ) ic ON o.order_id = ic.order_id
 LEFT JOIN (
-    SELECT order_id, SUM(quantity) AS combo_count, SUM(quantity * unit_price_charged) AS combo_total 
-    FROM order_combos 
+    SELECT order_id, SUM(quantity) AS combo_count, SUM(quantity * unit_price_charged) AS combo_total
+    FROM order_combos
     GROUP BY order_id
 ) cc ON o.order_id = cc.order_id;
 

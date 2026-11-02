@@ -1,9 +1,4 @@
 <?php
-/**
- * ScreenBites - Store Utility Expense Handler
- * Procedural module modeled after itim211-2b-shop
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 require_admin();
 
@@ -22,10 +17,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $typeEsc  = mysqli_real_escape_string($conn, $type);
     $notesEsc = mysqli_real_escape_string($conn, $notes);
 
-    // Use ON DUPLICATE KEY UPDATE to gracefully handle existing bills for same period
     $sql = "INSERT INTO utility_expenses (utility_type, billing_month, billing_year, bill_amount, payment_status, due_date, payment_date, notes, user_id, created_at)
             VALUES ('{$typeEsc}', {$month}, {$year}, {$amount}, '{$status}', {$dueDate}, {$payDate}, '{$notesEsc}', {$userId}, NOW())
-            ON DUPLICATE KEY UPDATE 
+            ON DUPLICATE KEY UPDATE
                 bill_amount = VALUES(bill_amount),
                 payment_status = VALUES(payment_status),
                 due_date = VALUES(due_date),

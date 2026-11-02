@@ -1,9 +1,4 @@
 <?php
-/**
- * ScreenBites - Create Screening Schedule
- * Modeled after itim211-2b-shop/item/create.php
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 require_admin();
 

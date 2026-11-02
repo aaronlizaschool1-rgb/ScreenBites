@@ -1,18 +1,6 @@
 <?php
-/**
- * ScreenBites - Procedural Seat Tier Pricing Helper
- * Modelled after PedalWorks-Dynamics procedural architecture
- * Handles FR3: Tier-Based Seat Pricing calculations & validation
- */
-
 require_once __DIR__ . '/config.php';
 
-/**
- * Retrieve all seat tiers from the database
- *
- * @param mysqli $conn
- * @return array<int, array> Keyed by tier_id
- */
 function get_seat_tiers(mysqli $conn): array {
     $tiers = [];
     $res = mysqli_query($conn, "SELECT tier_id, tier_name, tier_surcharge, created_at FROM seat_tiers ORDER BY tier_surcharge ASC, tier_id ASC");
@@ -30,13 +18,6 @@ function get_seat_tiers(mysqli $conn): array {
     return $tiers;
 }
 
-/**
- * Retrieve a single seat tier by its ID
- *
- * @param mysqli $conn
- * @param int $tierId
- * @return array|null
- */
 function get_seat_tier_by_id(mysqli $conn, int $tierId): ?array {
     $stmt = mysqli_prepare($conn, "SELECT tier_id, tier_name, tier_surcharge, created_at FROM seat_tiers WHERE tier_id = ? LIMIT 1");
     if (!$stmt) return null;
@@ -56,24 +37,10 @@ function get_seat_tier_by_id(mysqli $conn, int $tierId): ?array {
     ];
 }
 
-/**
- * Calculate the final ticket price for a seat given a base screening price and tier surcharge
- *
- * @param float $basePrice
- * @param float $tierSurcharge
- * @return float
- */
 function calculate_seat_price(float $basePrice, float $tierSurcharge): float {
     return round(max(0.00, $basePrice + $tierSurcharge), 2);
 }
 
-/**
- * Fetch all seats for a specific hall grouped by row, including their tier information
- *
- * @param mysqli $conn
- * @param int $hallId
- * @return array<string, array> Grouped by row letter
- */
 function get_seats_with_tier_info(mysqli $conn, int $hallId): array {
     $rowsGrouped = [];
     $sql = "SELECT s.seat_id, s.hall_id, s.tier_id, s.seat_row, s.seat_number, s.is_active,
@@ -106,16 +73,6 @@ function get_seats_with_tier_info(mysqli $conn, int $hallId): array {
     return $rowsGrouped;
 }
 
-/**
- * Server-side anti-tamper recalculation:
- * Validates a list of selected seat IDs for a given screening,
- * ensures none are already booked, and computes exact tier pricing.
- *
- * @param mysqli $conn
- * @param int $screeningId
- * @param array $seatIds
- * @return array
- */
 function verify_and_price_seats(mysqli $conn, int $screeningId, array $seatIds): array {
     $result = [
         'valid'     => false,
@@ -130,7 +87,6 @@ function verify_and_price_seats(mysqli $conn, int $screeningId, array $seatIds):
         return $result;
     }
 
-    // 1. Fetch screening
     $sqlSc = "SELECT s.screening_id, s.screening_date, s.start_time, s.end_time, s.base_price, s.hall_id,
                      m.title AS movie_title, h.hall_name
               FROM screenings s
@@ -153,7 +109,6 @@ function verify_and_price_seats(mysqli $conn, int $screeningId, array $seatIds):
         return $result;
     }
 
-    // Check if screening has already concluded (past end_time)
     $screeningEndTimestamp = strtotime($screening['screening_date'] . ' ' . $screening['end_time']);
     if ($screeningEndTimestamp && $screeningEndTimestamp < time()) {
         $result['error'] = 'This screening concluded at ' . date('g:i A', $screeningEndTimestamp) . ' and is closed for booking.';
@@ -164,7 +119,6 @@ function verify_and_price_seats(mysqli $conn, int $screeningId, array $seatIds):
     $hallId = (int)$screening['hall_id'];
     $basePrice = (float)$screening['base_price'];
 
-    // 2. Fetch sold seats to prevent double-booking
     $soldRes = mysqli_query($conn, "SELECT seat_id FROM tickets WHERE screening_id = {$screeningId} AND ticket_status = 'Valid'");
     $soldIds = [];
     if ($soldRes) {
@@ -173,7 +127,6 @@ function verify_and_price_seats(mysqli $conn, int $screeningId, array $seatIds):
         }
     }
 
-    // 3. Process and price each seat
     $cleanedSeatIds = array_unique(array_filter(array_map('intval', $seatIds)));
     if (empty($cleanedSeatIds)) {
         $result['error'] = 'No valid seat identifiers submitted.';

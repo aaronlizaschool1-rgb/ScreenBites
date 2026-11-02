@@ -1,9 +1,4 @@
 <?php
-/**
- * ScreenBites - Edit Movie
- * Modeled after PedalWorks-Dynamics procedural architecture
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 require_admin();
 
@@ -17,7 +12,6 @@ if (!$movie) {
     exit;
 }
 
-// Fetch secondary gallery images
 $galleryImages = [];
 $giRes = mysqli_query($conn, "SELECT image_id, image_path FROM movie_images WHERE movie_id = {$id} AND is_primary = 0 ORDER BY image_id ASC");
 if ($giRes) {

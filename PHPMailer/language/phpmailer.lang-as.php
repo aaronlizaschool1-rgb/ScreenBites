@@ -1,11 +1,4 @@
 <?php
-
-/**
- * Assamese PHPMailer language file: refer to English translation for definitive list
- * @package PHPMailer
- * @author Manish Sarkar <manish.n.manish@gmail.com>
- */
-
 $PHPMAILER_LANG['authenticate']         = 'SMTP ত্ৰুটি: প্ৰমাণীকৰণ কৰিব নোৱাৰি';
 $PHPMAILER_LANG['buggy_php']            = 'আপোনাৰ PHP সংস্কৰণ এটা বাগৰ দ্বাৰা প্ৰভাৱিত হয় যাৰ ফলত নষ্ট বাৰ্তা হব পাৰে । ইয়াক সমাধান কৰিবলে, প্ৰেৰণ কৰিবলে SMTP ব্যৱহাৰ কৰক, আপোনাৰ php.ini ত mail.add_x_header বিকল্প নিষ্ক্ৰিয় কৰক, MacOS বা Linux লৈ সলনি কৰক, বা আপোনাৰ PHP সংস্কৰণ 7.0.17+ বা 7.1.3+ লৈ সলনি কৰক ।';
 $PHPMAILER_LANG['connect_host']         = 'SMTP ত্ৰুটি: SMTP চাৰ্ভাৰৰ সৈতে সংযোগ কৰিবলে অক্ষম';

@@ -1,9 +1,4 @@
 <?php
-/**
- * ScreenBites - Delete Concession Item
- * Modeled after itim211-2b-shop/item/delete.php
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 require_admin();
 

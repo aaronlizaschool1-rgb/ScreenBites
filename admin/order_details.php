@@ -1,10 +1,4 @@
 <?php
-/**
- * ScreenBites - Order Detail & Breakdown Console
- * Academic Assessment: Unit 1 (Active Relational MySQL VIEW Execution)
- * Actively queries `view_order_transaction_details` via procedural prepared statements
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 require_once dirname(__DIR__) . '/includes/mailer.php';
 require_login();
@@ -16,7 +10,6 @@ if ($orderId <= 0) {
     exit;
 }
 
-// Handle Resend Email Action (Native POST Form)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'resend_email') {
     $targetEmail = trim($_POST['customer_email'] ?? '');
     if (empty($targetEmail) || !validate_email($targetEmail)) {
@@ -33,9 +26,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     exit;
 }
 
-// 1. Actively query the Relational View for core order details
 $stmt = mysqli_prepare($conn, "
-    SELECT 
+    SELECT
         order_id,
         order_number,
         customer_name,
@@ -75,10 +67,9 @@ if (!$order) {
     exit;
 }
 
-// 2. Fetch Itemized Tickets
 $tickets = [];
 $tStmt = mysqli_prepare($conn, "
-    SELECT 
+    SELECT
         t.ticket_id,
         t.price_charged,
         t.ticket_status,
@@ -107,10 +98,9 @@ while ($tRow = mysqli_fetch_assoc($tRes)) {
 }
 mysqli_stmt_close($tStmt);
 
-// 3. Fetch Itemized Concessions
 $concessions = [];
 $cStmt = mysqli_prepare($conn, "
-    SELECT 
+    SELECT
         oi.order_item_id,
         p.product_name,
         p.category,
@@ -129,10 +119,9 @@ while ($cRow = mysqli_fetch_assoc($cRes)) {
 }
 mysqli_stmt_close($cStmt);
 
-// 4. Fetch Itemized Combos
 $combos = [];
 $cbStmt = mysqli_prepare($conn, "
-    SELECT 
+    SELECT
         oc.order_combo_id,
         cb.combo_name,
         oc.quantity,
@@ -162,7 +151,7 @@ require_once dirname(__DIR__) . '/includes/header.php';
         <h1>Order #<?= sanitize($order['order_number']); ?></h1>
         <p>Comprehensive transaction audit powered by <code>view_order_transaction_details</code>.</p>
     </div>
-    
+
     <div style="display: flex; gap: 0.5rem; align-items: center;">
         <a href="<?= BASE_URL; ?>/receipt.php?order_id=<?= $orderId; ?>" target="_blank" class="btn btn-primary">
             📄 Download Official PDF Receipt
@@ -171,10 +160,9 @@ require_once dirname(__DIR__) . '/includes/header.php';
 </div>
 
 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; align-items: start;">
-    
-    <!-- Left Column: Itemized Line Items -->
+
     <div>
-        <!-- Movie Tickets Breakdown -->
+
         <div class="card" style="margin-bottom: 1.5rem;">
             <div style="padding: 1.25rem 1.25rem 0.5rem;">
                 <h3 style="margin: 0; font-size: 1.1rem; color: var(--c-ink);">
@@ -225,7 +213,6 @@ require_once dirname(__DIR__) . '/includes/header.php';
             </div>
         </div>
 
-        <!-- Concessions & Combos Breakdown -->
         <div class="card">
             <div style="padding: 1.25rem 1.25rem 0.5rem;">
                 <h3 style="margin: 0; font-size: 1.1rem; color: var(--c-ink);">
@@ -276,11 +263,10 @@ require_once dirname(__DIR__) . '/includes/header.php';
         </div>
     </div>
 
-    <!-- Right Column: Financial Summary & Actions -->
     <div>
         <div class="card" style="padding: 1.25rem; margin-bottom: 1.5rem;">
             <h3 style="margin: 0 0 1rem; font-size: 1.1rem; color: var(--c-ink);">Transaction Summary</h3>
-            
+
             <div style="display: flex; flex-direction: column; gap: 0.6rem; font-size: 0.9rem;">
                 <div style="display: flex; justify-content: space-between;">
                     <span style="color: var(--c-muted);">Date &amp; Time:</span>
@@ -345,7 +331,6 @@ require_once dirname(__DIR__) . '/includes/header.php';
             </div>
         </div>
 
-        <!-- Resend Email Console (Mailtrap SMTP Integration) -->
         <div class="card" style="padding: 1.25rem;">
             <h3 style="margin: 0 0 0.5rem; font-size: 1.05rem; color: var(--c-ink);">📧 Dispatch Digital Receipt</h3>
             <p style="margin: 0 0 1rem; color: var(--c-muted); font-size: 0.85rem;">Email official PDF receipt directly to the customer via Mailtrap.</p>
@@ -354,11 +339,11 @@ require_once dirname(__DIR__) . '/includes/header.php';
                 <input type="hidden" name="action" value="resend_email">
                 <div class="form-group" style="margin-bottom: 0.75rem;">
                     <label style="font-size: 0.8rem; font-weight: 600; color: var(--c-muted); display: block; margin-bottom: 0.25rem;">Recipient Email</label>
-                    <input type="email" 
-                           name="customer_email" 
-                           value="<?= sanitize($order['customer_email'] ?? ''); ?>" 
-                           placeholder="customer@example.com" 
-                           class="form-control" 
+                    <input type="email"
+                           name="customer_email"
+                           value="<?= sanitize($order['customer_email'] ?? ''); ?>"
+                           placeholder="customer@example.com"
+                           class="form-control"
                            required>
                 </div>
                 <button type="submit" class="btn btn-secondary" style="width: 100%; font-weight: 600;">

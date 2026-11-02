@@ -1,9 +1,4 @@
 <?php
-/**
- * ScreenBites - Edit Concession Combo Bundle
- * Procedural module modeled after PedalWorks-Dynamics
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 require_admin();
 
@@ -17,14 +12,12 @@ if (!$combo) {
     exit;
 }
 
-// Fetch existing constituent items
 $ciRes = mysqli_query($conn, "SELECT product_id, quantity FROM combo_items WHERE combo_id = {$id}");
 $currentItems = [];
 while ($ci = mysqli_fetch_assoc($ciRes)) {
     $currentItems[(int)$ci['product_id']] = (int)$ci['quantity'];
 }
 
-// Fetch all active products
 $pRes = mysqli_query($conn, "SELECT product_id, product_name, category, retail_price, current_stock FROM products WHERE is_active = 1 ORDER BY category ASC, product_name ASC");
 $allProducts = [];
 while ($p = mysqli_fetch_assoc($pRes)) {
@@ -90,7 +83,7 @@ require_once dirname(__DIR__) . '/includes/header.php';
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($allProducts as $prod): 
+                        <?php foreach ($allProducts as $prod):
                             $pId = (int)$prod['product_id'];
                             $existingQty = $currentItems[$pId] ?? 0;
                         ?>
@@ -111,12 +104,12 @@ require_once dirname(__DIR__) . '/includes/header.php';
                                     </span>
                                 </td>
                                 <td style="text-align: center;">
-                                    <input type="number" 
-                                           name="items[<?= $pId; ?>]" 
-                                           value="<?= $existingQty; ?>" 
-                                           min="0" 
-                                           max="20" 
-                                           class="form-control" 
+                                    <input type="number"
+                                           name="items[<?= $pId; ?>]"
+                                           value="<?= $existingQty; ?>"
+                                           min="0"
+                                           max="20"
+                                           class="form-control"
                                            style="width: 70px; text-align: center; display: inline-block; padding: 0.25rem;">
                                 </td>
                             </tr>

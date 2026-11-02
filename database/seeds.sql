@@ -111,8 +111,6 @@ INSERT INTO screenings (screening_id, movie_id, hall_id, screening_date, start_t
 (9, 21, 1, DATE_ADD(CURDATE(), INTERVAL 1 DAY), '14:00:00', '16:00:00', 300.00),
 (10, 24, 2, DATE_ADD(CURDATE(), INTERVAL 1 DAY), '16:30:00', '18:30:00', 400.00);
 
-
-
 INSERT INTO products (product_id, product_name, category, unit_cost, retail_price, current_stock, reorder_level, image_path, is_active) VALUES
 (1, 'Classic Butter Popcorn (Large)', 'Popcorn', 35.00, 120.00, 85, 20, 'uploads/products/Butter_Popcorn.jpg', 1),
 (2, 'Caramel Glazed Popcorn (Large)', 'Popcorn', 42.00, 140.00, 50, 15, 'uploads/products/Caramel_Popcorn.jpg', 1),

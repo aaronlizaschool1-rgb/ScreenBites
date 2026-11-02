@@ -1,9 +1,4 @@
 <?php
-/**
- * ScreenBites - Update Movie Handler
- * Modeled after PedalWorks-Dynamics procedural architecture
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 require_admin();
 
@@ -23,7 +18,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // Procedural validation
     $err = validate_required($title, 'Movie title')
         ?? validate_numeric_range($duration, 1, 600, 'Duration in minutes')
         ?? validate_in_array($rating, ['G', 'PG', 'PG-13', 'R-13', 'R-16', 'R-18'], 'Age rating');
@@ -34,7 +28,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // Retrieve old poster for clean deletion if replaced
     $oldPoster = null;
     $chkRes = mysqli_query($conn, "SELECT poster_path FROM movies WHERE movie_id = {$id} LIMIT 1");
     if ($chkRow = mysqli_fetch_assoc($chkRes)) {
@@ -54,7 +47,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $imgSqlPart = ", poster_path = '" . mysqli_real_escape_string($conn, $posterRelPath) . "'";
     }
 
-    // Delete requested gallery images
     if (!empty($_POST['delete_images']) && is_array($_POST['delete_images'])) {
         $delStmt = mysqli_prepare($conn, "SELECT image_path FROM movie_images WHERE image_id = ? AND movie_id = ?");
         $delExec = mysqli_prepare($conn, "DELETE FROM movie_images WHERE image_id = ? AND movie_id = ?");
@@ -76,7 +68,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         mysqli_stmt_close($delExec);
     }
 
-    // Process new gallery stills uploads (MP1 upgrade)
     if (!empty($_FILES['photos']['name'])) {
         $galleryFiles = normalize_files_array($_FILES['photos']);
         if (!empty($galleryFiles)) {
@@ -95,7 +86,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Update primary poster in movie_images if replaced
     if ($posterRelPath) {
         $delPrim = mysqli_prepare($conn, "DELETE FROM movie_images WHERE movie_id = ? AND is_primary = 1");
         mysqli_stmt_bind_param($delPrim, "i", $id);
@@ -114,9 +104,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $trailerEsc  = !empty($trailer) ? "'" . mysqli_real_escape_string($conn, $trailer) . "'" : "NULL";
     $synopsisEsc = !empty($synopsis) ? "'" . mysqli_real_escape_string($conn, $synopsis) . "'" : "NULL";
 
-    $sql = "UPDATE movies 
-            SET title = '{$titleEsc}', 
-                duration_minutes = {$duration}, 
+    $sql = "UPDATE movies
+            SET title = '{$titleEsc}',
+                duration_minutes = {$duration},
                 rating = '{$rateEsc}',
                 genre = {$genreEsc},
                 trailer_url = {$trailerEsc},

@@ -1,9 +1,4 @@
 <?php
-/**
- * ScreenBites - Store Screening Schedule Handler
- * Modeled after itim211-2b-shop/item/store.php
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 require_admin();
 
@@ -19,12 +14,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // Fetch movie duration
     $mRes = mysqli_query($conn, "SELECT duration_minutes FROM movies WHERE movie_id = {$movieId} LIMIT 1");
     $movie = mysqli_fetch_assoc($mRes);
     $duration = (int)($movie['duration_minutes'] ?? 120);
 
-    // Compute end_time = start_time + duration + 20 mins
     $startTimestamp = strtotime($date . ' ' . $start);
     $endTimestamp   = $startTimestamp + (($duration + 20) * 60);
     $endTimeStr     = date('H:i:s', $endTimestamp);

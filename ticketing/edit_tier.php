@@ -1,9 +1,4 @@
 <?php
-/**
- * ScreenBites - Edit Seat Tier Surcharge & Configuration
- * Purely procedural script modeled after PedalWorks-Dynamics
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 require_once dirname(__DIR__) . '/includes/seat_pricing.php';
 require_admin();
@@ -89,25 +84,25 @@ require_once dirname(__DIR__) . '/includes/header.php';
     <form method="POST" action="<?= BASE_URL; ?>/ticketing/edit_tier.php?id=<?= $tierId; ?>">
         <div class="form-group">
             <label for="tier_name">Seat Tier Name *</label>
-            <input type="text" 
-                   id="tier_name" 
-                   name="tier_name" 
-                   value="<?= sanitize($_POST['tier_name'] ?? $tier['tier_name']); ?>" 
-                   class="form-control" 
-                   required 
+            <input type="text"
+                   id="tier_name"
+                   name="tier_name"
+                   value="<?= sanitize($_POST['tier_name'] ?? $tier['tier_name']); ?>"
+                   class="form-control"
+                   required
                    placeholder="e.g. Deluxe Couple Seats">
         </div>
 
         <div class="form-group">
             <label for="tier_surcharge">Tier Surcharge / Premium Amount (PHP) *</label>
-            <input type="number" 
-                   step="0.01" 
-                   min="0" 
-                   id="tier_surcharge" 
-                   name="tier_surcharge" 
-                   value="<?= htmlspecialchars(number_format((float)($_POST['tier_surcharge'] ?? $tier['tier_surcharge']), 2, '.', '')); ?>" 
-                   class="form-control" 
-                   required 
+            <input type="number"
+                   step="0.01"
+                   min="0"
+                   id="tier_surcharge"
+                   name="tier_surcharge"
+                   value="<?= htmlspecialchars(number_format((float)($_POST['tier_surcharge'] ?? $tier['tier_surcharge']), 2, '.', '')); ?>"
+                   class="form-control"
+                   required
                    placeholder="0.00">
             <small style="color: var(--c-muted, #5d6180); display: block; margin-top: 0.35rem;">
                 Set to <code>0.00</code> for standard seats. Any amount greater than 0 will be added dynamically to screening base prices.

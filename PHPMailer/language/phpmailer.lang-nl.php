@@ -1,12 +1,4 @@
 <?php
-
-/**
- * Dutch PHPMailer language file: refer to PHPMailer.php for definitive list.
- * @package PHPMailer
- * @author Tuxion <team@tuxion.nl>
- * @author Robin van der Vliet <info@robinvandervliet.com>
- */
-
 $PHPMAILER_LANG['authenticate']         = 'SMTP-fout: authenticatie mislukt.';
 $PHPMAILER_LANG['buggy_php']            = 'PHP-versie gedetecteerd die onderhevig is aan een bug die kan resulteren in gecorrumpeerde berichten. Om dit te voorkomen, gebruik SMTP voor het verzenden van berichten, zet de optie mail.add_x_header in uw php.ini uit, gebruik MacOS of Linux, of pas de gebruikte PHP-versie aan naar versie 7.0.17+ or 7.1.3+.';
 $PHPMAILER_LANG['connect_host']         = 'SMTP-fout: kon niet verbinden met SMTP-host.';

@@ -1,16 +1,10 @@
 <?php
-/**
- * ScreenBites - Concessions Restock Action
- * Procedural module modeled after PedalWorks-Dynamics
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 require_admin();
 
 $pageTitle = 'Receive Stock / Restock Concession';
 require_once dirname(__DIR__) . '/includes/header.php';
 
-// Fetch active products
 $productsQuery = mysqli_query($conn, "SELECT product_id, product_name, category, current_stock, reorder_level, unit_cost FROM products WHERE is_active = 1 ORDER BY category ASC, product_name ASC");
 
 $preselectId = isset($_GET['product_id']) ? (int)$_GET['product_id'] : 0;
@@ -41,15 +35,15 @@ $preselectId = isset($_GET['product_id']) ? (int)$_GET['product_id'] : 0;
             <label for="product_id" style="display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem;">
                 Select Concession Item <span style="color: #ef4444;">*</span>
             </label>
-            <select name="product_id" id="product_id" required 
+            <select name="product_id" id="product_id" required
                     style="width: 100%; padding: 0.65rem 0.75rem; border-radius: 6px; border: 1px solid var(--card-border); background: rgba(0,0,0,0.2); color: inherit; font-size: 0.95rem;">
                 <option value="">-- Select Product to Replenish --</option>
                 <?php while ($p = mysqli_fetch_assoc($productsQuery)): ?>
-                    <option value="<?= $p['product_id']; ?>" 
+                    <option value="<?= $p['product_id']; ?>"
                             data-cost="<?= $p['unit_cost']; ?>"
                             data-stock="<?= $p['current_stock']; ?>"
                             <?= ($preselectId === (int)$p['product_id']) ? 'selected' : ''; ?>>
-                        [<?= sanitize($p['category']); ?>] <?= sanitize($p['product_name']); ?> 
+                        [<?= sanitize($p['category']); ?>] <?= sanitize($p['product_name']); ?>
                         (Current Stock: <?= (int)$p['current_stock']; ?>, Catalog Cost: ₱<?= number_format($p['unit_cost'], 2); ?>)
                     </option>
                 <?php endwhile; ?>
@@ -112,7 +106,7 @@ $preselectId = isset($_GET['product_id']) ? (int)$_GET['product_id'] : 0;
 </div>
 
 <script>
-// Auto-fill unit cost from selected product if empty
+
 document.getElementById('product_id').addEventListener('change', function() {
     var opt = this.options[this.selectedIndex];
     var costInput = document.getElementById('purchase_cost');

@@ -1,9 +1,4 @@
 <?php
-/**
- * ScreenBites - Create Movie
- * Modeled after PedalWorks-Dynamics procedural architecture
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 require_admin();
 

@@ -1,9 +1,4 @@
 <?php
-/**
- * ScreenBites - Store Concession Combo Handler
- * Procedural module modeled after PedalWorks-Dynamics
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 require_admin();
 
@@ -19,7 +14,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // Filter items with qty > 0
     $validItems = [];
     foreach ($items as $prodId => $qty) {
         $pId = (int)$prodId;
@@ -40,7 +34,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     mysqli_begin_transaction($conn);
     try {
-        // 1. Insert into combos
         $sqlCombo = "INSERT INTO combos (combo_name, description, combo_price, is_active, created_at)
                      VALUES ('{$nameEsc}', {$descEsc}, {$price}, 1, NOW())";
         if (!mysqli_query($conn, $sqlCombo)) {
@@ -51,7 +44,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $newComboId = mysqli_insert_id($conn);
 
-        // 2. Insert into combo_items
         $sqlCi = "INSERT INTO combo_items (combo_id, product_id, quantity) VALUES (?, ?, ?)";
         $stmtCi = mysqli_prepare($conn, $sqlCi);
 

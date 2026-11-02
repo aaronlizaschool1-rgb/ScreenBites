@@ -1,9 +1,4 @@
 <?php
-/**
- * ScreenBites - Concession Details & Verified Customer Reviews
- * Fulfills MP4: Review CRUD with Regex Masking (100% Pure Procedural PHP)
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 require_once dirname(__DIR__) . '/includes/reviews.php';
 
@@ -13,7 +8,6 @@ if ($productId <= 0) {
     exit;
 }
 
-// 1. Fetch Product Information
 $pStmt = mysqli_prepare($conn, "SELECT product_id, product_name, category, unit_cost, retail_price, current_stock, image_path, is_active FROM products WHERE product_id = ? AND is_active = 1 LIMIT 1");
 mysqli_stmt_bind_param($pStmt, "i", $productId);
 mysqli_stmt_execute($pStmt);
@@ -26,11 +20,9 @@ if (!$product) {
     exit;
 }
 
-// 2. Reviews & Aggregations
 $reviews = get_item_reviews($conn, 'concession', $productId);
 $reviewSummary = get_item_review_summary($conn, 'concession', $productId);
 
-// 3. User verification
 $isUserLoggedIn = is_logged_in();
 $userId = $isUserLoggedIn ? (int)current_user()['user_id'] : 0;
 $isVerifiedBuyer = $isUserLoggedIn ? has_user_purchased_item($conn, $userId, 'concession', $productId) : false;
@@ -52,12 +44,11 @@ require_once dirname(__DIR__) . '/includes/header.php';
 
 <div class="card" style="padding: 2rem; margin-bottom: 2rem;">
     <div style="display: grid; grid-template-columns: 240px 1fr; gap: 2rem; align-items: start;" class="movie-details-layout">
-        
-        <!-- Product Thumbnail -->
+
         <div>
             <?php if (!empty($product['image_path']) && file_exists(dirname(__DIR__) . '/' . $product['image_path'])): ?>
-                <img src="<?= BASE_URL . '/' . htmlspecialchars($product['image_path']); ?>" 
-                     alt="<?= sanitize($product['product_name']); ?>" 
+                <img src="<?= BASE_URL . '/' . htmlspecialchars($product['image_path']); ?>"
+                     alt="<?= sanitize($product['product_name']); ?>"
                      style="width: 100%; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); object-fit: cover; aspect-ratio: 1/1;">
             <?php else: ?>
                 <div style="width: 100%; aspect-ratio: 1/1; border-radius: 12px; background: #141724; display: flex; align-items: center; justify-content: center; font-size: 5rem;">
@@ -75,7 +66,6 @@ require_once dirname(__DIR__) . '/includes/header.php';
             </div>
         </div>
 
-        <!-- Product Details & Add to Cart -->
         <div>
             <span class="badge" style="background: var(--c-indigo); color: #fff; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 700; font-size: 0.8rem;">
                 <?= sanitize($product['category']); ?>
@@ -112,9 +102,6 @@ require_once dirname(__DIR__) . '/includes/header.php';
     </div>
 </div>
 
-<!-- ====================================================================== -->
-<!-- VERIFIED CUSTOMER REVIEWS SECTION -->
-<!-- ====================================================================== -->
 <div class="card" id="reviews" style="padding: 2rem;">
     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--c-line); padding-bottom: 1rem; margin-bottom: 1.5rem;">
         <div>
@@ -129,7 +116,6 @@ require_once dirname(__DIR__) . '/includes/header.php';
         </div>
     </div>
 
-    <!-- Review Form Section (Purchase Verification Protected) -->
     <div style="background: #f8fafc; border: 1px solid var(--c-line); border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem;">
         <?php if (!$isUserLoggedIn): ?>
             <div style="text-align: center; padding: 1rem;">
@@ -149,7 +135,7 @@ require_once dirname(__DIR__) . '/includes/header.php';
                 </div>
             </div>
         <?php else: ?>
-            <!-- Verified Customer Submission / Edit Form -->
+
             <div>
                 <h3 style="font-size: 1.05rem; margin: 0 0 0.5rem; color: var(--c-ink);">
                     <?= $userExistingReview ? '✏️ Edit Your Verified Snack Review' : '✍️ Share Your Verified Snack Review'; ?>
@@ -179,13 +165,13 @@ require_once dirname(__DIR__) . '/includes/header.php';
 
                     <div class="form-group" style="margin-bottom: 1rem;">
                         <label for="review_text" style="font-weight: 600; font-size: 0.88rem;">Your Review &amp; Feedback</label>
-                        <textarea name="review_text" 
-                                  id="review_text" 
-                                  rows="4" 
-                                  class="form-control" 
-                                  required 
-                                  minlength="5" 
-                                  maxlength="2000" 
+                        <textarea name="review_text"
+                                  id="review_text"
+                                  rows="4"
+                                  class="form-control"
+                                  required
+                                  minlength="5"
+                                  maxlength="2000"
                                   placeholder="How was the flavor, portion size, and temperature? (Min. 5 characters)"><?= sanitize($userExistingReview['review_text'] ?? ''); ?></textarea>
                     </div>
 
@@ -197,21 +183,20 @@ require_once dirname(__DIR__) . '/includes/header.php';
         <?php endif; ?>
     </div>
 
-    <!-- Reviews List Display -->
     <div>
         <h3 style="font-size: 1.1rem; color: var(--c-ink); margin: 0 0 1rem;">Guest Reviews (<?= count($reviews); ?>)</h3>
-        
+
         <?php if (!empty($reviews)): ?>
             <div style="display: flex; flex-direction: column; gap: 1.25rem;">
-                <?php foreach ($reviews as $rev): 
+                <?php foreach ($reviews as $rev):
                     $stars = (int)$rev['rating'];
                 ?>
                     <div style="border-bottom: 1px solid var(--c-line); padding-bottom: 1.25rem;">
                         <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
                             <div style="display: flex; align-items: center; gap: 0.75rem;">
                                 <?php if (!empty($rev['avatar_path']) && file_exists(PROJECT_ROOT . '/' . $rev['avatar_path'])): ?>
-                                    <img src="<?= BASE_URL . '/' . htmlspecialchars($rev['avatar_path']); ?>" 
-                                         alt="Reviewer" 
+                                    <img src="<?= BASE_URL . '/' . htmlspecialchars($rev['avatar_path']); ?>"
+                                         alt="Reviewer"
                                          style="width: 38px; height: 38px; object-fit: cover; border-radius: 50%; border: 1.5px solid var(--c-line);">
                                 <?php else: ?>
                                     <div style="width: 38px; height: 38px; border-radius: 50%; background: #e0e7ff; color: #3730a3; display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 700;">

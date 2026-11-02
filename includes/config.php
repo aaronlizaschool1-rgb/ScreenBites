@@ -1,9 +1,4 @@
 <?php
-/**
- * ScreenBites - Database Configuration & Global Setup
- * Patterned after itim211-2b-shop
- */
-
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -13,25 +8,21 @@ $db_username = "root";
 $db_passwd   = "";
 $db_name     = "screenbites_db";
 
-$conn = mysqli_connect($db_host, $db_username, $db_passwd, $db_name) 
+$conn = mysqli_connect($db_host, $db_username, $db_passwd, $db_name)
     or die("Could not connect to database!\n" . mysqli_connect_error());
 
 mysqli_set_charset($conn, "utf8mb4");
 
-// Timezone configuration (Manila / Philippine Standard Time)
 date_default_timezone_set('Asia/Manila');
 
-// Currency & Business constants
 define('CURRENCY_SYMBOL', '₱');
 define('TAX_RATE', 0.12);
 
-// Mailtrap Sandbox Credentials (Term Test Lab)
 define('MAILTRAP_HOST', 'sandbox.smtp.mailtrap.io');
-define('MAILTRAP_PORT', 587);
-define('MAILTRAP_USER', '02ee9b634cec42');
-define('MAILTRAP_PASS', '11010eac78f293');
+define('MAILTRAP_PORT', 2525);
+define('MAILTRAP_USER', '690927f441cfe6');
+define('MAILTRAP_PASS', '81ecd079d6b1a2');
 
-// Dynamic Base URL computation
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
 $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
 $projectRoot = str_replace('\\', '/', dirname(__DIR__));
@@ -40,14 +31,12 @@ $relativeSubdir = str_replace($docRoot, '', $projectRoot);
 define('PROJECT_ROOT', dirname(__DIR__));
 define('BASE_URL', rtrim($protocol . $host . $relativeSubdir, '/'));
 
-// Include Authentication & Academic Procedural Helpers (PedalWorks-Dynamics pattern)
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/validation.php';
 require_once __DIR__ . '/upload.php';
 require_once __DIR__ . '/profanity_filter.php';
 require_once __DIR__ . '/reviews.php';
 
-// Simple helper functions
 function format_currency($amount): string {
     return CURRENCY_SYMBOL . number_format((float)$amount, 2);
 }

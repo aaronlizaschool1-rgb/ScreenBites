@@ -1,9 +1,4 @@
 <?php
-/**
- * ScreenBites - Flash Alert Notification Component
- * Modeled after PedalWorks-Dynamics/includes/alert.php
- */
-
 $flashSuccess = $_SESSION['flash_success'] ?? null;
 $flashError   = $_SESSION['flash_error']   ?? null;
 $flashWarning = $_SESSION['flash_warning'] ?? null;

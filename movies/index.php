@@ -1,10 +1,4 @@
 <?php
-/**
- * ScreenBites - Movie Showcase & Catalog Management
- * Modeled after PedalWorks-Dynamics procedural architecture
- * UI/UX styled from ScreenBites_oop_backup
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 
 $pageTitle = 'Now Showing Cinema Movies';
@@ -12,10 +6,9 @@ require_once dirname(__DIR__) . '/includes/header.php';
 
 $isAdmin = is_admin();
 
-// Fetch all active movies from MySQL
-$sql = "SELECT movie_id, title, duration_minutes, rating, poster_path, trailer_url, genre, synopsis, created_at 
-        FROM movies 
-        WHERE is_active = 1 
+$sql = "SELECT movie_id, title, duration_minutes, rating, poster_path, trailer_url, genre, synopsis, created_at
+        FROM movies
+        WHERE is_active = 1
         ORDER BY movie_id ASC";
 $res = mysqli_query($conn, $sql);
 
@@ -30,7 +23,6 @@ $totalMovies = count($movies);
 
 <div class="sm-cinema-page">
 
-    <!-- PAGE HEADER -->
     <div class="sm-page-header">
         <div>
             <h1 class="sm-main-title">Movies &amp; Box Office Catalog</h1>
@@ -46,7 +38,6 @@ $totalMovies = count($movies);
         </div>
     </div>
 
-    <!-- TABS & FILTER BAR -->
     <div class="sm-tabs-bar">
         <div class="sm-tab-group" role="tablist">
             <button type="button" class="sm-tab-item active" role="tab" aria-selected="true">
@@ -72,7 +63,6 @@ $totalMovies = count($movies);
         </div>
     </div>
 
-    <!-- MOVIE CARDS GRID -->
     <div class="sm-cinema-grid" id="smMoviesGrid">
         <?php if (empty($movies)): ?>
             <div class="card sm-empty-card" style="grid-column: 1 / -1; padding: 3rem; text-align: center;">
@@ -118,7 +108,6 @@ $totalMovies = count($movies);
                             <div class="art-watermark"><?= sanitize($title); ?></div>
                         </div>
 
-                        <!-- Poster Hover Overlay -->
                         <div class="sm-poster-overlay">
                             <div class="overlay-meta">
                                 <span>&#9201; <?= $timeText; ?></span>
@@ -194,7 +183,6 @@ $totalMovies = count($movies);
 
 </div>
 
-<!-- NATIVE HTML5 MOVIE TRAILER DIALOG -->
 <dialog class="sm-trailer-modal" id="trailerModal" aria-labelledby="trailerModalTitle">
     <div class="sm-modal-backdrop" id="closeTrailerBackdrop"></div>
     <div class="sm-modal-container">
@@ -227,12 +215,10 @@ $totalMovies = count($movies);
     </div>
 </dialog>
 
-<!-- VANILLA CONTROLLER FOR FILTERING & TRAILER MODAL -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     'use strict';
 
-    // 1. Movie Search & Rating Filters
     var searchInput  = document.getElementById('movieSearch');
     var ratingPills  = document.querySelectorAll('.sm-filter-pill');
     var movieCards   = document.querySelectorAll('.sm-movie-card');
@@ -265,7 +251,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // 2. Trailer Modal Interaction
     var trailerModal      = document.getElementById('trailerModal');
     var closeTrailerBtn   = document.getElementById('closeTrailerBtn');
     var modalBackdrop     = document.getElementById('closeTrailerBackdrop');

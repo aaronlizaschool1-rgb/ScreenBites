@@ -1,12 +1,4 @@
 <?php
-
-/**
- * Hindi PHPMailer language file: refer to English translation for definitive list
- * @package PHPMailer
- * @author Yash Karanke <mr.karanke@gmail.com>
- * Rewrite and extension of the work by Jayanti Suthar <suthar.jayanti93@gmail.com>
- */
-
 $PHPMAILER_LANG['authenticate']         = 'SMTP त्रुटि: प्रामाणिकता की जांच नहीं हो सका। ';
 $PHPMAILER_LANG['buggy_php']            = 'PHP का आपका संस्करण एक बग से प्रभावित है जिसके परिणामस्वरूप संदेश दूषित हो सकते हैं. इसे ठीक करने हेतु, भेजने के लिए SMTP का उपयोग करे, अपने php.ini में mail.add_x_header विकल्प को अक्षम करें, MacOS या Linux पर जाए, या अपने PHP संस्करण को 7.0.17+ या 7.1.3+ बदले.';
 $PHPMAILER_LANG['connect_host']         = 'SMTP त्रुटि: SMTP सर्वर से कनेक्ट नहीं हो सका। ';

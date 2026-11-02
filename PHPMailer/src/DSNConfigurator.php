@@ -1,46 +1,9 @@
 <?php
-
-/**
- * PHPMailer - PHP email creation and transport class.
- * PHP Version 5.5.
- *
- * @see https://github.com/PHPMailer/PHPMailer/ The PHPMailer GitHub project
- *
- * @author    Marcus Bointon (Synchro/coolbru) <phpmailer@synchromedia.co.uk>
- * @author    Jim Jagielski (jimjag) <jimjag@gmail.com>
- * @author    Andy Prevost (codeworxtech) <codeworxtech@users.sourceforge.net>
- * @author    Brent R. Matzelle (original founder)
- * @copyright 2012 - 2023 Marcus Bointon
- * @copyright 2010 - 2012 Jim Jagielski
- * @copyright 2004 - 2009 Andy Prevost
- * @license   https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html GNU Lesser General Public License
- * @note      This program is distributed in the hope that it will be useful - WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.
- */
-
 namespace PHPMailer\PHPMailer;
 
-/**
- * Configure PHPMailer with a DSN string.
- * Be aware that a DSN string can configure *all* PHPMailer properties,
- * including those that have security consequences, so do not use
- * user-provided DSN strings without strict validation of all parameters.
- *
- * @see https://en.wikipedia.org/wiki/Data_source_name
- *
- * @author Oleg Voronkovich <oleg-voronkovich@yandex.ru>
- */
 class DSNConfigurator
 {
-    /**
-     * Create new PHPMailer instance configured by DSN.
-     *
-     * @param string $dsn        DSN
-     * @param bool   $exceptions Should we throw external exceptions?
-     *
-     * @return PHPMailer
-     */
+
     public static function mailer($dsn, $exceptions = null)
     {
         static $configurator = null;
@@ -52,14 +15,6 @@ class DSNConfigurator
         return $configurator->configure(new PHPMailer($exceptions), $dsn);
     }
 
-    /**
-     * Configure PHPMailer instance with DSN string.
-     *
-     * @param PHPMailer $mailer PHPMailer instance
-     * @param string    $dsn    DSN
-     *
-     * @return PHPMailer
-     */
     public function configure(PHPMailer $mailer, $dsn)
     {
         $config = $this->parseDSN($dsn);
@@ -69,15 +24,6 @@ class DSNConfigurator
         return $mailer;
     }
 
-    /**
-     * Parse DSN string.
-     *
-     * @param string $dsn DSN
-     *
-     * @throws Exception If DSN is malformed
-     *
-     * @return array Configuration
-     */
     private function parseDSN($dsn)
     {
         $config = $this->parseUrl($dsn);
@@ -93,14 +39,6 @@ class DSNConfigurator
         return $config;
     }
 
-    /**
-     * Apply configuration to mailer.
-     *
-     * @param PHPMailer $mailer PHPMailer instance
-     * @param array     $config Configuration
-     *
-     * @throws Exception If scheme is invalid
-     */
     private function applyConfig(PHPMailer $mailer, $config)
     {
         switch ($config['scheme']) {
@@ -132,12 +70,6 @@ class DSNConfigurator
         }
     }
 
-    /**
-     * Configure SMTP.
-     *
-     * @param PHPMailer $mailer PHPMailer instance
-     * @param array     $config Configuration
-     */
     private function configureSMTP($mailer, $config)
     {
         $isSMTPS = 'smtps' === $config['scheme'];
@@ -165,14 +97,6 @@ class DSNConfigurator
         }
     }
 
-    /**
-     * Configure options.
-     *
-     * @param PHPMailer $mailer  PHPMailer instance
-     * @param array     $options Options
-     *
-     * @throws Exception If option is unknown
-     */
     private function configureOptions(PHPMailer $mailer, $options)
     {
         $allowedOptions = get_object_vars($mailer);
@@ -220,14 +144,6 @@ class DSNConfigurator
         }
     }
 
-    /**
-     * Parse a URL.
-     * Wrapper for the built-in parse_url function to work around a bug in PHP 5.5.
-     *
-     * @param string $url URL
-     *
-     * @return array|false
-     */
     protected function parseUrl($url)
     {
         if (\PHP_VERSION_ID >= 50600 || false === strpos($url, '?')) {

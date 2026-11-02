@@ -1,10 +1,4 @@
 <?php
-/**
- * ScreenBites - Visual Seat Selection Matrix
- * Direct 1:1 UI/UX recreation modeled after ScreenBites_oop_backup
- * Implemented with clean, 100% procedural architecture
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 require_once dirname(__DIR__) . '/includes/seat_pricing.php';
 require_once dirname(__DIR__) . '/includes/seat_holds.php';
@@ -16,8 +10,7 @@ if ($screeningId <= 0) {
     exit;
 }
 
-// 1. Fetch screening details
-$sql = "SELECT s.screening_id, s.screening_date, s.start_time, s.end_time, s.base_price, 
+$sql = "SELECT s.screening_id, s.screening_date, s.start_time, s.end_time, s.base_price,
                m.movie_id, m.title AS movie_title, m.poster_path, m.duration_minutes, m.rating,
                h.hall_id, h.hall_name, h.total_columns
         FROM screenings s
@@ -33,7 +26,6 @@ if (!$screening) {
     exit;
 }
 
-// Concurrency & Expiration Protection: Block past / already-started screenings
 $screeningStartTimestamp = strtotime($screening['screening_date'] . ' ' . $screening['start_time']);
 if ($screeningStartTimestamp && $screeningStartTimestamp < time()) {
     set_flash('error', 'This screening started at ' . date('M d, g:i A', $screeningStartTimestamp) . ' and is closed for new bookings.');
@@ -44,24 +36,19 @@ if ($screeningStartTimestamp && $screeningStartTimestamp < time()) {
 $hallId = (int)$screening['hall_id'];
 $basePrice = (float)$screening['base_price'];
 
-// 2. Fetch all seat tiers
 $seatTiers = get_seat_tiers($conn);
 
-// 3. Fetch already-sold seats for this screening
 $soldRes = mysqli_query($conn, "SELECT seat_id FROM tickets WHERE screening_id = {$screeningId} AND ticket_status = 'Valid'");
 $soldSeatIds = [];
 while ($soldRow = mysqli_fetch_assoc($soldRes)) {
     $soldSeatIds[] = (int)$soldRow['seat_id'];
 }
 
-// 4. Fetch active seat holds (FR4: Seat Hold & Timeout)
 $currentSessionToken = session_id();
 $activeHolds = get_active_seat_holds_for_screening($conn, $screeningId);
 
-// 5. Fetch all seats in this cinema hall with tier information
 $rowsGrouped = get_seats_with_tier_info($conn, $hallId);
 
-// Calculate total seats & availability stats
 $totalSeatsCount = 0;
 $availableCount = 0;
 $maxCol = (int)($screening['total_columns'] ?? 8);
@@ -72,7 +59,7 @@ foreach ($rowsGrouped as $rowLetter => $seatsInRow) {
         $sId = (int)$seat['seat_id'];
         $num = (int)$seat['seat_number'];
         if ($num > $maxCol) $maxCol = $num;
-        
+
         $isSold = in_array($sId, $soldSeatIds, true);
         $isHeldOther = isset($activeHolds[$sId]) && ($activeHolds[$sId]['session_token'] !== $currentSessionToken);
         if (!$isSold && !$isHeldOther) {
@@ -107,10 +94,9 @@ require_once dirname(__DIR__) . '/includes/header.php';
 </div>
 
 <div class="seatmap" id="seatMatrix">
-    <!-- TWO-COLUMN LAYOUT MATCHING ScreenBites_oop_backup -->
+
     <div class="seat-layout">
 
-        <!-- LEFT COLUMN: CINEMA SCREEN & INTERACTIVE SEAT GRID -->
         <section class="sb-card" style="padding: 1.5rem; text-align: center;" aria-label="Seat map">
             <div class="seat-screen">Cinema Screen</div>
 
@@ -119,7 +105,7 @@ require_once dirname(__DIR__) . '/includes/header.php';
                     <?php foreach ($rowsGrouped as $rowName => $rowSeats): ?>
                         <div class="seat-row">
                             <span class="seat-row-label" aria-hidden="true"><?= sanitize($rowName); ?></span>
-                            <?php foreach ($rowSeats as $st): 
+                            <?php foreach ($rowSeats as $st):
                                 $seatId = (int)$st['seat_id'];
                                 $isSold = in_array($seatId, $soldSeatIds, true);
                                 $isHeldByOther = false;
@@ -133,7 +119,6 @@ require_once dirname(__DIR__) . '/includes/header.php';
                                     }
                                 }
 
-                                // Status: available, sold, held, or heldbyme
                                 $status = 'available';
                                 if ($isSold) {
                                     $status = 'sold';
@@ -171,7 +156,6 @@ require_once dirname(__DIR__) . '/includes/header.php';
                 </div>
             </div>
 
-            <!-- STATUS LEGEND (ScreenBites_oop_backup) -->
             <ul class="seat-legend" aria-label="Seat status legend">
                 <li><span class="seat is-key" data-status="available" aria-hidden="true"></span>Available</li>
                 <li><span class="seat is-key" data-status="selected" aria-hidden="true"></span>Selected / Held by you</li>
@@ -179,9 +163,8 @@ require_once dirname(__DIR__) . '/includes/header.php';
                 <li><span class="seat is-key" data-status="sold" aria-hidden="true"></span>Sold</li>
             </ul>
 
-            <!-- TIER PRICING LEGEND (ScreenBites_oop_backup) -->
             <ul class="seat-legend tier-legend" aria-label="Seat tiers and prices">
-                <?php foreach ($seatTiers as $tId => $tier): 
+                <?php foreach ($seatTiers as $tId => $tier):
                     $surcharge = (float)$tier['tier_surcharge'];
                     $tierPrice = calculate_seat_price($basePrice, $surcharge);
                 ?>
@@ -196,7 +179,6 @@ require_once dirname(__DIR__) . '/includes/header.php';
             </ul>
         </section>
 
-        <!-- RIGHT COLUMN: STICKY 'YOUR HELD SEATS' SUMMARY PANEL -->
         <aside class="seat-panel sb-card" style="padding: 1.5rem;" aria-labelledby="heldHeading">
             <h2 class="card-title" id="heldHeading" style="font-size: 1.25rem; font-weight: 700; margin: 0 0 0.5rem;">
                 Your Selected Seats
@@ -216,7 +198,6 @@ require_once dirname(__DIR__) . '/includes/header.php';
                 <strong id="heldTotal">₱0.00</strong>
             </div>
 
-            <!-- NATIVE PROCEDURAL POST FORM -->
             <form method="POST" action="<?= BASE_URL; ?>/cart_update.php" id="seatSubmitForm">
                 <input type="hidden" name="type" value="add_tickets">
                 <input type="hidden" name="screening_id" value="<?= $screeningId; ?>">
@@ -240,7 +221,6 @@ require_once dirname(__DIR__) . '/includes/header.php';
     </div>
 </div>
 
-<!-- LIGHTWEIGHT PROCEDURAL JAVASCRIPT CONTROLLER (NO OOP / NO COMPLEX ASYNC ENGINE) -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var selectedSeats = {};
@@ -253,7 +233,6 @@ document.addEventListener('DOMContentLoaded', function() {
     var holdClockText = document.getElementById('holdClockText');
     var hiddenInputsContainer = document.getElementById('hiddenSeatInputs');
 
-    // Pre-select any seats already in user's hold
     document.querySelectorAll('.seat[data-status="heldbyme"]').forEach(function(btn) {
         toggleSeat(btn, true);
     });
@@ -324,10 +303,9 @@ document.addEventListener('DOMContentLoaded', function() {
         Object.values(selectedSeats).forEach(function(st) {
             total += st.price;
 
-            // 1. Render item in side list
             var li = document.createElement('li');
             li.className = 'held-item';
-            li.innerHTML = 
+            li.innerHTML =
                 '<div class="held-seat">' +
                     '<strong>Seat ' + st.label + '</strong>' +
                     '<small>' + st.tier + ' Tier</small>' +
@@ -336,7 +314,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 '<button type="button" class="held-remove" data-id="' + st.id + '" title="Remove seat">✕</button>';
             heldList.appendChild(li);
 
-            // 2. Render hidden input for native POST submission
             var input = document.createElement('input');
             input.type = 'hidden';
             input.name = 'seats[]';
@@ -346,7 +323,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         heldTotal.textContent = '₱' + total.toFixed(2);
 
-        // Bind remove button handlers in the side list
         heldList.querySelectorAll('.held-remove').forEach(function(rmBtn) {
             rmBtn.addEventListener('click', function() {
                 var sId = this.getAttribute('data-id');

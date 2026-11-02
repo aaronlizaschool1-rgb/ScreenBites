@@ -1,9 +1,4 @@
 <?php
-/**
- * ScreenBites - Screening Schedules
- * Modeled after itim211-2b-shop
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 
 $pageTitle = 'Screening Schedules';
@@ -13,7 +8,7 @@ $selectedDate = $_GET['date'] ?? date('Y-m-d');
 $selectedDateEsc = mysqli_real_escape_string($conn, $selectedDate);
 $showPast = isset($_GET['show_past']) && $_GET['show_past'] === '1';
 
-$sql = "SELECT s.screening_id, s.screening_date, s.start_time, s.end_time, s.base_price, 
+$sql = "SELECT s.screening_id, s.screening_date, s.start_time, s.end_time, s.base_price,
                m.movie_id, m.title AS movie_title, m.duration_minutes, m.rating,
                h.hall_id, h.hall_name
         FROM screenings s
@@ -42,7 +37,7 @@ $nowTimestamp = time();
     <form method="GET" action="<?= BASE_URL; ?>/schedules/index.php" style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
         <label for="date" style="font-weight: 600; font-size: 0.9rem; color: var(--text-muted);">Select Date:</label>
         <input type="date" id="date" name="date" value="<?= sanitize($selectedDate); ?>" class="form-control" style="width: auto;">
-        
+
         <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; color: var(--text-muted); cursor: pointer; margin-left: 0.5rem;">
             <input type="checkbox" name="show_past" value="1" <?= $showPast ? 'checked' : ''; ?> onchange="this.form.submit()">
             Show Concluded Screenings
@@ -70,14 +65,13 @@ $nowTimestamp = time();
             </thead>
             <tbody>
                 <?php if ($res && mysqli_num_rows($res) > 0): ?>
-                    <?php 
+                    <?php
                     $displayedCount = 0;
-                    while ($sc = mysqli_fetch_assoc($res)): 
+                    while ($sc = mysqli_fetch_assoc($res)):
                         $scId = (int)$sc['screening_id'];
                         $endTimestamp = strtotime($sc['screening_date'] . ' ' . $sc['end_time']);
                         $isEnded = ($endTimestamp && $endTimestamp < $nowTimestamp);
 
-                        // If user chose not to show past screenings, skip concluded ones
                         if ($isEnded && !$showPast) {
                             continue;
                         }
@@ -110,8 +104,8 @@ $nowTimestamp = time();
                                     </button>
                                 <?php endif; ?>
                                 <?php if (is_admin()): ?>
-                                    <a href="<?= BASE_URL; ?>/schedules/delete.php?id=<?= $scId; ?>" 
-                                       class="btn btn-sm btn-danger" 
+                                    <a href="<?= BASE_URL; ?>/schedules/delete.php?id=<?= $scId; ?>"
+                                       class="btn btn-sm btn-danger"
                                        onclick="return confirm('Delete this screening schedule?');">
                                         Delete
                                     </a>
@@ -122,7 +116,7 @@ $nowTimestamp = time();
                     <?php if ($displayedCount === 0): ?>
                         <tr>
                             <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">
-                                All screenings for this date have concluded. 
+                                All screenings for this date have concluded.
                                 <a href="<?= BASE_URL; ?>/schedules/index.php?date=<?= urlencode($selectedDate); ?>&show_past=1" style="color: var(--accent-gold);">
                                     View concluded screenings
                                 </a>.

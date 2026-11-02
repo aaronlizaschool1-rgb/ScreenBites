@@ -1,17 +1,11 @@
 <?php
-/**
- * ScreenBites - Combo Packages Management
- * Procedural module modeled after PedalWorks-Dynamics
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 require_admin();
 
 $pageTitle = 'Manage Concession Bundles & Combos';
 require_once dirname(__DIR__) . '/includes/header.php';
 
-// Fetch combos with their constituent items
-$combosSql = "SELECT c.*, 
+$combosSql = "SELECT c.*,
                      COUNT(ci.product_id) AS total_items_count
               FROM combos c
               LEFT JOIN combo_items ci ON c.combo_id = ci.combo_id
@@ -46,10 +40,9 @@ $combosRes = mysqli_query($conn, $combosSql);
             </thead>
             <tbody>
                 <?php if ($combosRes && mysqli_num_rows($combosRes) > 0): ?>
-                    <?php while ($c = mysqli_fetch_assoc($combosRes)): 
+                    <?php while ($c = mysqli_fetch_assoc($combosRes)):
                         $cId = (int)$c['combo_id'];
 
-                        // Fetch constituent items with product current stock
                         $itemsSql = "SELECT ci.quantity, p.product_name, p.current_stock
                                      FROM combo_items ci
                                      INNER JOIN products p ON ci.product_id = p.product_id

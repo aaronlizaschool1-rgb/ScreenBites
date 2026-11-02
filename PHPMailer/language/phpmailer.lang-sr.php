@@ -1,12 +1,4 @@
 <?php
-
-/**
- * Serbian PHPMailer language file: refer to English translation for definitive list
- * @package PHPMailer
- * @author Александар Јевремовић <ajevremovic@gmail.com>
- * @author Miloš Milanović <mmilanovic016@gmail.com>
- */
-
 $PHPMAILER_LANG['authenticate']         = 'SMTP грешка: аутентификација није успела.';
 $PHPMAILER_LANG['connect_host']         = 'SMTP грешка: повезивање са SMTP сервером није успело.';
 $PHPMAILER_LANG['data_not_accepted']    = 'SMTP грешка: подаци нису прихваћени.';

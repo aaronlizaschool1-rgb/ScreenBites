@@ -1,14 +1,4 @@
 <?php
-
-/**
- * Japanese PHPMailer language file: refer to English translation for definitive list
- * @package PHPMailer
- * @author Mitsuhiro Yoshida <https://mitstek.com>
- * @author Yoshi Sakai <http://bluemooninc.jp/>
- * @author Arisophy <https://github.com/arisophy/>
- * @author ARAKI Musashi <https://github.com/arakim/>
- */
-
 $PHPMAILER_LANG['authenticate']         = 'SMTPエラー: 認証できませんでした。';
 $PHPMAILER_LANG['buggy_php']            = 'ご利用のバージョンのPHPには不具合があり、メッセージが破損するおそれがあります。問題の解決は以下のいずれかを行ってください。SMTPでの送信に切り替える。php.iniのmail.add_x_headerをoffにする。MacOSまたはLinuxに切り替える。PHPバージョン7.0.17以降または7.1.3以降にアップグレードする。';
 $PHPMAILER_LANG['connect_host']         = 'SMTPエラー: SMTPホストに接続できませんでした。';

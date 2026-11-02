@@ -1,18 +1,11 @@
 <?php
-/**
- * ScreenBites - Concessions & Bundles Catalog
- * Procedural module modeled after PedalWorks-Dynamics
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 
 $pageTitle = 'Concessions & Value Combos';
 require_once dirname(__DIR__) . '/includes/header.php';
 
-// Category filter
 $category = $_GET['category'] ?? '';
 
-// 1. Fetch individual products (if not filtering exclusively for Combos)
 $products = [];
 if ($category !== 'Combos') {
     $where = "WHERE is_active = 1";
@@ -29,7 +22,6 @@ if ($category !== 'Combos') {
     }
 }
 
-// 2. Fetch combos (if filtering All or Combos)
 $combos = [];
 if (empty($category) || $category === 'Combos') {
     $cSql = "SELECT * FROM combos WHERE is_active = 1 ORDER BY combo_price ASC";
@@ -37,7 +29,7 @@ if (empty($category) || $category === 'Combos') {
     if ($cRes) {
         while ($c = mysqli_fetch_assoc($cRes)) {
             $cId = (int)$c['combo_id'];
-            // Fetch constituent items with product current stock
+
             $ciSql = "SELECT ci.quantity, p.product_name, p.current_stock
                       FROM combo_items ci
                       INNER JOIN products p ON ci.product_id = p.product_id
@@ -61,7 +53,6 @@ if (empty($category) || $category === 'Combos') {
     }
 }
 
-// Distinct product categories for filter bar
 $catRes = mysqli_query($conn, "SELECT DISTINCT category FROM products WHERE is_active = 1 ORDER BY category ASC");
 $catIcons = ['Popcorn' => '🍿', 'Beverage' => '🥤', 'Snacks' => '🌭', 'Candy' => '🍫'];
 ?>
@@ -90,7 +81,6 @@ $catIcons = ['Popcorn' => '🍿', 'Beverage' => '🥤', 'Snacks' => '🌭', 'Can
     </div>
 </div>
 
-<!-- CATEGORY FILTER BAR -->
 <div class="sb-card" style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; padding: 0.75rem 1.25rem;">
     <span style="font-size: 0.9rem; color: var(--text-muted); font-weight: 600;">Filter:</span>
     <a href="<?= BASE_URL; ?>/concessions/index.php" class="btn btn-sm <?= empty($category) ? 'btn-primary' : 'btn-secondary'; ?>">All Concessions</a>
@@ -98,18 +88,16 @@ $catIcons = ['Popcorn' => '🍿', 'Beverage' => '🥤', 'Snacks' => '🌭', 'Can
         🎁 Value Combos (<?= count($combos); ?>)
     </a>
     <?php while ($c = mysqli_fetch_assoc($catRes)): ?>
-        <a href="<?= BASE_URL; ?>/concessions/index.php?category=<?= urlencode($c['category']); ?>" 
+        <a href="<?= BASE_URL; ?>/concessions/index.php?category=<?= urlencode($c['category']); ?>"
            class="btn btn-sm <?= ($category === $c['category']) ? 'btn-primary' : 'btn-secondary'; ?>">
             <?= sanitize($c['category']); ?>
         </a>
     <?php endwhile; ?>
 </div>
 
-<!-- UNIFIED CONCESSIONS & COMBOS GRID -->
 <div class="sb-grid">
 
-    <!-- 1. RENDER VALUE COMBOS FIRST AS PROMINENT CARDS (If in All or Combos tab) -->
-    <?php foreach ($combos as $combo): 
+    <?php foreach ($combos as $combo):
         $cId = (int)$combo['combo_id'];
         $canFulfill = ($combo['max_available'] > 0);
     ?>
@@ -127,7 +115,7 @@ $catIcons = ['Popcorn' => '🍿', 'Beverage' => '🥤', 'Snacks' => '🌭', 'Can
 
                 <div class="sb-item-body">
                     <h3 class="sb-item-title" style="color: #fbbf24;"><?= sanitize($combo['combo_name']); ?></h3>
-                    
+
                     <p class="sb-item-meta" style="margin-bottom: 0.35rem;">
                         <span style="color: <?= $canFulfill ? '#10b981' : '#ef4444'; ?>; font-weight: 600;">
                             <?= $canFulfill ? "Available ({$combo['max_available']} bundles)" : "Temporarily Sold Out"; ?>
@@ -161,8 +149,7 @@ $catIcons = ['Popcorn' => '🍿', 'Beverage' => '🥤', 'Snacks' => '🌭', 'Can
         </div>
     <?php endforeach; ?>
 
-    <!-- 2. RENDER STANDALONE CONCESSION PRODUCTS -->
-    <?php foreach ($products as $row): 
+    <?php foreach ($products as $row):
         $pId = (int)$row['product_id'];
         $hasImg = !empty($row['image_path']) && file_exists(dirname(__DIR__) . '/' . $row['image_path']);
         $icon = $catIcons[$row['category']] ?? '🍿';
@@ -180,11 +167,11 @@ $catIcons = ['Popcorn' => '🍿', 'Beverage' => '🥤', 'Snacks' => '🌭', 'Can
                         <span><?= $icon; ?></span>
                     </div>
                 <?php endif; ?>
-                
+
                 <div class="sb-item-body">
                     <h3 class="sb-item-title"><?= sanitize($row['product_name']); ?></h3>
                     <p class="sb-item-meta">
-                        <?= sanitize($row['category']); ?> &bull; 
+                        <?= sanitize($row['category']); ?> &bull;
                         <span style="color: <?= $inStock ? '#10b981' : '#ef4444'; ?>;">
                             <?= $inStock ? 'In Stock (' . (int)$row['current_stock'] . ')' : 'Out of Stock'; ?>
                         </span>

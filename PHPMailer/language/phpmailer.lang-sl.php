@@ -1,13 +1,4 @@
 <?php
-
-/**
- * Slovene PHPMailer language file: refer to English translation for definitive list
- * @package PHPMailer
- * @author Klemen Tušar <techouse@gmail.com>
- * @author Filip Š <projects@filips.si>
- * @author Blaž Oražem <blaz@orazem.si>
- */
-
 $PHPMAILER_LANG['authenticate']         = 'SMTP napaka: Avtentikacija ni uspela.';
 $PHPMAILER_LANG['buggy_php']            = 'Na vašo PHP različico vpliva napaka, ki lahko povzroči poškodovana sporočila. Če želite težavo odpraviti, preklopite na pošiljanje prek SMTP, onemogočite možnost mail.add_x_header v vaši php.ini datoteki, preklopite na MacOS ali Linux, ali nadgradite vašo PHP zaličico na 7.0.17+ ali 7.1.3+.';
 $PHPMAILER_LANG['connect_host']         = 'SMTP napaka: Vzpostavljanje povezave s SMTP gostiteljem ni uspelo.';

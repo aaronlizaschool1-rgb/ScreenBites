@@ -1,9 +1,4 @@
 <?php
-/**
- * ScreenBites - Edit Concession Item
- * Modeled after itim211-2b-shop/item/edit.php
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 require_admin();
 
@@ -41,7 +36,7 @@ require_once dirname(__DIR__) . '/includes/header.php';
             <div class="form-group">
                 <label for="category">Category *</label>
                 <select id="category" name="category" class="form-control" required>
-                    <?php 
+                    <?php
                     $cats = ['Popcorn', 'Beverage', 'Snacks', 'Candy'];
                     foreach ($cats as $cat):
                     ?>
@@ -69,8 +64,6 @@ require_once dirname(__DIR__) . '/includes/header.php';
                 <input type="number" step="0.01" id="unit_cost" name="unit_cost" value="<?= (float)$product['unit_cost']; ?>" class="form-control" min="0">
             </div>
         </div>
-
-
 
         <div class="form-group">
             <label for="image_file">Item Image (uploads/products/)</label>

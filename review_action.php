@@ -1,10 +1,4 @@
 <?php
-/**
- * ScreenBites - Customer Review Action Controller
- * Fulfills MP4: Review CRUD with Regex Masking (100% Pure Procedural PHP)
- * Action-redirect flow with purchase verification, regex masking, and author edit controls
- */
-
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/reviews.php';
 require_once __DIR__ . '/includes/profanity_filter.php';
@@ -30,19 +24,17 @@ $rawText  = trim($_POST['review_text'] ?? '');
 $redirect = trim($_POST['redirect'] ?? '');
 
 if (empty($redirect)) {
-    $redirect = ($itemType === 'movie') 
-        ? BASE_URL . "/movie_details.php?id=" . $itemId . "#reviews" 
+    $redirect = ($itemType === 'movie')
+        ? BASE_URL . "/movie_details.php?id=" . $itemId . "#reviews"
         : BASE_URL . "/concessions/index.php#reviews";
 }
 
-// 1. Validate Item Reference
 if (!in_array($itemType, ['movie', 'concession'], true) || $itemId <= 0) {
     set_flash('error', 'Invalid item reference specified for review.');
     header("Location: " . BASE_URL . "/index.php");
     exit;
 }
 
-// 2. Validate Review Content
 $fieldErr = validate_numeric_range($rating, 1, 5, 'Star rating')
     ?? validate_required($rawText, 'Review text')
     ?? validate_string_length($rawText, 5, 2000, 'Review text');
@@ -53,7 +45,6 @@ if ($fieldErr !== null) {
     exit;
 }
 
-// 3. Purchase Verification (MP4 Constraint: 5 pts)
 $isVerified = has_user_purchased_item($conn, $userId, $itemType, $itemId);
 
 if (!$isVerified) {
@@ -63,12 +54,9 @@ if (!$isVerified) {
     exit;
 }
 
-// 4. Regex Profanity Masking (MP4 Constraint: 5 pts)
 $sanitizedReview = mask_profanity($rawText);
 
-// 5. Create or Edit Review (MP4 Constraint: 5 pts)
 if ($action === 'update' && $reviewId > 0) {
-    // Verify ownership
     $ownStmt = mysqli_prepare($conn, "SELECT review_id FROM reviews WHERE review_id = ? AND user_id = ? LIMIT 1");
     mysqli_stmt_bind_param($ownStmt, "ii", $reviewId, $userId);
     mysqli_stmt_execute($ownStmt);
@@ -93,10 +81,8 @@ if ($action === 'update' && $reviewId > 0) {
         set_flash('error', 'Database error updating review: ' . mysqli_error($conn));
     }
 } else {
-    // Check if user already submitted a review for this item (enforce 1 review per item per user)
     $existing = get_user_item_review($conn, $userId, $itemType, $itemId);
     if ($existing) {
-        // Automatically route to update
         $existingId = (int)$existing['review_id'];
         $updStmt = mysqli_prepare($conn, "UPDATE reviews SET rating = ?, review_text = ?, updated_at = NOW() WHERE review_id = ? AND user_id = ?");
         mysqli_stmt_bind_param($updStmt, "isii", $rating, $sanitizedReview, $existingId, $userId);

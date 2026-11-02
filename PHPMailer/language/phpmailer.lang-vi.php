@@ -1,11 +1,4 @@
 <?php
-
-/**
- * Vietnamese (Tiếng Việt) PHPMailer language file: refer to English translation for definitive list.
- * @package PHPMailer
- * @author VINADES.,JSC <contact@vinades.vn>
- */
-
 $PHPMAILER_LANG['authenticate']         = 'Lỗi SMTP: Không thể xác thực.';
 $PHPMAILER_LANG['connect_host']         = 'Lỗi SMTP: Không thể kết nối máy chủ SMTP.';
 $PHPMAILER_LANG['data_not_accepted']    = 'Lỗi SMTP: Dữ liệu không được chấp nhận.';
@@ -24,4 +17,4 @@ $PHPMAILER_LANG['signing']              = 'Lỗi đăng nhập: ';
 $PHPMAILER_LANG['smtp_connect_failed']  = 'Lỗi kết nối với SMTP';
 $PHPMAILER_LANG['smtp_error']           = 'Lỗi máy chủ smtp ';
 $PHPMAILER_LANG['variable_set']         = 'Không thể thiết lập hoặc thiết lập lại biến: ';
-//$PHPMAILER_LANG['extension_missing']    = 'Extension missing: ';
+

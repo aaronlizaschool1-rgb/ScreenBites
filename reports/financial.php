@@ -1,9 +1,4 @@
 <?php
-/**
- * ScreenBites - Net Income, P&L Statement & Inventory Valuation Report
- * Procedural reporting module modeled after PedalWorks-Dynamics
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 require_admin();
 
@@ -21,9 +16,6 @@ $monthNames = [
 ];
 
 if ($activeTab === 'inventory') {
-    // -------------------------------------------------------------
-    // INVENTORY ASSET VALUATION LOGIC
-    // -------------------------------------------------------------
     $catFilter = trim($_GET['category'] ?? '');
     $whereProd = "WHERE is_active = 1";
     if (!empty($catFilter)) {
@@ -59,7 +51,6 @@ if ($activeTab === 'inventory') {
         }
     }
 
-    // Recent replenishment spend over the selected month/year
     $replenishSql = "SELECT SUM(quantity_added * purchase_cost) AS total_restock_spend,
                             SUM(quantity_added) AS total_units_received
                      FROM stock_restocks
@@ -67,28 +58,22 @@ if ($activeTab === 'inventory') {
     $replenishRes = mysqli_query($conn, $replenishSql);
     $replenishData = mysqli_fetch_assoc($replenishRes) ?: ['total_restock_spend' => 0, 'total_units_received' => 0];
 
-    // Categories for filter
     $catListRes = mysqli_query($conn, "SELECT DISTINCT category FROM products WHERE is_active = 1 ORDER BY category ASC");
 
 } else {
-    // -------------------------------------------------------------
-    // P&L STATEMENT LOGIC
-    // -------------------------------------------------------------
-    // 1. Gross Revenue
     $revRes = mysqli_query($conn, "
-        SELECT 
+        SELECT
             COALESCE(SUM(subtotal_amount + tax_amount), 0) AS gross_revenue,
             COALESCE(SUM(subtotal_amount), 0) AS subtotal,
             COALESCE(SUM(tax_amount), 0) AS tax
-        FROM orders 
-        WHERE MONTH(created_at) = {$selectedMonth} 
-          AND YEAR(created_at) = {$selectedYear} 
+        FROM orders
+        WHERE MONTH(created_at) = {$selectedMonth}
+          AND YEAR(created_at) = {$selectedYear}
           AND order_status = 'Completed'
     ");
     $revRow = mysqli_fetch_assoc($revRes);
     $grossRevenue = (float)$revRow['gross_revenue'];
 
-    // Ticket Revenue
     $tRes = mysqli_query($conn, "
         SELECT COALESCE(SUM(t.price_charged), 0) AS ticket_revenue
         FROM tickets t
@@ -101,7 +86,6 @@ if ($activeTab === 'inventory') {
     $tRow = mysqli_fetch_assoc($tRes);
     $ticketRevenue = (float)$tRow['ticket_revenue'];
 
-    // Concessions Revenue (Individual snacks + Value Combos)
     $cRes = mysqli_query($conn, "
         SELECT COALESCE(SUM(oi.quantity * oi.unit_price_charged), 0) AS conc_revenue
         FROM order_items oi
@@ -126,7 +110,6 @@ if ($activeTab === 'inventory') {
 
     $concRevenue = $snackRevenue + $comboRevenue;
 
-    // 2. Cost of Goods Sold (COGS: Individual products + Combo constituent items)
     $cogsRes = mysqli_query($conn, "
         SELECT COALESCE(SUM(oi.quantity * p.unit_cost), 0) AS total_cogs
         FROM order_items oi
@@ -155,9 +138,8 @@ if ($activeTab === 'inventory') {
     $cogs = $snackCogs + $comboCogs;
     $grossProfit = $grossRevenue - $cogs;
 
-    // 3. Operational Utilities Overhead
     $utilRes = mysqli_query($conn, "
-        SELECT 
+        SELECT
             COALESCE(SUM(bill_amount), 0) AS total_utilities,
             COALESCE(SUM(CASE WHEN utility_type = 'Electricity' THEN bill_amount ELSE 0 END), 0) AS electricity,
             COALESCE(SUM(CASE WHEN utility_type = 'Water' THEN bill_amount ELSE 0 END), 0) AS water
@@ -170,7 +152,6 @@ if ($activeTab === 'inventory') {
     $elecExpense    = (float)$utilRow['electricity'];
     $waterExpense   = (float)$utilRow['water'];
 
-    // Total Operational Expenses & Net Operating Income
     $totalExpenses = $cogs + $totalUtilities;
     $netIncome     = $grossRevenue - $totalExpenses;
     $profitMargin  = $grossRevenue > 0 ? round(($netIncome / $grossRevenue) * 100, 1) : 0;
@@ -182,14 +163,13 @@ if ($activeTab === 'inventory') {
         <h1>Financial &amp; Stock Reports</h1>
         <p>Comprehensive profit &amp; loss analysis, cost of goods sold, and inventory asset valuation.</p>
     </div>
-    
-    <!-- Tab Navigation -->
+
     <div style="display: flex; gap: 0.5rem; align-items: center;">
-        <a href="<?= BASE_URL; ?>/reports/financial.php?tab=pnl&month=<?= $selectedMonth; ?>&year=<?= $selectedYear; ?>" 
+        <a href="<?= BASE_URL; ?>/reports/financial.php?tab=pnl&month=<?= $selectedMonth; ?>&year=<?= $selectedYear; ?>"
            class="btn <?= $activeTab === 'pnl' ? 'btn-primary' : 'btn-secondary'; ?>">
             📊 Income Statement (P&amp;L)
         </a>
-        <a href="<?= BASE_URL; ?>/reports/financial.php?tab=inventory&month=<?= $selectedMonth; ?>&year=<?= $selectedYear; ?>" 
+        <a href="<?= BASE_URL; ?>/reports/financial.php?tab=inventory&month=<?= $selectedMonth; ?>&year=<?= $selectedYear; ?>"
            class="btn <?= $activeTab === 'inventory' ? 'btn-primary' : 'btn-secondary'; ?>">
             📦 Inventory Asset Valuation
         </a>
@@ -200,9 +180,7 @@ if ($activeTab === 'inventory') {
 </div>
 
 <?php if ($activeTab === 'pnl'): ?>
-    <!-- ======================================================== -->
-    <!-- TAB 1: P&L INCOME STATEMENT -->
-    <!-- ======================================================== -->
+
     <div class="sb-card" style="margin-bottom: 1.5rem; padding: 1rem 1.25rem;">
         <form method="GET" action="<?= BASE_URL; ?>/reports/financial.php" style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
             <input type="hidden" name="tab" value="pnl">
@@ -222,7 +200,6 @@ if ($activeTab === 'inventory') {
         </form>
     </div>
 
-    <!-- KPI Cards -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
         <div class="sb-card" style="border-left: 4px solid #6366f1;">
             <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Gross Revenue</div>
@@ -251,7 +228,6 @@ if ($activeTab === 'inventory') {
         </div>
     </div>
 
-    <!-- Formal Income Statement Table (P&L) -->
     <div class="sb-card" style="padding: 0; overflow-x: auto;">
         <div style="padding: 1.25rem 1.25rem 0.5rem;">
             <h3 style="margin: 0; font-size: 1.15rem; font-weight: 700;">Profit &amp; Loss Statement</h3>
@@ -267,7 +243,7 @@ if ($activeTab === 'inventory') {
                 </tr>
             </thead>
             <tbody>
-                <!-- 1. Revenue -->
+
                 <tr style="background: rgba(255,255,255,0.02);">
                     <td colspan="3" style="padding: 0.75rem 1.25rem;"><strong style="color: #818cf8; font-size: 0.95rem;">1. OPERATING REVENUE</strong></td>
                 </tr>
@@ -287,7 +263,6 @@ if ($activeTab === 'inventory') {
                     <td style="padding: 0.75rem 1.25rem; text-align: right; color: #818cf8;"><?= format_currency($grossRevenue); ?></td>
                 </tr>
 
-                <!-- 2. COGS -->
                 <tr style="background: rgba(255,255,255,0.02);">
                     <td colspan="3" style="padding: 0.75rem 1.25rem;"><strong style="color: #f59e0b; font-size: 0.95rem;">2. COST OF GOODS SOLD</strong></td>
                 </tr>
@@ -302,7 +277,6 @@ if ($activeTab === 'inventory') {
                     <td style="padding: 0.75rem 1.25rem; text-align: right;"><?= format_currency($grossProfit); ?></td>
                 </tr>
 
-                <!-- 3. Utilities -->
                 <tr style="background: rgba(255,255,255,0.02);">
                     <td colspan="3" style="padding: 0.75rem 1.25rem;"><strong style="color: #ef4444; font-size: 0.95rem;">3. OPERATING OVERHEAD (UTILITIES)</strong></td>
                 </tr>
@@ -322,7 +296,6 @@ if ($activeTab === 'inventory') {
                     <td style="padding: 0.75rem 1.25rem; text-align: right; color: #ef4444;">&minus; <?= format_currency($totalExpenses); ?></td>
                 </tr>
 
-                <!-- Net Income Bottom Line -->
                 <tr style="background: <?= $netIncome >= 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'; ?>; font-size: 1.1rem; font-weight: 800;">
                     <td style="padding: 1rem 1.25rem 1rem 2rem; color: <?= $netIncome >= 0 ? '#10b981' : '#ef4444'; ?>;">
                         NET OPERATING INCOME
@@ -339,9 +312,7 @@ if ($activeTab === 'inventory') {
     </div>
 
 <?php else: ?>
-    <!-- ======================================================== -->
-    <!-- TAB 2: INVENTORY ASSET VALUATION REPORT -->
-    <!-- ======================================================== -->
+
     <div class="sb-card" style="margin-bottom: 1.5rem; padding: 1rem 1.25rem;">
         <form method="GET" action="<?= BASE_URL; ?>/reports/financial.php" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
             <input type="hidden" name="tab" value="inventory">
@@ -366,7 +337,6 @@ if ($activeTab === 'inventory') {
         </form>
     </div>
 
-    <!-- INVENTORY KPI CARDS -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
         <div class="sb-card" style="border-left: 4px solid var(--accent-gold);">
             <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Total Asset Valuation (Cost)</div>
@@ -411,7 +381,6 @@ if ($activeTab === 'inventory') {
         </div>
     </div>
 
-    <!-- INVENTORY VALUATION BREAKDOWN TABLE -->
     <div class="sb-card" style="padding: 0; overflow-x: auto;">
         <div style="padding: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
             <div>
@@ -439,10 +408,10 @@ if ($activeTab === 'inventory') {
             </thead>
             <tbody>
                 <?php if (!empty($inventoryItems)): ?>
-                    <?php foreach ($inventoryItems as $item): 
+                    <?php foreach ($inventoryItems as $item):
                         $isLow = (int)$item['current_stock'] <= (int)$item['reorder_level'];
-                        $marginPct = (float)$item['retail_price'] > 0 
-                            ? round((((float)$item['retail_price'] - (float)$item['unit_cost']) / (float)$item['retail_price']) * 100, 1) 
+                        $marginPct = (float)$item['retail_price'] > 0
+                            ? round((((float)$item['retail_price'] - (float)$item['unit_cost']) / (float)$item['retail_price']) * 100, 1)
                             : 0;
                     ?>
                         <tr style="border-bottom: 1px solid var(--card-border);">
@@ -476,8 +445,8 @@ if ($activeTab === 'inventory') {
                                 <?= $marginPct; ?>%
                             </td>
                             <td style="padding: 0.75rem 1rem; text-align: center;">
-                                <a href="<?= BASE_URL; ?>/concessions/restock.php?product_id=<?= (int)$item['product_id']; ?>" 
-                                   class="btn btn-sm btn-secondary" 
+                                <a href="<?= BASE_URL; ?>/concessions/restock.php?product_id=<?= (int)$item['product_id']; ?>"
+                                   class="btn btn-sm btn-secondary"
                                    style="font-size: 0.8rem; padding: 0.25rem 0.6rem; border: 1px solid rgba(16, 185, 129, 0.4); color: #10b981;">
                                     + Restock
                                 </a>

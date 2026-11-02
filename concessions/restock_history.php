@@ -1,16 +1,10 @@
 <?php
-/**
- * ScreenBites - Concessions Restock History Ledger
- * Procedural module modeled after PedalWorks-Dynamics
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 require_admin();
 
 $pageTitle = 'Stock Receiving Ledger & Restock History';
 require_once dirname(__DIR__) . '/includes/header.php';
 
-// Filter by product or supplier
 $filterProduct = (int)($_GET['product_id'] ?? 0);
 $filterSupplier = trim($_GET['supplier'] ?? '');
 
@@ -31,10 +25,8 @@ $historySql = "SELECT r.*, p.product_name, p.category, p.current_stock, u.full_n
                ORDER BY r.created_at DESC, r.restock_id DESC";
 $historyRes = mysqli_query($conn, $historySql);
 
-// Fetch products for filter dropdown
 $productsList = mysqli_query($conn, "SELECT product_id, product_name FROM products ORDER BY product_name ASC");
 
-// Totals
 $totalsSql = "SELECT SUM(quantity_added) AS total_units, SUM(quantity_added * purchase_cost) AS total_spend FROM stock_restocks r {$where}";
 $totalsRes = mysqli_query($conn, $totalsSql);
 $totals = mysqli_fetch_assoc($totalsRes) ?: ['total_units' => 0, 'total_spend' => 0];
@@ -55,7 +47,6 @@ $totals = mysqli_fetch_assoc($totalsRes) ?: ['total_units' => 0, 'total_spend' =
     </div>
 </div>
 
-<!-- KPI CARDS -->
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
     <div class="sb-card" style="border-left: 4px solid var(--accent-gold);">
         <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Filtered Units Received</div>
@@ -71,7 +62,6 @@ $totals = mysqli_fetch_assoc($totalsRes) ?: ['total_units' => 0, 'total_spend' =
     </div>
 </div>
 
-<!-- FILTER BAR -->
 <div class="sb-card" style="margin-bottom: 1.5rem; padding: 1rem 1.25rem;">
     <form method="GET" action="<?= BASE_URL; ?>/concessions/restock_history.php" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
         <div style="flex: 1; min-width: 220px;">
@@ -101,7 +91,6 @@ $totals = mysqli_fetch_assoc($totalsRes) ?: ['total_units' => 0, 'total_spend' =
     </form>
 </div>
 
-<!-- RESTOCK LEDGER TABLE -->
 <div class="sb-card" style="padding: 0; overflow-x: auto;">
     <table class="sb-table" style="width: 100%; border-collapse: collapse;">
         <thead>
@@ -119,7 +108,7 @@ $totals = mysqli_fetch_assoc($totalsRes) ?: ['total_units' => 0, 'total_spend' =
         </thead>
         <tbody>
             <?php if (mysqli_num_rows($historyRes) > 0): ?>
-                <?php while ($row = mysqli_fetch_assoc($historyRes)): 
+                <?php while ($row = mysqli_fetch_assoc($historyRes)):
                     $batchTotal = (float)$row['quantity_added'] * (float)$row['purchase_cost'];
                 ?>
                     <tr style="border-bottom: 1px solid var(--card-border);">

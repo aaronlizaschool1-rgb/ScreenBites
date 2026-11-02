@@ -1,13 +1,4 @@
 <?php
-
-/**
- * Spanish PHPMailer language file: refer to English translation for definitive list
- * @package PHPMailer
- * @author Matt Sturdy <matt.sturdy@gmail.com>
- * @author Crystopher Glodzienski Cardoso <crystopher.glodzienski@gmail.com>
- * @author Daniel Cruz <danicruz0415@gmail.com>
- */
-
 $PHPMAILER_LANG['authenticate']         = 'Error SMTP: Imposible autentificar.';
 $PHPMAILER_LANG['buggy_php']            = 'Tu versión de PHP ha sido afectada por un bug que puede resultar en mensajes corruptos. Para arreglarlo, cambia a enviar usando SMTP, deshabilita la opción mail.add_x_header en tu php.ini, cambia a MacOS o Linux, o actualiza tu PHP a la versión 7.0.17+ o 7.1.3+.';
 $PHPMAILER_LANG['connect_host']         = 'Error SMTP: Imposible conectar al servidor SMTP.';

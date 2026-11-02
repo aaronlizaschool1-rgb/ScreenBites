@@ -1,16 +1,9 @@
 <?php
-/**
- * ScreenBites - Administrative User Management Console
- * Fulfills MP2: User CRUD (100% Pure Procedural PHP)
- * User auditing, inline role update, and active/inactive status toggling with self-demotion guards
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 require_admin();
 
 $currentAdminId = (int)current_user()['user_id'];
 
-// Handle POST Mutations (Action-Redirect Flow)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action       = $_POST['action'] ?? '';
     $targetUserId = (int)($_POST['target_user_id'] ?? 0);
@@ -21,7 +14,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // Fetch target user metadata
     $chkStmt = mysqli_prepare($conn, "SELECT user_id, username, full_name, role, status FROM users WHERE user_id = ? LIMIT 1");
     mysqli_stmt_bind_param($chkStmt, "i", $targetUserId);
     mysqli_stmt_execute($chkStmt);
@@ -34,7 +26,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // 1. Toggle Active / Inactive Status
     if ($action === 'toggle_status') {
         if ($targetUserId === $currentAdminId) {
             set_flash('error', 'Security Violation: You cannot deactivate your own active administrator account.');
@@ -58,7 +49,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // 2. Update Role Assignment
     if ($action === 'update_role') {
         $newRole = trim($_POST['new_role'] ?? '');
         $allowedRoles = ['Customer', 'Administrator', 'Ticketing Staff', 'Snackbar Cashier'];
@@ -69,7 +59,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        // Self-demotion guard
         if ($targetUserId === $currentAdminId && $newRole !== 'Administrator') {
             set_flash('error', 'Security Violation: You cannot revoke or demote your own Administrator privileges.');
             header("Location: " . BASE_URL . "/admin/users.php");
@@ -92,7 +81,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Filter parameters
 $search       = trim($_GET['search'] ?? '');
 $roleFilter   = trim($_GET['role'] ?? '');
 $statusFilter = trim($_GET['status'] ?? '');
@@ -124,9 +112,8 @@ if (!empty($statusFilter)) {
 
 $whereClause = implode(" AND ", $where);
 
-// Compute Overall KPIs
 $kpiRes = mysqli_query($conn, "
-    SELECT 
+    SELECT
         COUNT(*) AS total_users,
         SUM(CASE WHEN role = 'Customer' THEN 1 ELSE 0 END) AS total_customers,
         SUM(CASE WHEN role IN ('Administrator', 'Ticketing Staff', 'Snackbar Cashier') THEN 1 ELSE 0 END) AS total_staff,
@@ -139,10 +126,9 @@ $totalCust  = (int)($kpiData['total_customers'] ?? 0);
 $totalStaff = (int)($kpiData['total_staff'] ?? 0);
 $activeUsers = (int)($kpiData['active_users'] ?? 0);
 
-// Fetch User Records
-$query = "SELECT user_id, full_name, username, email, avatar_path, role, status, created_at 
-          FROM users 
-          WHERE {$whereClause} 
+$query = "SELECT user_id, full_name, username, email, avatar_path, role, status, created_at
+          FROM users
+          WHERE {$whereClause}
           ORDER BY created_at DESC";
 
 $stmt = mysqli_prepare($conn, $query);
@@ -168,7 +154,6 @@ require_once dirname(__DIR__) . '/includes/header.php';
     </div>
 </div>
 
-<!-- Operational KPI Cards -->
 <div class="kpi-grid">
     <div class="kpi is-key">
         <p class="kpi-label">Registered Accounts</p>
@@ -197,7 +182,6 @@ require_once dirname(__DIR__) . '/includes/header.php';
     </div>
 </div>
 
-<!-- Filter Toolbar (Native Form GET) -->
 <div class="card" style="padding: 1.25rem; margin-bottom: 1.5rem;">
     <form method="GET" action="<?= BASE_URL; ?>/admin/users.php" style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: flex-end;">
         <div style="flex: 2; min-width: 220px;">
@@ -232,7 +216,6 @@ require_once dirname(__DIR__) . '/includes/header.php';
     </form>
 </div>
 
-<!-- Users Table -->
 <div class="card">
     <div style="padding: 1.25rem 1.25rem 0.5rem; display: flex; justify-content: space-between; align-items: center;">
         <div>
@@ -256,15 +239,15 @@ require_once dirname(__DIR__) . '/includes/header.php';
             </thead>
             <tbody>
                 <?php if (!empty($usersList)): ?>
-                    <?php foreach ($usersList as $u): 
+                    <?php foreach ($usersList as $u):
                         $isSelf = ((int)$u['user_id'] === $currentAdminId);
                     ?>
                         <tr>
-                            <!-- Avatar Thumbnail -->
+
                             <td>
                                 <?php if (!empty($u['avatar_path']) && file_exists(PROJECT_ROOT . '/' . $u['avatar_path'])): ?>
-                                    <img src="<?= BASE_URL . '/' . htmlspecialchars($u['avatar_path']); ?>" 
-                                         alt="Avatar" 
+                                    <img src="<?= BASE_URL . '/' . htmlspecialchars($u['avatar_path']); ?>"
+                                         alt="Avatar"
                                          style="width: 36px; height: 36px; object-fit: cover; border-radius: 50%; border: 1.5px solid var(--c-line);">
                                 <?php else: ?>
                                     <div style="width: 36px; height: 36px; border-radius: 50%; background: #e0e7ff; color: #3730a3; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; font-weight: 700;">
@@ -273,7 +256,6 @@ require_once dirname(__DIR__) . '/includes/header.php';
                                 <?php endif; ?>
                             </td>
 
-                            <!-- Name & Username -->
                             <td>
                                 <strong style="font-size: 0.92rem; color: var(--c-ink); display: block;">
                                     <?= sanitize($u['full_name']); ?>
@@ -284,19 +266,17 @@ require_once dirname(__DIR__) . '/includes/header.php';
                                 <small style="color: var(--c-muted); font-size: 0.8rem;">@<?= sanitize($u['username']); ?></small>
                             </td>
 
-                            <!-- Email -->
                             <td style="font-size: 0.88rem;">
                                 <?= sanitize($u['email'] ?? 'Not set'); ?>
                             </td>
 
-                            <!-- Role Update Form (Zero-JSON auto-submit) -->
                             <td>
                                 <form method="POST" action="<?= BASE_URL; ?>/admin/users.php" style="margin: 0;">
                                     <input type="hidden" name="action" value="update_role">
                                     <input type="hidden" name="target_user_id" value="<?= (int)$u['user_id']; ?>">
-                                    <select name="new_role" 
-                                            class="form-control" 
-                                            style="padding: 0.3rem 0.5rem; font-size: 0.82rem; font-weight: 600;" 
+                                    <select name="new_role"
+                                            class="form-control"
+                                            style="padding: 0.3rem 0.5rem; font-size: 0.82rem; font-weight: 600;"
                                             onchange="this.form.submit()"
                                             <?= $isSelf ? 'disabled title="You cannot demote your own administrator privileges"' : ''; ?>>
                                         <option value="Customer" <?= $u['role'] === 'Customer' ? 'selected' : ''; ?>>Customer</option>
@@ -307,7 +287,6 @@ require_once dirname(__DIR__) . '/includes/header.php';
                                 </form>
                             </td>
 
-                            <!-- Status Badge -->
                             <td style="text-align: center;">
                                 <?php if ($u['status'] === 'Active'): ?>
                                     <span style="color: #065f46; background: #d1fae5; font-size: 0.78rem; font-weight: 700; padding: 0.2rem 0.55rem; border-radius: 999px;">
@@ -320,12 +299,10 @@ require_once dirname(__DIR__) . '/includes/header.php';
                                 <?php endif; ?>
                             </td>
 
-                            <!-- Created Date -->
                             <td style="font-size: 0.85rem; color: var(--c-muted);">
                                 <?= date('M d, Y', strtotime($u['created_at'])); ?>
                             </td>
 
-                            <!-- Status Toggle Action Form -->
                             <td style="text-align: center;">
                                 <?php if ($isSelf): ?>
                                     <span style="font-size: 0.78rem; color: var(--c-muted); font-style: italic;">Protected</span>
@@ -334,15 +311,15 @@ require_once dirname(__DIR__) . '/includes/header.php';
                                         <input type="hidden" name="action" value="toggle_status">
                                         <input type="hidden" name="target_user_id" value="<?= (int)$u['user_id']; ?>">
                                         <?php if ($u['status'] === 'Active'): ?>
-                                            <button type="submit" 
-                                                    class="btn btn-sm btn-secondary" 
-                                                    style="color: #991b1b; border-color: #fecaca; background: #fff5f5; font-size: 0.78rem;" 
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-secondary"
+                                                    style="color: #991b1b; border-color: #fecaca; background: #fff5f5; font-size: 0.78rem;"
                                                     onclick="return confirm('Are you sure you want to deactivate account @<?= sanitize($u['username']); ?>?')">
                                                 Deactivate
                                             </button>
                                         <?php else: ?>
-                                            <button type="submit" 
-                                                    class="btn btn-sm btn-secondary" 
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-secondary"
                                                     style="color: #065f46; border-color: #a7f3d0; background: #f0fdf4; font-size: 0.78rem;">
                                                 Activate
                                             </button>

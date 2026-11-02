@@ -1,9 +1,4 @@
 <?php
-/**
- * ScreenBites - Update Concession Combo Handler
- * Procedural module modeled after PedalWorks-Dynamics
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 require_admin();
 
@@ -41,16 +36,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     mysqli_begin_transaction($conn);
     try {
-        // 1. Update combos table
-        $sqlCombo = "UPDATE combos 
-                     SET combo_name = '{$nameEsc}', 
-                         combo_price = {$price}, 
-                         description = {$descEsc}, 
-                         is_active = {$isActive} 
+        $sqlCombo = "UPDATE combos
+                     SET combo_name = '{$nameEsc}',
+                         combo_price = {$price},
+                         description = {$descEsc},
+                         is_active = {$isActive}
                      WHERE combo_id = {$id}";
         mysqli_query($conn, $sqlCombo);
 
-        // 2. Refresh combo_items
         mysqli_query($conn, "DELETE FROM combo_items WHERE combo_id = {$id}");
 
         $sqlCi = "INSERT INTO combo_items (combo_id, product_id, quantity) VALUES (?, ?, ?)";

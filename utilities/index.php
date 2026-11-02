@@ -1,9 +1,4 @@
 <?php
-/**
- * ScreenBites - Operational Utilities Overhead Ledger
- * Pure procedural module modeled after itim211-2b-shop
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 require_admin();
 
@@ -18,20 +13,19 @@ if (!empty($selectedType) && in_array($selectedType, ['Electricity', 'Water'], t
     $whereClause .= " AND utility_type = '{$selectedType}'";
 }
 
-$sqlExpenses = "SELECT u.*, us.full_name AS recorder_name 
+$sqlExpenses = "SELECT u.*, us.full_name AS recorder_name
                 FROM utility_expenses u
                 LEFT JOIN users us ON u.user_id = us.user_id
                 {$whereClause}
                 ORDER BY u.billing_year DESC, u.billing_month DESC, u.utility_type ASC";
 $resExpenses = mysqli_query($conn, $sqlExpenses);
 
-// Totals across selected year
 $resUtilTotals = mysqli_query($conn, "
-    SELECT 
+    SELECT
         COALESCE(SUM(bill_amount), 0) AS total_utilities,
         COALESCE(SUM(CASE WHEN utility_type = 'Electricity' THEN bill_amount ELSE 0 END), 0) AS total_electricity,
         COALESCE(SUM(CASE WHEN utility_type = 'Water' THEN bill_amount ELSE 0 END), 0) AS total_water
-    FROM utility_expenses 
+    FROM utility_expenses
     WHERE billing_year = {$selectedYear}
 ");
 $utilTotals = mysqli_fetch_assoc($resUtilTotals);
@@ -76,14 +70,12 @@ $monthNames = [
     </div>
 </div>
 
-<!-- Utility Expenses Ledger Section -->
 <div class="page-head" style="margin-top: 1.5rem; margin-bottom: 0.75rem;">
     <div>
         <h2>Utility Billing Records</h2>
         <p>Audited monthly bills for year <?= $selectedYear; ?>.</p>
     </div>
-    
-    <!-- Filter Form -->
+
     <form method="GET" action="<?= BASE_URL; ?>/utilities/index.php" style="display: flex; gap: 0.5rem; align-items: center;">
         <select name="type" class="form-control" style="width: auto; padding: 0.4rem 0.6rem;">
             <option value="">All Utilities</option>
@@ -116,7 +108,7 @@ $monthNames = [
             </thead>
             <tbody>
                 <?php if ($resExpenses && mysqli_num_rows($resExpenses) > 0): ?>
-                    <?php while ($exp = mysqli_fetch_assoc($resExpenses)): 
+                    <?php while ($exp = mysqli_fetch_assoc($resExpenses)):
                         $expId = (int)$exp['expense_id'];
                         $isPaid = $exp['payment_status'] === 'Paid';
                         $monthLabel = ($monthNames[(int)$exp['billing_month']] ?? 'Month ' . $exp['billing_month']) . ' ' . $exp['billing_year'];

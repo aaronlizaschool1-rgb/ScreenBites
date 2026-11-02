@@ -1,9 +1,4 @@
 <?php
-/**
- * ScreenBites - Store Movie Handler
- * Modeled after PedalWorks-Dynamics procedural architecture
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 require_admin();
 
@@ -16,7 +11,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $trailer  = get_youtube_id($rawTrailer);
     $synopsis = trim($_POST['synopsis'] ?? '');
 
-    // Procedural validation using validation.php
     $err = validate_required($title, 'Movie title')
         ?? validate_numeric_range($duration, 1, 600, 'Duration in minutes')
         ?? validate_in_array($rating, ['G', 'PG', 'PG-13', 'R-13', 'R-16', 'R-18'], 'Age rating');
@@ -51,7 +45,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (mysqli_query($conn, $sql)) {
         $newId = (int)mysqli_insert_id($conn);
 
-        // Store primary poster in movie_images if uploaded
         if ($posterRelPath) {
             $stmtPrim = mysqli_prepare($conn, "INSERT INTO movie_images (movie_id, image_path, is_primary, created_at) VALUES (?, ?, 1, NOW())");
             if ($stmtPrim) {
@@ -61,7 +54,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        // Multi-photo gallery upload processing (MP1 upgrade)
         if (!empty($_FILES['photos']['name'])) {
             $galleryFiles = normalize_files_array($_FILES['photos']);
             if (!empty($galleryFiles)) {

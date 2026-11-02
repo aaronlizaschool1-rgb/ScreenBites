@@ -1,9 +1,4 @@
 <?php
-/**
- * ScreenBites - Update Concession Item Handler
- * Modeled after itim211-2b-shop/item/update.php
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 require_admin();
 
@@ -21,7 +16,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // Procedural validation
     $err = validate_required($name, 'Product name')
         ?? validate_in_array($category, ['Popcorn', 'Beverage', 'Snacks', 'Candy'], 'Category')
         ?? validate_numeric_range($stock, 0, 10000, 'Current stock')
@@ -38,7 +32,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // Fetch old image to delete on replacement
     $oldImg = null;
     $chkRes = mysqli_query($conn, "SELECT image_path FROM products WHERE product_id = {$id} LIMIT 1");
     if ($chkRow = mysqli_fetch_assoc($chkRes)) {
@@ -60,11 +53,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $imgSqlPart = ", image_path = '" . mysqli_real_escape_string($conn, $imageRelPath) . "'";
     }
 
-    $sql = "UPDATE products 
-            SET product_name = '{$nameEsc}', 
-                category = '{$catEsc}', 
-                current_stock = {$stock}, 
-                retail_price = {$retail}, 
+    $sql = "UPDATE products
+            SET product_name = '{$nameEsc}',
+                category = '{$catEsc}',
+                current_stock = {$stock},
+                retail_price = {$retail},
                 unit_cost = {$cost}
                 {$imgSqlPart}
             WHERE product_id = {$id}";

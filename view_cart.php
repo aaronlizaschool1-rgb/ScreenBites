@@ -1,20 +1,13 @@
 <?php
-/**
- * ScreenBites - View Shopping Cart
- * Dynamic concessions quantity updating & synchronized checkout calculations
- */
-
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/seat_holds.php';
 
-// Sync cart with active holds (auto-remove expired seats)
 $sessionToken = session_id();
 $removedHolds = sync_cart_with_seat_holds($conn, $sessionToken);
 if ($removedHolds > 0) {
     $_SESSION['flash_error'] = "Your 8-minute seat reservation expired. The seat(s) have been released back to other customers.";
 }
 
-// Check for hold countdown
 $holdExpiryTimestamp = get_session_hold_expiry($conn, $sessionToken);
 
 $pageTitle = 'Shopping Cart';
@@ -60,7 +53,7 @@ $grandTotal = 0.00;
 <?php endif; ?>
 
 <style>
-/* Robust Cart Table Display & Alignment */
+
 #cartTable {
     width: 100% !important;
     border-collapse: collapse !important;
@@ -149,8 +142,8 @@ $grandTotal = 0.00;
                                             </span>
                                         <?php endif; ?>
 
-                                        <a href="<?= BASE_URL; ?>/cart_update.php?type=remove&code=<?= urlencode($key); ?>" 
-                                           onclick="return confirm('Remove this item from your cart?');" 
+                                        <a href="<?= BASE_URL; ?>/cart_update.php?type=remove&code=<?= urlencode($key); ?>"
+                                           onclick="return confirm('Remove this item from your cart?');"
                                            style="background: none; border: none; color: #ef4444; font-size: 0.75rem; text-decoration: underline; cursor: pointer; padding: 0.1rem 0.3rem;"
                                            title="Remove item">
                                             Remove
@@ -173,23 +166,23 @@ $grandTotal = 0.00;
                                         <input type="hidden" name="product_qty[<?= sanitize($key); ?>]" value="1">
                                     <?php else: ?>
                                         <div style="display: inline-flex; align-items: center; border: 1.5px solid var(--c-line, #dcdff0); border-radius: 6px; background: #fff; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); vertical-align: middle;">
-                                            <button type="button" 
-                                                    onclick="stepQty('<?= sanitize($key); ?>', -1)" 
-                                                    style="border: none; background: #f8fafc; color: var(--c-ink, #1d1f3a); width: 32px; height: 34px; font-weight: 700; cursor: pointer; display: grid; place-items: center; font-size: 1.1rem; border-right: 1px solid var(--c-line, #dcdff0);" 
+                                            <button type="button"
+                                                    onclick="stepQty('<?= sanitize($key); ?>', -1)"
+                                                    style="border: none; background: #f8fafc; color: var(--c-ink, #1d1f3a); width: 32px; height: 34px; font-weight: 700; cursor: pointer; display: grid; place-items: center; font-size: 1.1rem; border-right: 1px solid var(--c-line, #dcdff0);"
                                                     title="Decrease quantity">&minus;</button>
-                                            
-                                            <input type="number" 
+
+                                            <input type="number"
                                                    id="qty-<?= sanitize($key); ?>"
-                                                   name="product_qty[<?= sanitize($key); ?>]" 
-                                                   value="<?= $qty; ?>" 
-                                                   min="1" 
-                                                   max="<?= $maxQty; ?>" 
+                                                   name="product_qty[<?= sanitize($key); ?>]"
+                                                   value="<?= $qty; ?>"
+                                                   min="1"
+                                                   max="<?= $maxQty; ?>"
                                                    onchange="document.getElementById('cartForm').submit();"
                                                    style="width: 48px; height: 34px; text-align: center; border: none; font-size: 0.95rem; font-weight: 700; color: var(--c-ink, #1d1f3a); -moz-appearance: textfield;">
-                                            
-                                            <button type="button" 
-                                                    onclick="stepQty('<?= sanitize($key); ?>', 1)" 
-                                                    style="border: none; background: #f8fafc; color: var(--c-ink, #1d1f3a); width: 32px; height: 34px; font-weight: 700; cursor: pointer; display: grid; place-items: center; font-size: 1.1rem; border-left: 1px solid var(--c-line, #dcdff0);" 
+
+                                            <button type="button"
+                                                    onclick="stepQty('<?= sanitize($key); ?>', 1)"
+                                                    style="border: none; background: #f8fafc; color: var(--c-ink, #1d1f3a); width: 32px; height: 34px; font-weight: 700; cursor: pointer; display: grid; place-items: center; font-size: 1.1rem; border-left: 1px solid var(--c-line, #dcdff0);"
                                                     title="Increase quantity">&plus;</button>
                                         </div>
                                     <?php endif; ?>
@@ -208,7 +201,6 @@ $grandTotal = 0.00;
             $vatAmount     = round($grandTotal - $subtotalVatEx, 2);
             ?>
 
-            
                 <div class="sb-card" style="min-width: 320px; padding: 1.5rem; background: #ffffff; border: 1.5px solid var(--c-line, #dcdff0); box-shadow: 0 4px 12px rgba(0,0,0,0.04); border-radius: 10px;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.6rem; color: var(--c-muted, #5d6180); font-size: 0.92rem;">
                         <span>Vatable Subtotal:</span>
@@ -233,7 +225,6 @@ $grandTotal = 0.00;
 <?php endif; ?>
 </div>
 
-<!-- PROCEDURAL CART CONTROLLER (Zero JSON - Native Form Submissions) -->
 <script>
 function stepQty(key, delta) {
     var input = document.getElementById('qty-' + key);
@@ -251,13 +242,6 @@ function stepQty(key, delta) {
     }
 }
 
-
-
-
-
-
-
-// Live Seat Hold Countdown Timer (FR4)
 document.addEventListener('DOMContentLoaded', function() {
     var banner = document.getElementById('seatHoldBanner');
     if (banner) {
@@ -271,7 +255,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (remaining <= 0) {
                 display.textContent = '00:00';
                 display.style.color = '#ef4444';
-                // Reload page to trigger PHP hold expiration and cart cleanup
+
                 window.location.reload();
                 return;
             }

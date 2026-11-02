@@ -1,10 +1,4 @@
 <?php
-/**
- * ScreenBites - Customer Registration Subsystem
- * Fulfills MP2: User CRUD (100% Pure Procedural PHP)
- * Secure password hashing, native upload via includes/upload.php, auto-session initialization
- */
-
 require_once __DIR__ . '/includes/config.php';
 
 if (is_logged_in()) {
@@ -24,7 +18,6 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $password        = $_POST['password'] ?? '';
     $confirmPassword = $_POST['confirm_password'] ?? '';
 
-    // 1. Procedural Validation
     $valErr = validate_required($fullName, 'Full Name')
         ?? validate_string_length($fullName, 2, 100, 'Full Name')
         ?? validate_required($username, 'Username')
@@ -42,7 +35,6 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     } elseif ($password !== $confirmPassword) {
         $error = 'Passwords do not match. Please re-enter your password.';
     } else {
-        // 2. Uniqueness checks via prepared statements
         $chkStmt = mysqli_prepare($conn, "SELECT user_id FROM users WHERE username = ? LIMIT 1");
         mysqli_stmt_bind_param($chkStmt, "s", $username);
         mysqli_stmt_execute($chkStmt);
@@ -64,7 +56,6 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         }
     }
 
-    // 3. Native File Upload via includes/upload.php if avatar provided
     $avatarRelPath = null;
     if (empty($error) && !empty($_FILES['avatar_file']['name'])) {
         $uploadRes = handle_image_upload($_FILES['avatar_file'], 'avatars');
@@ -75,7 +66,6 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         }
     }
 
-    // 4. Insert User Record and Auto-Login
     if (empty($error)) {
         $passwordHash = password_hash($password, PASSWORD_DEFAULT);
         $role = 'Customer';
@@ -92,10 +82,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             mysqli_stmt_close($stmtIns);
 
             if ($saved && $newUserId > 0) {
-                // Procedural Audit Logging
                 audit_log('CUSTOMER_REGISTERED', 'users', (int)$newUserId, "New customer account registered: {$username} ({$email})");
 
-                // Auto-login session initialization
                 session_regenerate_id(true);
                 $_SESSION['user'] = [
                     'user_id'     => (int)$newUserId,
@@ -136,32 +124,32 @@ require_once __DIR__ . '/includes/header.php';
     <form method="POST" action="<?= BASE_URL; ?>/register.php" enctype="multipart/form-data" id="registerForm" novalidate>
         <div class="form-group">
             <label for="full_name">Full Legal Name <span style="color: #ef4444;">*</span></label>
-            <input type="text" 
-                   id="full_name" 
-                   name="full_name" 
-                   class="form-control" 
-                   value="<?= sanitize($fullName); ?>" 
+            <input type="text"
+                   id="full_name"
+                   name="full_name"
+                   class="form-control"
+                   value="<?= sanitize($fullName); ?>"
                    placeholder="e.g. Maria Santos">
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <div class="form-group">
                 <label for="username">Username <span style="color: #ef4444;">*</span></label>
-                <input type="text" 
-                       id="username" 
-                       name="username" 
-                       class="form-control" 
-                       value="<?= sanitize($username); ?>" 
+                <input type="text"
+                       id="username"
+                       name="username"
+                       class="form-control"
+                       value="<?= sanitize($username); ?>"
                        placeholder="e.g. maria_s">
             </div>
 
             <div class="form-group">
                 <label for="email">Email Address <span style="color: #ef4444;">*</span></label>
-                <input type="text" 
-                       id="email" 
-                       name="email" 
-                       class="form-control" 
-                       value="<?= sanitize($email); ?>" 
+                <input type="text"
+                       id="email"
+                       name="email"
+                       class="form-control"
+                       value="<?= sanitize($email); ?>"
                        placeholder="maria@example.com">
             </div>
         </div>
@@ -169,29 +157,29 @@ require_once __DIR__ . '/includes/header.php';
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <div class="form-group">
                 <label for="password">Password <span style="color: #ef4444;">*</span></label>
-                <input type="password" 
-                       id="password" 
-                       name="password" 
-                       class="form-control" 
+                <input type="password"
+                       id="password"
+                       name="password"
+                       class="form-control"
                        placeholder="Min. 8 characters">
             </div>
 
             <div class="form-group">
                 <label for="confirm_password">Confirm Password <span style="color: #ef4444;">*</span></label>
-                <input type="password" 
-                       id="confirm_password" 
-                       name="confirm_password" 
-                       class="form-control" 
+                <input type="password"
+                       id="confirm_password"
+                       name="confirm_password"
+                       class="form-control"
                        placeholder="Re-enter password">
             </div>
         </div>
 
         <div class="form-group">
             <label for="avatar_file">Profile Photo <span style="font-weight: 400; color: var(--c-muted);">(Optional &bull; Max 2MB JPEG, PNG, or WebP)</span></label>
-            <input type="file" 
-                   id="avatar_file" 
-                   name="avatar_file" 
-                   class="form-control" 
+            <input type="file"
+                   id="avatar_file"
+                   name="avatar_file"
+                   class="form-control"
                    accept="image/jpeg,image/png,image/webp">
             <small style="color: var(--c-muted, #5d6180); display: block; margin-top: 0.25rem;">
                 Uploaded avatars are strictly validated via MIME inspection and stored securely.
@@ -204,7 +192,7 @@ require_once __DIR__ . '/includes/header.php';
     </form>
 
     <div style="text-align: center; margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px dashed var(--c-line, #dcdff0); font-size: 0.9rem; color: var(--c-muted, #5d6180);">
-        Already have an account? 
+        Already have an account?
         <a href="<?= BASE_URL; ?>/login.php" style="color: var(--c-indigo, #2b2d7a); font-weight: 700; text-decoration: none;">
             Sign In here
         </a>

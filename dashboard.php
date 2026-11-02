@@ -1,10 +1,4 @@
 <?php
-/**
- * ScreenBites - Management & Operational Dashboard
- * Modeled after PedalWorks-Dynamics procedural architecture
- * UI/UX styled from ScreenBites_oop_backup
- */
-
 require_once __DIR__ . '/includes/config.php';
 require_admin();
 
@@ -14,7 +8,6 @@ require_once __DIR__ . '/includes/header.php';
 $currentUser = current_user();
 $userName = sanitize($currentUser['full_name'] ?? 'Administrator');
 
-// 1. Box Office & Concessions KPIs
 $resGross = mysqli_query($conn, "SELECT COALESCE(SUM(subtotal_amount + tax_amount), 0) AS total_gross, COUNT(*) AS total_orders FROM orders WHERE order_status = 'Completed'");
 $grossRow = mysqli_fetch_assoc($resGross);
 $grossRevenue = (float)$grossRow['total_gross'];
@@ -25,19 +18,18 @@ $ticketsRow = mysqli_fetch_assoc($resTickets);
 $totalTickets = (int)$ticketsRow['total_tickets'];
 
 $resSnacks = mysqli_query($conn, "
-    SELECT 
+    SELECT
         (SELECT COALESCE(SUM(quantity), 0) FROM order_items) +
         (SELECT COALESCE(SUM(quantity), 0) FROM order_combos) AS total_snacks
 ");
 $snacksRow = mysqli_fetch_assoc($resSnacks);
 $totalSnacks = (int)$snacksRow['total_snacks'];
 
-// 2. Low-Stock Watchlist Query
 $resLowStock = mysqli_query($conn, "
-    SELECT product_id, product_name, category, current_stock, reorder_level 
-    FROM products 
-    WHERE is_active = 1 AND current_stock <= reorder_level 
-    ORDER BY (current_stock <= 0) DESC, current_stock ASC 
+    SELECT product_id, product_name, category, current_stock, reorder_level
+    FROM products
+    WHERE is_active = 1 AND current_stock <= reorder_level
+    ORDER BY (current_stock <= 0) DESC, current_stock ASC
     LIMIT 6
 ");
 $lowStockAlerts = [];
@@ -48,7 +40,6 @@ if ($resLowStock) {
 }
 $lowStockCount = count($lowStockAlerts);
 
-// 3. Today's Screenings (Upcoming & Active)
 $nowDateTime = date('Y-m-d H:i:s');
 $resTodayScreenings = mysqli_query($conn, "
     SELECT s.screening_id, s.screening_date, s.start_time, s.end_time, s.base_price,
@@ -68,7 +59,6 @@ if ($resTodayScreenings) {
     }
 }
 
-// 4. Recent Completed Transactions
 $resRecentOrders = mysqli_query($conn, "
     SELECT o.order_id, o.order_number, (o.subtotal_amount + o.tax_amount) AS total_amount, o.order_status, o.created_at,
            u.full_name AS cashier_name,
@@ -87,14 +77,13 @@ if ($resRecentOrders) {
     }
 }
 
-// 5. Utility Overhead for current year
 $currentYear = (int)date('Y');
 $resUtilTotals = mysqli_query($conn, "
-    SELECT 
+    SELECT
         COALESCE(SUM(bill_amount), 0) AS total_utilities,
         COALESCE(SUM(CASE WHEN utility_type = 'Electricity' THEN bill_amount ELSE 0 END), 0) AS total_electricity,
         COALESCE(SUM(CASE WHEN utility_type = 'Water' THEN bill_amount ELSE 0 END), 0) AS total_water
-    FROM utility_expenses 
+    FROM utility_expenses
     WHERE billing_year = {$currentYear}
 ");
 $utilTotals = mysqli_fetch_assoc($resUtilTotals);
@@ -106,7 +95,6 @@ $netOperatingMargin = $grossRevenue - $totalUtilities;
 
 <div class="sb-dash-wrapper">
 
-    <!-- 1. DASHBOARD HERO BANNER -->
     <div class="dash-hero">
         <div class="dash-hero-backdrop" aria-hidden="true">
             <div class="dash-hero-glow"></div>
@@ -142,7 +130,6 @@ $netOperatingMargin = $grossRevenue - $totalUtilities;
         </div>
     </div>
 
-    <!-- 2. HIGH-IMPACT KPI METRICS -->
     <div class="dash-kpi-grid">
         <div class="dash-kpi-card kpi-card-revenue">
             <div class="dash-kpi-icon-wrap icon-revenue">
@@ -207,7 +194,6 @@ $netOperatingMargin = $grossRevenue - $totalUtilities;
         </div>
     </div>
 
-    <!-- 3. WIDGET: OPERATIONAL QUICK ACCESS HUB -->
     <section class="dash-section" aria-label="Operations Quick Launch">
         <div class="dash-section-head">
             <div>
@@ -272,10 +258,8 @@ $netOperatingMargin = $grossRevenue - $totalUtilities;
         </div>
     </section>
 
-    <!-- 4. SPLIT MAIN GRID -->
     <div class="dash-main-grid">
 
-        <!-- LEFT COLUMN: Recent Transactions & Screenings -->
         <div class="dash-col-left">
 
             <section class="card dash-card" aria-label="Recent Transactions">
@@ -343,7 +327,6 @@ $netOperatingMargin = $grossRevenue - $totalUtilities;
                 </div>
             </section>
 
-            <!-- Cinema Hall Screenings -->
             <section class="card dash-card" aria-label="Today Screenings" style="margin-top: 1.5rem;">
                 <div class="dash-card-header">
                     <div>
@@ -395,10 +378,8 @@ $netOperatingMargin = $grossRevenue - $totalUtilities;
 
         </div>
 
-        <!-- RIGHT COLUMN: WIDGET: INVENTORY WATCHLIST & ANALYTICS PORTAL -->
         <div class="dash-col-right">
 
-            <!-- INVENTORY WATCHLIST WIDGET -->
             <section class="card dash-card" aria-label="Inventory Watchlist">
                 <div class="dash-card-header">
                     <div>
@@ -451,7 +432,6 @@ $netOperatingMargin = $grossRevenue - $totalUtilities;
                 <?php endif; ?>
             </section>
 
-            <!-- ANALYTICS & INTELLIGENCE PORTAL -->
             <section class="card dash-card" aria-label="Financial and Operations Analytics" style="margin-top: 1.5rem;">
                 <div class="dash-card-header">
                     <div>

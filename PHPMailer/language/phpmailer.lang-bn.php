@@ -1,11 +1,4 @@
 <?php
-
-/**
- * Bengali PHPMailer language file: refer to English translation for definitive list
- * @package PHPMailer
- * @author Manish Sarkar <manish.n.manish@gmail.com>
- */
-
 $PHPMAILER_LANG['authenticate']         = 'SMTP ত্রুটি: প্রমাণীকরণ করতে অক্ষম৷';
 $PHPMAILER_LANG['buggy_php']            = 'আপনার PHP সংস্করণ একটি বাগ দ্বারা প্রভাবিত হয় যার ফলে দূষিত বার্তা হতে পারে। এটি ঠিক করতে, পাঠাতে SMTP ব্যবহার করুন, আপনার php.ini এ mail.add_x_header বিকল্পটি নিষ্ক্রিয় করুন, MacOS বা Linux-এ স্যুইচ করুন, অথবা আপনার PHP সংস্করণকে 7.0.17+ বা 7.1.3+ এ পরিবর্তন করুন।';
 $PHPMAILER_LANG['connect_host']         = 'SMTP ত্রুটি: SMTP সার্ভারের সাথে সংযোগ করতে অক্ষম৷';

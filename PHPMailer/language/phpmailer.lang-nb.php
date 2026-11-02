@@ -1,11 +1,4 @@
 <?php
-
-/**
- * Norwegian Bokmål PHPMailer language file: refer to English translation for definitive list
- * @package PHPMailer
- * @author Wera AS <wordpress@wera.no>
- */
-
  $PHPMAILER_LANG['authenticate']         = 'SMTP-feil: Kunne ikke autentisere.';
  $PHPMAILER_LANG['buggy_php']            = 'Din versjon av PHP er påvirket av en feil som kan føre til ødelagte meldinger. For å løse problemet kan du bytte til sending via SMTP, deaktivere mail.add_x_header-alternativet i php.ini, bytte til MacOS eller Linux, eller oppgradere PHP til versjon 7.0.17+ eller 7.1.3+.';
  $PHPMAILER_LANG['connect_host']         = 'SMTP-feil: Kunne ikke koble til SMTP-vert.';

@@ -1,15 +1,9 @@
 <?php
-/**
- * ScreenBites - Checkout & Order Processing
- * Modeled after itim211-2b-shop/checkout.php
- */
-
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/seat_pricing.php';
 require_once __DIR__ . '/includes/seat_holds.php';
 require_once __DIR__ . '/includes/mailer.php';
 
-// Sync cart with active holds (FR4: Seat Hold & Timeout auto-expiration)
 $sessionToken = session_id();
 $removedHolds = sync_cart_with_seat_holds($conn, $sessionToken);
 if ($removedHolds > 0) {
@@ -22,7 +16,6 @@ $holdExpiryTimestamp = get_session_hold_expiry($conn, $sessionToken);
 
 $cart = $_SESSION['cart'] ?? [];
 
-// Calculate totals
 $grandTotal = 0.00;
 $hasTickets = false;
 $hasConcessions = false;
@@ -39,7 +32,6 @@ foreach ($cart as $item) {
 $subtotalVatEx = round($grandTotal / (1 + TAX_RATE), 2);
 $vatAmount     = round($grandTotal - $subtotalVatEx, 2);
 
-// Handle POST - Finalize Order
 $orderCompleted = false;
 $orderNumber = '';
 $changeDue = 0.00;
@@ -57,7 +49,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($cart)) {
     }
     $customerEmail = trim($_POST['customer_email'] ?? '');
 
-    // Pure server-side validation (Anti-HTML5 Validation Constraint)
     if (empty($paymentMethod)) {
         $errorMsg = "Please select a payment method.";
     } elseif ($amountPaidRaw === '' || !is_numeric($amountPaidRaw) || $amountPaid < $grandTotal) {
@@ -71,7 +62,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($cart)) {
 
         mysqli_begin_transaction($conn);
         try {
-            // 1. Insert order with customer metadata
             $sqlOrder = "INSERT INTO orders (order_number, user_id, customer_name, customer_email, subtotal_amount, tax_amount, order_status, created_at)
                          VALUES (?, ?, ?, ?, ?, ?, 'Completed', NOW())";
             $stmtOrder = mysqli_prepare($conn, $sqlOrder);
@@ -80,17 +70,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($cart)) {
             $orderId = mysqli_insert_id($conn);
             mysqli_stmt_close($stmtOrder);
 
-            // 2. Insert tickets
             $sqlTicket = "INSERT INTO tickets (order_id, screening_id, seat_id, hall_id, price_charged, ticket_status)
                           VALUES (?, ?, ?, ?, ?, 'Valid')";
             $stmtTicket = mysqli_prepare($conn, $sqlTicket);
 
-            // 3. Insert concessions
             $sqlOrderItem = "INSERT INTO order_items (order_id, product_id, quantity, unit_price_charged)
                              VALUES (?, ?, ?, ?)";
             $stmtOrderItem = mysqli_prepare($conn, $sqlOrderItem);
 
-            // 3b. Insert combos
             $sqlOrderCombo = "INSERT INTO order_combos (order_id, combo_id, quantity, unit_price_charged)
                               VALUES (?, ?, ?, ?)";
             $stmtOrderCombo = mysqli_prepare($conn, $sqlOrderCombo);
@@ -103,7 +90,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($cart)) {
                     $scId = (int)$item['screening_id'];
                     $seatId = (int)$item['seat_id'];
 
-                    // Fresh server-side anti-tamper recalculation of tier price and expiration check
                     $stRes = mysqli_query($conn, "
                         SELECT s.hall_id, st.tier_name, st.tier_surcharge, sc.base_price, sc.screening_date, sc.end_time, m.title AS movie_title
                         FROM seats s
@@ -117,17 +103,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($cart)) {
                         throw new Exception("Invalid seat or screening reference in cart.");
                     }
 
-                    // Check if screening concluded while customer was in cart/checkout
                     $scEndTime = strtotime($stRow['screening_date'] . ' ' . $stRow['end_time']);
                     if ($scEndTime && $scEndTime < time()) {
                         throw new Exception("Screening for '{$stRow['movie_title']}' has already concluded at " . date('g:i A', $scEndTime) . " and cannot be checked out.");
                     }
 
-                    // Concurrency Protection: Check if seat is already booked for this screening
                     $checkSeatRes = mysqli_query($conn, "
-                        SELECT ticket_id 
-                        FROM tickets 
-                        WHERE screening_id = {$scId} AND seat_id = {$seatId} AND ticket_status = 'Valid' 
+                        SELECT ticket_id
+                        FROM tickets
+                        WHERE screening_id = {$scId} AND seat_id = {$seatId} AND ticket_status = 'Valid'
                         LIMIT 1 FOR UPDATE
                     ");
                     if (mysqli_num_rows($checkSeatRes) > 0) {
@@ -140,14 +124,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($cart)) {
                     mysqli_stmt_bind_param($stmtTicket, "iiiid", $orderId, $scId, $seatId, $hallId, $price);
                     mysqli_stmt_execute($stmtTicket);
 
-                    // FR4: Release seat hold upon successful ticket generation
                     release_seat_hold($conn, $scId, $seatId);
                 } elseif ($item['type'] === 'concession') {
                     $prodId = (int)$item['id'];
                     $qty = (int)$item['qty'];
                     $price = (float)$item['price'];
 
-                    // Concurrency Protection: Lock product row with FOR UPDATE
                     $pStockRes = mysqli_query($conn, "SELECT current_stock, product_name FROM products WHERE product_id = {$prodId} LIMIT 1 FOR UPDATE");
                     $pStock = mysqli_fetch_assoc($pStockRes);
                     if (!$pStock || (int)$pStock['current_stock'] < $qty) {
@@ -165,11 +147,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($cart)) {
                     $comboQty = (int)$item['qty'];
                     $price = (float)$item['price'];
 
-                    // Insert into order_combos
                     mysqli_stmt_bind_param($stmtOrderCombo, "iiid", $orderId, $comboId, $comboQty, $price);
                     mysqli_stmt_execute($stmtOrderCombo);
 
-                    // Concurrency Protection: Deduct each constituent item in combo_items with FOR UPDATE
                     $ciRes = mysqli_query($conn, "SELECT product_id, quantity FROM combo_items WHERE combo_id = {$comboId}");
                     while ($child = mysqli_fetch_assoc($ciRes)) {
                         $childId = (int)$child['product_id'];
@@ -196,7 +176,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($cart)) {
                 mysqli_rollback($conn);
                 $errorMsg = 'Transaction failed: ' . $txAbortReason;
             } else {
-                // 4. Record payment
                 $sqlPay = "INSERT INTO payments (order_id, payment_method, amount_paid, change_returned, payment_date)
                            VALUES (?, ?, ?, ?, NOW())";
                 $stmtPay = mysqli_prepare($conn, $sqlPay);
@@ -206,13 +185,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($cart)) {
 
                 mysqli_commit($conn);
 
-                // Term Test Lab: Attempt to dispatch digital PDF receipt via Mailtrap SMTP
                 $emailSent = false;
                 if (!empty($customerEmail) && validate_email($customerEmail)) {
                     $emailSent = send_transaction_email((int)$orderId, $customerEmail);
                 }
 
-                // Clear session cart and persist completed order details
                 $_SESSION['completed_order'] = [
                     'order_id'       => (int)$orderId,
                     'order_number'   => $orderNumber,
@@ -242,7 +219,7 @@ $pageTitle = $orderCompleted ? 'Order Receipt' : 'Checkout';
 require_once __DIR__ . '/includes/header.php';
 ?>
 
-<?php if ($orderCompleted && isset($_SESSION['completed_order'])): 
+<?php if ($orderCompleted && isset($_SESSION['completed_order'])):
     $ord = $_SESSION['completed_order'];
 ?>
     <div class="sb-card" style="max-width: 600px; margin: 0 auto; padding: 2rem;">
@@ -380,7 +357,7 @@ require_once __DIR__ . '/includes/header.php';
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($cart as $key => $item): 
+                    <?php foreach ($cart as $key => $item):
                         $price = (float)$item['price'];
                         $qty = (int)$item['qty'];
                         $lineTotal = $price * $qty;
@@ -441,20 +418,20 @@ require_once __DIR__ . '/includes/header.php';
 
                 <div class="form-group">
                     <label for="customer_name">Customer Name</label>
-                    <input type="text" 
-                           name="customer_name" 
-                           id="customer_name" 
-                           value="<?= sanitize(is_logged_in() ? current_user()['full_name'] : ''); ?>" 
-                           placeholder="e.g. Maria Santos" 
+                    <input type="text"
+                           name="customer_name"
+                           id="customer_name"
+                           value="<?= sanitize(is_logged_in() ? current_user()['full_name'] : ''); ?>"
+                           placeholder="e.g. Maria Santos"
                            class="form-control">
                 </div>
 
                 <div class="form-group">
                     <label for="customer_email">Customer Email <span style="font-weight: 400; color: var(--c-muted);">(for digital PDF receipt)</span></label>
-                    <input type="text" 
-                           name="customer_email" 
-                           id="customer_email" 
-                           placeholder="guest@example.com" 
+                    <input type="text"
+                           name="customer_email"
+                           id="customer_email"
+                           placeholder="guest@example.com"
                            class="form-control">
                     <small style="color: var(--c-muted, #5d6180); display: block; margin-top: 0.25rem;">
                         Official PDF receipt will be dispatched via Mailtrap SMTP.
@@ -472,11 +449,11 @@ require_once __DIR__ . '/includes/header.php';
 
                 <div class="form-group">
                     <label for="amount_paid">Amount Tendered (PHP)</label>
-                    <input type="number" 
-                           step="0.01" 
-                           name="amount_paid" 
-                           id="amount_paid" 
-                           value="<?= $grandTotal; ?>" 
+                    <input type="number"
+                           step="0.01"
+                           name="amount_paid"
+                           id="amount_paid"
+                           value="<?= $grandTotal; ?>"
                            class="form-control">
                     <small style="color: var(--c-muted, #5d6180); display: block; margin-top: 0.35rem;" id="tenderHelp">
                         Minimum payment: <?= format_currency($grandTotal); ?>
@@ -494,12 +471,6 @@ require_once __DIR__ . '/includes/header.php';
 document.addEventListener('DOMContentLoaded', function() {
     'use strict';
 
-
-
-
-
-
-    // Live Seat Hold Countdown Timer (FR4)
     var banner = document.getElementById('seatHoldBanner');
     if (banner) {
         var expiryTimestamp = parseInt(banner.getAttribute('data-expiry'), 10);
@@ -512,7 +483,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (remaining <= 0) {
                 display.textContent = '00:00';
                 display.style.color = '#ef4444';
-                // Reload page to trigger PHP hold expiration and cart cleanup
+
                 window.location.reload();
                 return;
             }

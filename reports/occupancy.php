@@ -1,9 +1,4 @@
 <?php
-/**
- * ScreenBites - Occupancy Analytics Report
- * Procedural reporting module modeled after itim211-2b-shop
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 require_admin();
 
@@ -13,7 +8,6 @@ require_once dirname(__DIR__) . '/includes/header.php';
 $selectedDate = trim($_GET['date'] ?? date('Y-m-d'));
 $selectedDateEsc = mysqli_real_escape_string($conn, $selectedDate);
 
-// 1. Fetch screenings and seat occupancy for the selected date
 $sql = "SELECT s.screening_id, s.start_time, s.end_time, s.base_price,
                m.title AS movie_title, m.rating,
                h.hall_name,
@@ -48,9 +42,8 @@ if ($res) {
 
 $overallOccupancyRate = $totalCapacity > 0 ? round(($totalSeatsSold / $totalCapacity) * 100, 1) : 0;
 
-// 2. 30-Day Peak Showtimes (Hourly aggregation)
 $peakRes = mysqli_query($conn, "
-    SELECT 
+    SELECT
         HOUR(s.start_time) AS hour_of_day,
         COUNT(t.ticket_id) AS total_tickets_sold
     FROM tickets t
@@ -68,8 +61,7 @@ $peakRes = mysqli_query($conn, "
         <h1>Cinema Occupancy Analytics</h1>
         <p>Theater seat utilization rates for <?= date('l, F j, Y', strtotime($selectedDate)); ?>.</p>
     </div>
-    
-    <!-- Date picker filter form -->
+
     <form method="GET" action="<?= BASE_URL; ?>/reports/occupancy.php" style="display: flex; gap: 0.5rem; align-items: center;">
         <label for="date" style="font-weight: 600; font-size: 0.88rem; color: var(--c-muted);">Select Date:</label>
         <input type="date" id="date" name="date" value="<?= sanitize($selectedDate); ?>" class="form-control" style="width: auto; padding: 0.4rem 0.6rem;">
@@ -80,7 +72,6 @@ $peakRes = mysqli_query($conn, "
     </form>
 </div>
 
-<!-- KPI Cards -->
 <div class="kpi-grid">
     <div class="kpi is-key">
         <p class="kpi-label">Overall Occupancy Rate</p>
@@ -103,7 +94,6 @@ $peakRes = mysqli_query($conn, "
     </div>
 </div>
 
-<!-- Screenings Occupancy Table -->
 <div class="card" style="margin-top: 1.5rem;">
     <div style="padding: 1.25rem 1.25rem 0.5rem;">
         <h3 style="margin: 0; font-size: 1.15rem; color: var(--c-ink);">Screening Schedule Seat Utilization</h3>
@@ -124,7 +114,7 @@ $peakRes = mysqli_query($conn, "
             </thead>
             <tbody>
                 <?php if (!empty($screenings)): ?>
-                    <?php foreach ($screenings as $sc): 
+                    <?php foreach ($screenings as $sc):
                         $rate = (float)$sc['rate'];
                         $sold = (int)$sc['seats_sold'];
                         $cap  = (int)$sc['total_capacity'];
@@ -170,14 +160,13 @@ $peakRes = mysqli_query($conn, "
     </div>
 </div>
 
-<!-- 30-Day Peak Hours Section -->
 <div class="card" style="margin-top: 1.5rem; padding: 1.25rem;">
     <h3 style="margin: 0 0 0.35rem; font-size: 1.15rem; color: var(--c-ink);">Busiest Showtimes (Last 30 Days)</h3>
     <p style="margin: 0 0 1.25rem; color: var(--c-muted); font-size: 0.85rem;">Peak customer booking hours to assist in theater staffing.</p>
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
         <?php if ($peakRes && mysqli_num_rows($peakRes) > 0): ?>
-            <?php while ($p = mysqli_fetch_assoc($peakRes)): 
+            <?php while ($p = mysqli_fetch_assoc($peakRes)):
                 $hour = (int)$p['hour_of_day'];
                 $timeFmt = date('g:i A', strtotime("$hour:00:00"));
             ?>

@@ -1,11 +1,4 @@
 <?php
-
-/**
- * Esperanto PHPMailer language file: refer to English translation for definitive list
- * @package PHPMailer
- * @author Robin van der Vliet <info@robinvandervliet.com>
- */
-
 $PHPMAILER_LANG['authenticate']         = 'SMTP-eraro: Ne eblis aŭtentigi.';
 $PHPMAILER_LANG['buggy_php']            = 'Via versio de PHP estas trafita de cimo, kiu povas kaŭzi difektitajn mesaĝojn. Por ripari tion, ŝanĝu al sendado per SMTP, malŝaltu la opcion mail.add_x_header en via php.ini, ŝanĝu al MacOS aŭ Linux, aŭ ĝisdatigu vian PHP al versio 7.0.17+ aŭ 7.1.3+.';
 $PHPMAILER_LANG['connect_host']         = 'SMTP-eraro: Ne eblis konektiĝi al la SMTP-gastiganto.';

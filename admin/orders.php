@@ -1,14 +1,7 @@
 <?php
-/**
- * ScreenBites - Administrative Orders & Transactions Console
- * Academic Assessment: Unit 1 (Active Relational MySQL VIEW Execution)
- * Actively queries `view_order_transaction_details` via procedural prepared statements
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 require_login();
 
-// Administrative Order Status Update Handler (Term Test Lab Workflow)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_status') {
     require_admin();
 
@@ -17,7 +10,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $allowedStatuses = ['Pending', 'Paid', 'Completed', 'Cancelled', 'Refunded'];
 
     if ($orderId > 0 && in_array($newStatus, $allowedStatuses, true)) {
-        // Fetch existing order record for auditing and customer notification
         $chkStmt = mysqli_prepare($conn, "SELECT order_id, order_number, customer_name, customer_email, order_status FROM orders WHERE order_id = ? LIMIT 1");
         if ($chkStmt) {
             mysqli_stmt_bind_param($chkStmt, "i", $orderId);
@@ -28,7 +20,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             if ($ordData) {
                 $oldStatus = $ordData['order_status'];
 
-                // Atomic prepared statement update
                 $upStmt = mysqli_prepare($conn, "UPDATE orders SET order_status = ? WHERE order_id = ?");
                 if ($upStmt) {
                     mysqli_stmt_bind_param($upStmt, "si", $newStatus, $orderId);
@@ -38,7 +29,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     if ($ok) {
                         audit_log('ORDER_STATUS_UPDATED', 'orders', $orderId, "Updated order #{$ordData['order_number']} status from '{$oldStatus}' to '{$newStatus}'");
 
-                        // Trigger Mailtrap SMTP transaction email via includes/mailer.php
                         $emailSent = false;
                         if (!empty($ordData['customer_email']) && filter_var($ordData['customer_email'], FILTER_VALIDATE_EMAIL)) {
                             require_once dirname(__DIR__) . '/includes/mailer.php';
@@ -71,14 +61,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 $pageTitle = 'Orders & Transactions';
 require_once dirname(__DIR__) . '/includes/header.php';
 
-// Filter parameters
 $search = trim($_GET['search'] ?? '');
 $statusFilter = trim($_GET['status'] ?? '');
 $paymentFilter = trim($_GET['payment_method'] ?? '');
 $dateFrom = trim($_GET['date_from'] ?? '');
 $dateTo = trim($_GET['date_to'] ?? '');
 
-// Base query against relational VIEW
 $where = ["1=1"];
 $params = [];
 $types = "";
@@ -119,8 +107,7 @@ if (!empty($dateTo)) {
 
 $whereClause = implode(" AND ", $where);
 
-// 1. Compute Summary KPIs from view_order_transaction_details
-$kpiSql = "SELECT 
+$kpiSql = "SELECT
             COUNT(*) AS total_count,
             COALESCE(SUM(grand_total), 0) AS gross_sales,
             COALESCE(SUM(total_tickets), 0) AS sum_tickets,
@@ -141,8 +128,7 @@ $grossSales = (float)($kpiData['gross_sales'] ?? 0.00);
 $totalTickets = (int)($kpiData['sum_tickets'] ?? 0);
 $totalSnacks = (int)($kpiData['sum_snacks'] ?? 0);
 
-// 2. Fetch Order List from view_order_transaction_details
-$listSql = "SELECT 
+$listSql = "SELECT
                 order_id,
                 order_number,
                 customer_name,
@@ -185,7 +171,6 @@ mysqli_stmt_close($listStmt);
     </div>
 </div>
 
-<!-- Operational KPI Cards -->
 <div class="kpi-grid">
     <div class="kpi is-key">
         <p class="kpi-label">Gross Transaction Volume</p>
@@ -214,7 +199,6 @@ mysqli_stmt_close($listStmt);
     </div>
 </div>
 
-<!-- Filter Toolbar (Native Form GET) -->
 <div class="card" style="padding: 1.25rem; margin-bottom: 1.5rem;">
     <form method="GET" action="<?= BASE_URL; ?>/admin/orders.php" style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: flex-end;">
         <div style="flex: 2; min-width: 220px;">
@@ -261,7 +245,6 @@ mysqli_stmt_close($listStmt);
     </form>
 </div>
 
-<!-- Orders Table -->
 <div class="card">
     <div style="padding: 1.25rem 1.25rem 0.5rem; display: flex; justify-content: space-between; align-items: center;">
         <div>
@@ -287,7 +270,7 @@ mysqli_stmt_close($listStmt);
             </thead>
             <tbody>
                 <?php if (!empty($ordersList)): ?>
-                    <?php foreach ($ordersList as $ord): 
+                    <?php foreach ($ordersList as $ord):
                         $grand = (float)$ord['grand_total'];
                         $tix = (int)$ord['total_tickets'];
                         $snacks = (int)$ord['total_concessions'] + (int)$ord['total_combos'];
@@ -348,7 +331,7 @@ mysqli_stmt_close($listStmt);
                                 </span>
                             </td>
                             <td style="text-align: center;">
-                                <?php if (is_admin()): 
+                                <?php if (is_admin()):
                                     $st = $ord['order_status'];
                                     $bgColor = '#f1f5f9';
                                     $textColor = '#475569';
@@ -383,14 +366,14 @@ mysqli_stmt_close($listStmt);
                             </td>
                             <td style="text-align: center;">
                                 <div style="display: inline-flex; gap: 0.35rem;">
-                                    <a href="<?= BASE_URL; ?>/admin/order_details.php?id=<?= (int)$ord['order_id']; ?>" 
-                                       class="btn btn-sm btn-secondary" 
+                                    <a href="<?= BASE_URL; ?>/admin/order_details.php?id=<?= (int)$ord['order_id']; ?>"
+                                       class="btn btn-sm btn-secondary"
                                        title="View Full Breakdown">
                                         Details
                                     </a>
-                                    <a href="<?= BASE_URL; ?>/receipt.php?order_id=<?= (int)$ord['order_id']; ?>" 
-                                       target="_blank" 
-                                       class="btn btn-sm btn-primary" 
+                                    <a href="<?= BASE_URL; ?>/receipt.php?order_id=<?= (int)$ord['order_id']; ?>"
+                                       target="_blank"
+                                       class="btn btn-sm btn-primary"
                                        title="Download Official PDF Receipt">
                                         PDF
                                     </a>

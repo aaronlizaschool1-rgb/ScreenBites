@@ -1,11 +1,4 @@
 <?php
-
-/**
- * Portuguese (European) PHPMailer language file: refer to English translation for definitive list
- * @package PHPMailer
- * @author João Vieira <mail@joaovieira.eu>
- */
-
 $PHPMAILER_LANG['authenticate']         = 'Erro SMTP: Falha na autenticação.';
 $PHPMAILER_LANG['buggy_php']            = 'A sua versão do PHP tem um bug que pode causar mensagens corrompidas. Para resolver, utilize o envio por SMTP, desative a opção mail.add_x_header no ficheiro php.ini, mude para MacOS ou Linux, ou atualize o PHP para a versão 7.0.17+ ou 7.1.3+.';
 $PHPMAILER_LANG['connect_host']         = 'Erro SMTP: Não foi possível ligar ao servidor SMTP.';

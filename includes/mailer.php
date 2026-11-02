@@ -1,14 +1,4 @@
 <?php
-/**
- * ScreenBites - Third-Party Vendor Isolation Wrapper (Mailtrap & FPDF)
- * Strictly fulfills Term Test Lab Requirements & Vendor Isolation Exception:
- * 1. Third-party class instantiations (PHPMailer, FPDF) are isolated exclusively in this file.
- * 2. Zero object references or arrow notation (->) leak outside this file.
- * 3. Exposes pure procedural functions:
- *    - send_transaction_email($orderId, $recipientEmail, $orderData)
- *    - generate_receipt_pdf($orderId, $orderData, $outputMode)
- */
-
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception as MailerException;
 
@@ -18,16 +8,9 @@ require_once dirname(__DIR__) . '/PHPMailer/src/SMTP.php';
 require_once __DIR__ . '/fpdf/fpdf.php';
 require_once __DIR__ . '/config.php';
 
-/**
- * Procedurally fetch complete order details, tickets, and concessions for receipt generation
- *
- * @param mysqli $conn
- * @param int $orderId
- * @return array|null
- */
 function fetch_order_receipt_data(mysqli $conn, int $orderId): ?array {
     $stmt = mysqli_prepare($conn, "
-        SELECT 
+        SELECT
             o.order_id,
             o.order_number,
             o.customer_name,
@@ -64,10 +47,9 @@ function fetch_order_receipt_data(mysqli $conn, int $orderId): ?array {
         return null;
     }
 
-    // Fetch movie tickets
     $tickets = [];
     $tStmt = mysqli_prepare($conn, "
-        SELECT 
+        SELECT
             t.ticket_id,
             t.price_charged,
             t.ticket_status,
@@ -98,10 +80,9 @@ function fetch_order_receipt_data(mysqli $conn, int $orderId): ?array {
         mysqli_stmt_close($tStmt);
     }
 
-    // Fetch concessions
     $concessions = [];
     $cStmt = mysqli_prepare($conn, "
-        SELECT 
+        SELECT
             oi.order_item_id,
             p.product_name,
             p.category,
@@ -122,10 +103,9 @@ function fetch_order_receipt_data(mysqli $conn, int $orderId): ?array {
         mysqli_stmt_close($cStmt);
     }
 
-    // Fetch combos
     $combos = [];
     $cbStmt = mysqli_prepare($conn, "
-        SELECT 
+        SELECT
             oc.order_combo_id,
             cb.combo_name,
             oc.quantity,
@@ -153,14 +133,6 @@ function fetch_order_receipt_data(mysqli $conn, int $orderId): ?array {
     ];
 }
 
-/**
- * Pure procedural receipt PDF generator isolating FPDF internally
- *
- * @param int $orderId
- * @param array $orderData Optional pre-fetched data array
- * @param string $outputMode 'I' = Browser inline, 'D' = Download, 'S' = Return string, 'F' = Save file
- * @return string Raw PDF string or empty string on direct stream
- */
 function generate_receipt_pdf(int $orderId, array $orderData = [], string $outputMode = 'I'): string {
     global $conn;
 
@@ -182,16 +154,15 @@ function generate_receipt_pdf(int $orderId, array $orderData = [], string $outpu
     $pdf->AddPage();
     $pdf->SetAutoPageBreak(true, 15);
 
-    // Header Cinema Branding
     $pdf->SetFillColor(30, 41, 59);
     $pdf->Rect(0, 0, 210, 32, 'F');
 
-    $pdf->SetTextColor(245, 158, 11); // Cinema Gold
+    $pdf->SetTextColor(245, 158, 11);
     $pdf->SetFont('Arial', 'B', 18);
     $pdf->SetXY(15, 8);
     $pdf->Cell(0, 8, 'SCREENBITES CINEMA & POS LOUNGE', 0, 1, 'L');
 
-    $pdf->SetTextColor(226, 232, 240); // Slate 200
+    $pdf->SetTextColor(226, 232, 240);
     $pdf->SetFont('Arial', '', 10);
     $pdf->SetX(15);
     $pdf->Cell(0, 6, 'Official Sales & Booking Transaction Receipt | Philippines (VAT Registered)', 0, 1, 'L');
@@ -199,13 +170,11 @@ function generate_receipt_pdf(int $orderId, array $orderData = [], string $outpu
     $pdf->Ln(8);
     $pdf->SetTextColor(30, 41, 59);
 
-    // Meta Block: Order # and Dates
     $pdf->SetFont('Arial', 'B', 11);
     $pdf->Cell(100, 6, 'Order Reference: #' . $ord['order_number'], 0, 0, 'L');
     $pdf->SetFont('Arial', '', 10);
     $pdf->Cell(80, 6, 'Date: ' . date('F j, Y, g:i A', strtotime($ord['order_date'])), 0, 1, 'R');
 
-    // Customer & Cashier Info
     $custName = !empty($ord['customer_name']) ? $ord['customer_name'] : 'Walk-in Cinema Guest';
     $custEmail = !empty($ord['customer_email']) ? $ord['customer_email'] : 'N/A';
     $cashier = !empty($ord['cashier_name']) ? $ord['cashier_name'] : 'Self-Service POS';
@@ -221,7 +190,6 @@ function generate_receipt_pdf(int $orderId, array $orderData = [], string $outpu
     $pdf->Line(15, $pdf->GetY(), 195, $pdf->GetY());
     $pdf->Ln(4);
 
-    // Table Header
     $pdf->SetFillColor(241, 245, 249);
     $pdf->SetFont('Arial', 'B', 9);
     $pdf->Cell(95, 7, '  Item Description & Details', 1, 0, 'L', true);
@@ -231,13 +199,12 @@ function generate_receipt_pdf(int $orderId, array $orderData = [], string $outpu
 
     $pdf->SetFont('Arial', '', 9);
 
-    // 1. Render Tickets
     if (!empty($tickets)) {
         foreach ($tickets as $t) {
             $seatLabel = 'Seat ' . $t['seat_row'] . $t['seat_number'] . ' (' . $t['tier_name'] . ')';
             $showtime = date('M d, g:i A', strtotime($t['screening_date'] . ' ' . $t['start_time']));
             $desc = $t['movie_title'] . ' [' . $seatLabel . ' | ' . $t['hall_name'] . ' - ' . $showtime . ']';
-            
+
             $pdf->Cell(95, 7, ' ' . substr($desc, 0, 52), 1, 0, 'L');
             $pdf->Cell(25, 7, '1 seat', 1, 0, 'C');
             $pdf->Cell(30, 7, number_format((float)$t['price_charged'], 2), 1, 0, 'R');
@@ -245,7 +212,6 @@ function generate_receipt_pdf(int $orderId, array $orderData = [], string $outpu
         }
     }
 
-    // 2. Render Concessions
     if (!empty($concessions)) {
         foreach ($concessions as $c) {
             $desc = $c['product_name'] . ' (' . $c['category'] . ')';
@@ -256,7 +222,6 @@ function generate_receipt_pdf(int $orderId, array $orderData = [], string $outpu
         }
     }
 
-    // 3. Render Combos
     if (!empty($combos)) {
         foreach ($combos as $cb) {
             $desc = $cb['combo_name'] . ' [Combo Bundle]';
@@ -269,7 +234,6 @@ function generate_receipt_pdf(int $orderId, array $orderData = [], string $outpu
 
     $pdf->Ln(2);
 
-    // Financial & 12% VAT Breakdown
     $subtotal = (float)$ord['subtotal_amount'];
     $vat = (float)$ord['tax_amount'];
     $grand = (float)$ord['grand_total'];
@@ -300,7 +264,6 @@ function generate_receipt_pdf(int $orderId, array $orderData = [], string $outpu
     $pdf->Cell(30, 6, 'Change Returned:', 0, 0, 'R');
     $pdf->Cell(30, 6, 'PHP ' . number_format($change, 2), 0, 1, 'R');
 
-    // Footer Notice
     $pdf->Ln(10);
     $pdf->SetFont('Arial', 'I', 8);
     $pdf->SetTextColor(100, 116, 139);
@@ -316,16 +279,6 @@ function generate_receipt_pdf(int $orderId, array $orderData = [], string $outpu
     return '';
 }
 
-/**
- * Pure procedural transaction email dispatch using Mailtrap SMTP
- * Isolates PHPMailer internally; zero objects leak outside
- *
- * @param int $orderId
- * @param string $recipientEmail
- * @param array $orderData Optional pre-fetched order data
- * @param string $statusNote Optional status notification note
- * @return bool True if successfully dispatched, false otherwise
- */
 function send_transaction_email(int $orderId, string $recipientEmail, array $orderData = [], string $statusNote = ''): bool {
     global $conn;
 
@@ -346,7 +299,6 @@ function send_transaction_email(int $orderId, string $recipientEmail, array $ord
     $concessions = $orderData['concessions'] ?? [];
     $combos = $orderData['combos'] ?? [];
 
-    // Generate the PDF receipt binary string
     $pdfBinary = generate_receipt_pdf($orderId, $orderData, 'S');
 
     $mail = new PHPMailer(true);
@@ -356,10 +308,10 @@ function send_transaction_email(int $orderId, string $recipientEmail, array $ord
         $mail->Host       = defined('MAILTRAP_HOST') ? MAILTRAP_HOST : 'sandbox.smtp.mailtrap.io';
         $mail->SMTPAuth   = true;
         $mail->Port       = defined('MAILTRAP_PORT') ? MAILTRAP_PORT : 2525;
-        $mail->Username   = defined('MAILTRAP_USER') ? MAILTRAP_USER : '312649aee7d340';
-        $mail->Password   = defined('MAILTRAP_PASS') ? MAILTRAP_PASS : '7bec3dc61ba28b';
+        $mail->Username   = defined('MAILTRAP_USER') ? MAILTRAP_USER : '690927f441cfe6';
+        $mail->Password   = defined('MAILTRAP_PASS') ? MAILTRAP_PASS : '81ecd079d6b1a2';
         $mail->CharSet    = 'UTF-8';
-        $mail->SMTPSecure = 'tls'; 
+        $mail->SMTPSecure = 'tls';
 
         $mail->SMTPOptions = [
     'ssl' => [
@@ -373,13 +325,11 @@ function send_transaction_email(int $orderId, string $recipientEmail, array $ord
         $customerDisplayName = !empty($ord['customer_name']) ? $ord['customer_name'] : 'Cinema Guest';
         $mail->addAddress($recipientEmail, $customerDisplayName);
 
-        // Attach PDF Receipt
         if (!empty($pdfBinary)) {
             $attachmentName = 'ScreenBites_Receipt_' . $ord['order_number'] . '.pdf';
             $mail->addStringAttachment($pdfBinary, $attachmentName, 'base64', 'application/pdf');
         }
 
-        // Build HTML Email Body
         $itemsHtml = '';
         foreach ($tickets as $t) {
             $seatInfo = 'Seat ' . $t['seat_row'] . $t['seat_number'] . ' (' . $t['tier_name'] . ')';
@@ -431,7 +381,7 @@ function send_transaction_email(int $orderId, string $recipientEmail, array $ord
             <div style='padding: 24px;'>
                 <p style='font-size: 15px; color: #1e293b; margin-top: 0;'>Hello <strong>" . htmlspecialchars($customerDisplayName) . "</strong>,</p>
                 <p style='color: #475569; font-size: 14px;'>Here is the current operational status of your ScreenBites order. Your official digital receipt is attached as a PDF.</p>
-                
+
                 {$statusBannerHtml}
 
                 <div style='background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 16px; margin: 16px 0;'>
@@ -478,7 +428,6 @@ function send_transaction_email(int $orderId, string $recipientEmail, array $ord
 
         $mail->send();
 
-        // Audit log dispatch event procedurally
         if (function_exists('audit_log')) {
             audit_log('EMAIL_RECEIPT_SENT', 'orders', (int)$orderId, "Dispatched digital receipt for Order #{$ord['order_number']} to {$recipientEmail}");
         }

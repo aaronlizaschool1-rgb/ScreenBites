@@ -1,10 +1,4 @@
 <?php
-/**
- * ScreenBites - Seat Tiers Configuration & Overview
- * Procedural architecture modeled after PedalWorks-Dynamics
- * Supports FR3: Tier-Based Seat Pricing configuration
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 require_once dirname(__DIR__) . '/includes/seat_pricing.php';
 require_admin();
@@ -16,7 +10,6 @@ require_once dirname(__DIR__) . '/includes/header.php';
 <link rel="stylesheet" href="<?= BASE_URL; ?>/assets/css/seat-matrix.css">
 
 <?php
-// Fetch all tiers with count of assigned seats
 $sql = "SELECT st.tier_id, st.tier_name, st.tier_surcharge, st.created_at,
                COUNT(s.seat_id) AS assigned_seats_count
         FROM seat_tiers st
@@ -73,7 +66,7 @@ if ($res) {
                         </td>
                     </tr>
                 <?php else: ?>
-                    <?php foreach ($tiers as $tier): 
+                    <?php foreach ($tiers as $tier):
                         $tId = (int)$tier['tier_id'];
                         $surcharge = (float)$tier['tier_surcharge'];
                         $tierClass = "tier-{$tId}";

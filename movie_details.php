@@ -1,10 +1,4 @@
 <?php
-/**
- * ScreenBites - Movie Showcase & Verified Customer Reviews
- * Fulfills MP4: Review CRUD with Regex Masking (100% Pure Procedural PHP)
- * Dynamic review showcase, purchase verification check, and author edit controls
- */
-
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/reviews.php';
 
@@ -14,7 +8,6 @@ if ($movieId <= 0) {
     exit;
 }
 
-// 1. Fetch Movie Information
 $mStmt = mysqli_prepare($conn, "SELECT movie_id, title, duration_minutes, rating, poster_path, trailer_url, genre, synopsis FROM movies WHERE movie_id = ? AND is_active = 1 LIMIT 1");
 mysqli_stmt_bind_param($mStmt, "i", $movieId);
 mysqli_stmt_execute($mStmt);
@@ -27,12 +20,11 @@ if (!$movie) {
     exit;
 }
 
-// 2. Fetch Active Upcoming Screenings for this Movie (filtered by >= NOW())
 $screenings = [];
-$scSql = "SELECT s.screening_id, s.screening_date, s.start_time, s.base_price, h.hall_name 
+$scSql = "SELECT s.screening_id, s.screening_date, s.start_time, s.base_price, h.hall_name
           FROM screenings s
           INNER JOIN halls h ON s.hall_id = h.hall_id
-          WHERE s.movie_id = ? 
+          WHERE s.movie_id = ?
             AND CONCAT(s.screening_date, ' ', s.start_time) >= NOW()
           ORDER BY s.screening_date ASC, s.start_time ASC";
 
@@ -47,11 +39,9 @@ if ($scStmt) {
     mysqli_stmt_close($scStmt);
 }
 
-// 3. Fetch Reviews and Summary (MP4 Constraint: Display Reviews)
 $reviews = get_item_reviews($conn, 'movie', $movieId);
 $reviewSummary = get_item_review_summary($conn, 'movie', $movieId);
 
-// 4. Fetch Movie Stills Gallery (MP1 Upgrade: Multiple Photo Uploads & Gallery View)
 $galleryStills = [];
 $gStmt = mysqli_prepare($conn, "SELECT image_id, image_path FROM movie_images WHERE movie_id = ? AND is_primary = 0 ORDER BY image_id ASC");
 if ($gStmt) {
@@ -64,7 +54,6 @@ if ($gStmt) {
     mysqli_stmt_close($gStmt);
 }
 
-// 5. Check if current user is logged in, verified, and if they already submitted a review
 $isUserLoggedIn = is_logged_in();
 $userId = $isUserLoggedIn ? (int)current_user()['user_id'] : 0;
 $isVerifiedBuyer = $isUserLoggedIn ? has_user_purchased_item($conn, $userId, 'movie', $movieId) : false;
@@ -80,21 +69,19 @@ require_once __DIR__ . '/includes/header.php';
     </a>
 </div>
 
-<!-- Movie Details Hero Showcase -->
 <div class="card" style="padding: 2rem; margin-bottom: 2rem;">
     <div style="display: grid; grid-template-columns: 240px 1fr; gap: 2rem; align-items: start;" class="movie-details-layout">
-        
-        <!-- Poster & Rating Summary -->
+
         <div>
-            <?php 
+            <?php
                 $posterSrc = (!empty($movie['poster_path']) && file_exists(dirname(__DIR__) . '/' . $movie['poster_path']))
                     ? BASE_URL . '/' . htmlspecialchars($movie['poster_path'])
                     : BASE_URL . '/assets/img/logo.png';
             ?>
-            <img src="<?= $posterSrc; ?>" 
-                 alt="<?= sanitize($movie['title']); ?>" 
+            <img src="<?= $posterSrc; ?>"
+                 alt="<?= sanitize($movie['title']); ?>"
                  style="width: 100%; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); object-fit: cover; aspect-ratio: 2/3;">
-            
+
             <div style="text-align: center; margin-top: 1rem; background: #f8fafc; border: 1px solid var(--c-line); padding: 0.75rem; border-radius: 8px;">
                 <div style="color: #f59e0b; font-size: 1.35rem; font-weight: 800;">
                     ★ <?= number_format($reviewSummary['average'], 1); ?> <span style="font-size: 0.85rem; color: var(--c-muted); font-weight: 500;">/ 5.0</span>
@@ -120,7 +107,6 @@ require_once __DIR__ . '/includes/header.php';
             <?php endif; ?>
         </div>
 
-        <!-- Movie Info & Upcoming Showtimes -->
         <div>
             <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem;">
                 <span class="badge" style="background: var(--c-indigo); color: #fff; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 700; font-size: 0.8rem;">
@@ -139,12 +125,11 @@ require_once __DIR__ . '/includes/header.php';
                 <?= nl2br(sanitize($movie['synopsis'] ?? 'No synopsis provided for this film.')); ?>
             </p>
 
-            <!-- Upcoming Screenings Section -->
             <div style="margin-bottom: 1.5rem;">
                 <h3 style="font-size: 1.1rem; color: var(--c-ink); margin: 0 0 0.75rem;">Available Showtimes</h3>
                 <?php if (!empty($screenings)): ?>
                     <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
-                        <?php foreach ($screenings as $sc): 
+                        <?php foreach ($screenings as $sc):
                             $dateStr = date('M d', strtotime($sc['screening_date']));
                             $timeStr = date('g:i A', strtotime($sc['start_time']));
                         ?>
@@ -170,10 +155,10 @@ require_once __DIR__ . '/includes/header.php';
                 <div>
                     <h3 style="font-size: 1.1rem; color: var(--c-ink); margin: 0 0 0.75rem;">Official Trailer</h3>
                     <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px; max-width: 560px;">
-                        <iframe src="https://www.youtube-nocookie.com/embed/<?= htmlspecialchars($movie['trailer_url']); ?>" 
-                                title="YouTube Trailer" 
-                                style="position: absolute; top:0; left: 0; width: 100%; height: 100%; border:0;" 
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        <iframe src="https://www.youtube-nocookie.com/embed/<?= htmlspecialchars($movie['trailer_url']); ?>"
+                                title="YouTube Trailer"
+                                style="position: absolute; top:0; left: 0; width: 100%; height: 100%; border:0;"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                 allowfullscreen>
                         </iframe>
                     </div>
@@ -196,9 +181,6 @@ require_once __DIR__ . '/includes/header.php';
     </div>
 </div>
 
-<!-- ====================================================================== -->
-<!-- VERIFIED CUSTOMER REVIEWS SECTION -->
-<!-- ====================================================================== -->
 <div class="card" id="reviews" style="padding: 2rem;">
     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--c-line); padding-bottom: 1rem; margin-bottom: 1.5rem;">
         <div>
@@ -213,7 +195,6 @@ require_once __DIR__ . '/includes/header.php';
         </div>
     </div>
 
-    <!-- Review Form Section (Purchase Verification Protected) -->
     <div style="background: #f8fafc; border: 1px solid var(--c-line); border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem;">
         <?php if (!$isUserLoggedIn): ?>
             <div style="text-align: center; padding: 1rem;">
@@ -233,7 +214,7 @@ require_once __DIR__ . '/includes/header.php';
                 </div>
             </div>
         <?php else: ?>
-            <!-- Verified Customer Submission / Edit Form -->
+
             <div>
                 <h3 style="font-size: 1.05rem; margin: 0 0 0.5rem; color: var(--c-ink);">
                     <?= $userExistingReview ? '✏️ Edit Your Verified Review' : '✍️ Share Your Verified Movie Review'; ?>
@@ -263,13 +244,13 @@ require_once __DIR__ . '/includes/header.php';
 
                     <div class="form-group" style="margin-bottom: 1rem;">
                         <label for="review_text" style="font-weight: 600; font-size: 0.88rem;">Your Review &amp; Commentary</label>
-                        <textarea name="review_text" 
-                                  id="review_text" 
-                                  rows="4" 
-                                  class="form-control" 
-                                  required 
-                                  minlength="5" 
-                                  maxlength="2000" 
+                        <textarea name="review_text"
+                                  id="review_text"
+                                  rows="4"
+                                  class="form-control"
+                                  required
+                                  minlength="5"
+                                  maxlength="2000"
                                   placeholder="What did you think of the cinematography, sound design, and performances? (Min. 5 characters)"><?= sanitize($userExistingReview['review_text'] ?? ''); ?></textarea>
                     </div>
 
@@ -281,13 +262,12 @@ require_once __DIR__ . '/includes/header.php';
         <?php endif; ?>
     </div>
 
-    <!-- Reviews List Display -->
     <div>
         <h3 style="font-size: 1.1rem; color: var(--c-ink); margin: 0 0 1rem;">Guest Reviews (<?= count($reviews); ?>)</h3>
-        
+
         <?php if (!empty($reviews)): ?>
             <div style="display: flex; flex-direction: column; gap: 1.25rem;">
-                <?php foreach ($reviews as $rev): 
+                <?php foreach ($reviews as $rev):
                     $stars = (int)$rev['rating'];
                     $isAuthor = ($isUserLoggedIn && (int)$rev['user_id'] === $userId);
                 ?>
@@ -295,8 +275,8 @@ require_once __DIR__ . '/includes/header.php';
                         <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
                             <div style="display: flex; align-items: center; gap: 0.75rem;">
                                 <?php if (!empty($rev['avatar_path']) && file_exists(PROJECT_ROOT . '/' . $rev['avatar_path'])): ?>
-                                    <img src="<?= BASE_URL . '/' . htmlspecialchars($rev['avatar_path']); ?>" 
-                                         alt="Reviewer" 
+                                    <img src="<?= BASE_URL . '/' . htmlspecialchars($rev['avatar_path']); ?>"
+                                         alt="Reviewer"
                                          style="width: 38px; height: 38px; object-fit: cover; border-radius: 50%; border: 1.5px solid var(--c-line);">
                                 <?php else: ?>
                                     <div style="width: 38px; height: 38px; border-radius: 50%; background: #e0e7ff; color: #3730a3; display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 700;">

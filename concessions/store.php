@@ -1,9 +1,4 @@
 <?php
-/**
- * ScreenBites - Store Concession Product Handler
- * Modeled after itim211-2b-shop/item/store.php
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 require_admin();
 
@@ -14,7 +9,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $retail   = (float)($_POST['retail_price'] ?? 0.00);
     $cost     = (float)($_POST['unit_cost'] ?? 0.00);
 
-    // Procedural validation
     $err = validate_required($name, 'Product name')
         ?? validate_in_array($category, ['Popcorn', 'Beverage', 'Snacks', 'Candy'], 'Category')
         ?? validate_numeric_range($stock, 0, 10000, 'Current stock')

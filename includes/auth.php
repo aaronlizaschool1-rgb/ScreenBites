@@ -1,9 +1,4 @@
 <?php
-/**
- * ScreenBites - Procedural Authentication & Role Authorization
- * Modeled after PedalWorks-Dynamics/includes/admin_auth.php
- */
-
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }

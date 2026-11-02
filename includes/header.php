@@ -36,7 +36,6 @@ $isActive = function(string $path) use ($currentUri): bool {
 <body class="app-body">
 <a class="skip-link" href="#main">Skip to content</a>
 
-<!-- Mobile Topbar with Nav Toggle -->
 <div class="app-topbar">
     <button type="button" class="app-topbar-btn" id="navToggle"
             aria-controls="appSidebar" aria-expanded="false" aria-label="Open menu">
@@ -50,7 +49,6 @@ $isActive = function(string $path) use ($currentUri): bool {
 
 <div class="app-shell">
 
-<!-- Left Sidebar Navigation -->
 <aside class="app-sidebar" id="appSidebar" aria-label="Main navigation">
     <div class="app-brand">
         <a href="<?= BASE_URL; ?>/index.php" class="app-brand-link">
@@ -65,7 +63,7 @@ $isActive = function(string $path) use ($currentUri): bool {
     </div>
 
     <nav class="app-nav">
-        <!-- Overview Group -->
+
         <div class="app-nav-group">
             <p class="app-nav-title">Overview</p>
             <ul>
@@ -92,7 +90,6 @@ $isActive = function(string $path) use ($currentUri): bool {
             </ul>
         </div>
 
-        <!-- Box Office Group -->
         <div class="app-nav-group">
             <p class="app-nav-title">Box Office</p>
             <ul>
@@ -130,7 +127,6 @@ $isActive = function(string $path) use ($currentUri): bool {
             </ul>
         </div>
 
-        <!-- Concessions Group -->
         <div class="app-nav-group">
             <p class="app-nav-title">Concessions</p>
             <ul>
@@ -169,7 +165,6 @@ $isActive = function(string $path) use ($currentUri): bool {
             </ul>
         </div>
 
-        <!-- Finance Group (Admin) -->
         <?php if (is_admin()): ?>
             <div class="app-nav-group">
                 <p class="app-nav-title">Finance</p>
@@ -222,7 +217,6 @@ $isActive = function(string $path) use ($currentUri): bool {
                 </ul>
             </div>
 
-            <!-- System Group (Admin) -->
             <div class="app-nav-group">
                 <p class="app-nav-title">System</p>
                 <ul>
@@ -249,15 +243,14 @@ $isActive = function(string $path) use ($currentUri): bool {
         <?php endif; ?>
     </nav>
 
-    <!-- Sidebar User / Auth Card -->
     <div class="app-user">
         <?php if (is_logged_in()): ?>
             <div class="app-user-card">
                 <div class="app-user-row">
                     <div class="app-avatar-wrap">
                         <?php if (!empty($user['avatar_path']) && file_exists(PROJECT_ROOT . '/' . $user['avatar_path'])): ?>
-                            <img src="<?= BASE_URL . '/' . htmlspecialchars($user['avatar_path']); ?>" 
-                                 alt="Avatar" 
+                            <img src="<?= BASE_URL . '/' . htmlspecialchars($user['avatar_path']); ?>"
+                                 alt="Avatar"
                                  style="width: 38px; height: 38px; object-fit: cover; border-radius: 50%; border: 1.5px solid var(--c-indigo);">
                         <?php else: ?>
                             <span class="app-avatar" aria-hidden="true"><?= htmlspecialchars(mb_strtoupper(mb_substr(trim($user['full_name'] ?? $user['username']), 0, 1))); ?></span>
@@ -302,10 +295,8 @@ $isActive = function(string $path) use ($currentUri): bool {
     </div>
 </aside>
 
-<!-- Scrim for mobile sidebar -->
 <div class="app-scrim" id="appScrim"></div>
 
-<!-- Main Application Column -->
 <div class="app-col">
 <main class="app-main" id="main">
 <div class="sb-container">

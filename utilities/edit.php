@@ -1,9 +1,4 @@
 <?php
-/**
- * ScreenBites - Edit Utility Expense Bill
- * Procedural module modeled after itim211-2b-shop
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 require_admin();
 

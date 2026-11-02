@@ -1,9 +1,4 @@
 <?php
-/**
- * ScreenBites - Update Utility Expense Handler
- * Procedural module modeled after itim211-2b-shop
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 require_admin();
 
@@ -26,14 +21,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $typeEsc  = mysqli_real_escape_string($conn, $type);
     $notesEsc = mysqli_real_escape_string($conn, $notes);
 
-    $sql = "UPDATE utility_expenses 
-            SET utility_type = '{$typeEsc}', 
-                billing_month = {$month}, 
-                billing_year = {$year}, 
-                bill_amount = {$amount}, 
-                payment_status = '{$status}', 
-                due_date = {$dueDate}, 
-                payment_date = {$payDate}, 
+    $sql = "UPDATE utility_expenses
+            SET utility_type = '{$typeEsc}',
+                billing_month = {$month},
+                billing_year = {$year},
+                bill_amount = {$amount},
+                payment_status = '{$status}',
+                due_date = {$dueDate},
+                payment_date = {$payDate},
                 notes = '{$notesEsc}'
             WHERE expense_id = {$id}";
 

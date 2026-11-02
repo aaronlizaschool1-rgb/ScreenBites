@@ -1,10 +1,4 @@
 <?php
-
-/**
- * Greek PHPMailer language file: refer to English translation for definitive list
- * @package PHPMailer
- */
-
 $PHPMAILER_LANG['authenticate']         = 'Σφάλμα SMTP: Αδυναμία πιστοποίησης.';
 $PHPMAILER_LANG['buggy_php']            = 'Η έκδοση PHP που χρησιμοποιείτε παρουσιάζει σφάλμα που μπορεί να έχει ως αποτέλεσμα κατεστραμένα μηνύματα. Για να το διορθώσετε, αλλάξτε τον τρόπο αποστολής σε SMTP, απενεργοποιήστε την επιλογή mail.add_x_header στο αρχείο php.ini, αλλάξτε λειτουργικό σε MacOS ή Linux ή αναβαθμίστε την PHP σε έκδοση 7.0.17+ ή 7.1.3+.';
 $PHPMAILER_LANG['connect_host']         = 'Σφάλμα SMTP: Αδυναμία σύνδεσης με τον φιλοξενητή SMTP.';

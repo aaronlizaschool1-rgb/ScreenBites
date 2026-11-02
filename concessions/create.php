@@ -1,9 +1,4 @@
 <?php
-/**
- * ScreenBites - Create Concession Product
- * Modeled after itim211-2b-shop/item/create.php
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 require_admin();
 
@@ -54,8 +49,6 @@ require_once dirname(__DIR__) . '/includes/header.php';
                 <input type="number" step="0.01" id="unit_cost" name="unit_cost" class="form-control" min="0" value="50.00" placeholder="e.g. 60.00">
             </div>
         </div>
-
-
 
         <div class="form-group">
             <label for="image_file">Item Image (Placed in uploads/products/)</label>

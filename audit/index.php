@@ -1,16 +1,10 @@
 <?php
-/**
- * ScreenBites - System Audit Logs
- * Procedural auditing module modeled after itim211-2b-shop
- */
-
 require_once dirname(__DIR__) . '/includes/config.php';
 require_admin();
 
 $pageTitle = 'Security & Audit Logs';
 require_once dirname(__DIR__) . '/includes/header.php';
 
-// Filter parameters
 $actionType = trim($_GET['action_type'] ?? '');
 $userId     = (int)($_GET['user_id'] ?? 0);
 $startDate  = trim($_GET['start_date'] ?? '');
@@ -37,13 +31,11 @@ if (!empty($endDate)) {
 }
 $whereSql = implode(' AND ', $where);
 
-// Count total matching logs
 $countRes = mysqli_query($conn, "SELECT COUNT(*) AS total FROM audit_logs a WHERE {$whereSql}");
 $countRow = mysqli_fetch_assoc($countRes);
 $totalLogs = (int)($countRow['total'] ?? 0);
 $totalPages = max(1, (int)ceil($totalLogs / $limit));
 
-// Fetch paginated logs with user details
 $sql = "SELECT a.*, u.full_name, u.username, u.role
         FROM audit_logs a
         LEFT JOIN users u ON a.user_id = u.user_id
@@ -52,7 +44,6 @@ $sql = "SELECT a.*, u.full_name, u.username, u.role
         LIMIT {$limit} OFFSET {$offset}";
 $res = mysqli_query($conn, $sql);
 
-// Fetch all staff users for filter dropdown
 $usersRes = mysqli_query($conn, "SELECT user_id, full_name, username, role FROM users ORDER BY full_name ASC");
 
 $actionMeta = [
@@ -71,7 +62,6 @@ $actionMeta = [
     </div>
 </div>
 
-<!-- Header Banner Card -->
 <div class="card" style="margin-bottom: 1.5rem; padding: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
     <div style="display: flex; align-items: center; gap: 1rem;">
         <div style="width: 48px; height: 48px; border-radius: 10px; background: rgba(43, 45, 122, 0.1); display: flex; align-items: center; justify-content: center; color: var(--c-indigo);">
@@ -85,7 +75,7 @@ $actionMeta = [
             <div style="font-size: 0.85rem; color: var(--c-muted);">Captures recorded action timestamp, operator ID, target table, and IP address.</div>
         </div>
     </div>
-    
+
     <div>
         <span style="display: inline-block; padding: 0.35rem 0.85rem; background: #eef2ff; color: var(--c-indigo); font-weight: 700; border-radius: 20px; font-size: 0.85rem; border: 1px solid #c7d2fe;">
             <?= number_format($totalLogs); ?> <?= $totalLogs === 1 ? 'Event Logged' : 'Events Logged'; ?>
@@ -93,7 +83,6 @@ $actionMeta = [
     </div>
 </div>
 
-<!-- Filters Form -->
 <div class="card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
     <form method="GET" action="<?= BASE_URL; ?>/audit/index.php" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)) auto; gap: 0.75rem; align-items: flex-end;">
         <div class="form-group" style="margin-bottom: 0;">
@@ -139,7 +128,6 @@ $actionMeta = [
     </form>
 </div>
 
-<!-- Audit Log Table -->
 <div class="card">
     <div class="sb-table-wrap">
         <table class="sb-table">
@@ -155,7 +143,7 @@ $actionMeta = [
             </thead>
             <tbody>
                 <?php if ($res && mysqli_num_rows($res) > 0): ?>
-                    <?php while ($log = mysqli_fetch_assoc($res)): 
+                    <?php while ($log = mysqli_fetch_assoc($res)):
                         $aType = $log['action_type'];
                         $meta  = $actionMeta[$aType] ?? ['label' => $aType, 'class' => 'badge-indigo'];
                     ?>
@@ -194,7 +182,6 @@ $actionMeta = [
         </table>
     </div>
 
-    <!-- Pagination -->
     <?php if ($totalPages > 1): ?>
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem; border-top: 1px solid var(--c-line);">
             <span style="font-size: 0.85rem; color: var(--c-muted);">

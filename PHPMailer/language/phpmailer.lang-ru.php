@@ -1,13 +1,4 @@
 <?php
-
-/**
- * Russian PHPMailer language file: refer to English translation for definitive list
- * @package PHPMailer
- * @author Alexey Chumakov <alex@chumakov.ru>
- * @author Foster Snowhill <i18n@forstwoof.ru>
- * @author ProjectSoft <projectsoft2009@yandex.ru>
- */
-
 $PHPMAILER_LANG['authenticate']         = 'Ошибка SMTP: не удалось пройти аутентификацию.';
 $PHPMAILER_LANG['buggy_php']            = 'В вашей версии PHP есть ошибка, которая может привести к повреждению сообщений. Чтобы исправить, переключитесь на отправку по SMTP, отключите опцию mail.add_x_header в ваш php.ini, переключитесь на MacOS или Linux или обновите PHP до версии 7.0.17+ или 7.1.3+.';
 $PHPMAILER_LANG['connect_host']         = 'Ошибка SMTP: не удается подключиться к SMTP-серверу.';

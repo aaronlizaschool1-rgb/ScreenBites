@@ -1,9 +1,4 @@
 <?php
-/**
- * ScreenBites - Shopping Cart Update Handler
- * Modeled after itim211-2b-shop/cart_update.php
- */
-
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/seat_pricing.php';
 require_once __DIR__ . '/includes/seat_holds.php';
@@ -15,7 +10,6 @@ if (!isset($_SESSION['cart'])) {
 $type = $_POST['type'] ?? $_GET['type'] ?? '';
 $returnUrl = $_POST['return_url'] ?? $_SERVER['HTTP_REFERER'] ?? (BASE_URL . '/view_cart.php');
 
-// 1. Add Concession Snack/Drink
 if ($type === 'add_concession') {
     $productId = (int)($_POST['product_id'] ?? 0);
     $qty       = max(1, (int)($_POST['quantity'] ?? 1));
@@ -46,7 +40,6 @@ if ($type === 'add_concession') {
     exit;
 }
 
-// 1b. Add Concession Combo / Bundle
 if ($type === 'add_combo') {
     $comboId = (int)($_POST['combo_id'] ?? 0);
     $qty     = max(1, (int)($_POST['quantity'] ?? 1));
@@ -56,7 +49,6 @@ if ($type === 'add_combo') {
         $combo = mysqli_fetch_assoc($cRes);
 
         if ($combo) {
-            // Check stock of every constituent product in combo_items
             $ciSql = "SELECT ci.product_id, ci.quantity AS required_qty, p.product_name, p.current_stock
                       FROM combo_items ci
                       INNER JOIN products p ON ci.product_id = p.product_id
@@ -114,7 +106,6 @@ if ($type === 'add_combo') {
     exit;
 }
 
-// 2. Add Movie Tickets from Seat Grid (Tier-Based Anti-Tamper Verification & FR4 Seat Hold)
 if ($type === 'add_tickets') {
     $screeningId = (int)($_POST['screening_id'] ?? 0);
     $selectedSeats = (array)($_POST['seats'] ?? []);
@@ -138,12 +129,10 @@ if ($type === 'add_tickets') {
     $sessionToken = session_id();
     $hallId = (int)$sc['hall_id'];
 
-    // Try to hold each seat for 8 minutes
     $heldSeats = [];
     foreach ($pricedData['seats'] as $seatId => $seat) {
         $holdOk = hold_seat($conn, $screeningId, $seatId, $hallId, $sessionToken);
         if (!$holdOk) {
-            // Roll back any previously acquired holds for this attempt
             foreach ($heldSeats as $hId) {
                 release_seat_hold($conn, $screeningId, $hId);
             }
@@ -175,7 +164,6 @@ if ($type === 'add_tickets') {
     exit;
 }
 
-// 3. Batch Update Quantities (Traditional Form POST - Zero JSON)
 if ($type === 'update') {
     if (isset($_POST['product_qty']) && is_array($_POST['product_qty'])) {
         foreach ($_POST['product_qty'] as $key => $newQty) {
@@ -201,7 +189,6 @@ if ($type === 'update') {
     exit;
 }
 
-// 4. Single Item Removal (Standard GET Link - Zero JSON)
 if ($type === 'remove') {
     $key = trim($_GET['code'] ?? '');
     if (!empty($key) && isset($_SESSION['cart'][$key])) {
@@ -218,6 +205,5 @@ if ($type === 'remove') {
     exit;
 }
 
-// Fallback redirect
 header("Location: " . BASE_URL . "/view_cart.php");
 exit;
