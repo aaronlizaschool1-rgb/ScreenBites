@@ -17,7 +17,7 @@ $fullName = '';
 $username = '';
 $email    = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $fullName        = trim($_POST['full_name'] ?? '');
     $username        = trim($_POST['username'] ?? '');
     $email           = trim($_POST['email'] ?? '');

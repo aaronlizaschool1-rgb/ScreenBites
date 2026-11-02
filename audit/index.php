@@ -161,7 +161,7 @@ $actionMeta = [
                     ?>
                         <tr>
                             <td style="font-size: 0.85rem; color: var(--c-muted); white-space: nowrap;">
-                                <?= date('M d, Y &bull; g:i A', strtotime($log['created_at'])); ?>
+                                <?= date('M d, Y', strtotime($log['created_at'])); ?> &bull; <?= date('g:i A', strtotime($log['created_at'])); ?>
                             </td>
                             <td>
                                 <strong><?= sanitize($log['full_name'] ?? 'System Operator'); ?></strong>

@@ -13,7 +13,7 @@ if (is_logged_in()) {
 
 $error = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $identifier = trim($_POST['username'] ?? '');
     $password   = $_POST['password'] ?? '';
 
